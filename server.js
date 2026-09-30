@@ -6,21 +6,19 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// قاعدة بيانات وهمية للمستخدمين والطلبات والإشعارات
 let users = [
     { username: "Biz keskinleştiriyoruz", balance: 300.00, todayProfit: 0.00, bonus: 0.00, teamCount: 3, maxTeam: 40 }
 ];
 let pendingRequests = [];
-let transactionHistory = []; // سجل الإشعارات وتاريخ العمليات
+let transactionHistory = []; // السجل العام للعمليات
 
 // مسار رئيسي للتأكد من عمل السيرفر
 app.get('/', (req, res) => {
     res.send('سيرفر تطبيق المنصة السحابية المطور يعمل بنجاح!');
 });
 
-// مسار جلب إحصائيات لوحة التحكم للمشرف وللمستخدم
+// مسار جلب إحصائيات لوحة التحكم للمشرف
 app.get('/api/admin/dashboard', (req, res) => {
-    // تجهيز البيانات لتظهر بالنظام النصي المطلوب (مثل 3/40)
     const formattedUsers = users.map(u => ({
         ...u,
         teamCount: `${u.teamCount}/${u.maxTeam}`
@@ -34,6 +32,14 @@ app.get('/api/admin/dashboard', (req, res) => {
     });
 });
 
+// مسار مخصص لشاشة المستخدم لجلب إشعاراته الخاصة فقط
+app.get('/api/user/history', (req, res) => {
+    const { username } = req.query;
+    // تصفية التاريخ ليعرض فقط الإشعارات التابعة لهذا المستخدم
+    const userHistory = transactionHistory.filter(h => h.belongsTo === username);
+    res.json({ history: userHistory });
+});
+
 // مسار تسجيل دخول أو حفظ اسم المستخدم الجديد
 app.post('/api/user/login', (req, res) => {
     const { username } = req.body;
@@ -45,13 +51,13 @@ app.post('/api/user/login', (req, res) => {
     res.json({ success: true, user: { ...user, teamCount: `${user.teamCount}/${user.maxTeam}` } });
 });
 
-// مسار إرسال طلبات (إيداع، سحب، أو مكافأة دعوة) من شاشة المستخدم
+// مسار إرسال طلبات من شاشة المستخدم
 app.post('/api/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
     const newRequest = {
         id: Date.now(),
         invitee: username,
-        type: type, // 'deposit' أو 'withdraw' أو 'invite_bonus'
+        type: type, 
         amount: parseFloat(amount || 0),
         wallet: walletAddress || 'N/A',
         status: "معلق"
@@ -60,54 +66,52 @@ app.post('/api/user/request', (req, res) => {
     res.json({ success: true, message: "تم إرسال طلبك بنجاح وهو قيد المراجعة من المشرف" });
 });
 
-// مسار اتخاذ إجراء من المشرف (موافقة أو رفض) وتوليد إشعار بالتاريخ وزيادة الفريق
+// مسار اتخاذ إجراء من المشرف (موافقة أو رفض) وتوليد إشعار للمستخدم بالتاريخ
 app.post('/api/admin/action-request', (req, res) => {
-    const { requestId, action } = req.body; // action: 'approve' أو 'reject'
+    const { requestId, action } = req.body;
     const requestIndex = pendingRequests.findIndex(r => r.id === requestId);
     
     if (requestIndex !== -1) {
         const request = pendingRequests[requestIndex];
         let user = users.find(u => u.username === request.invitee);
         
-        // الحصول على تاريخ اليوم الحالي بتنسيق واضح وقروء
         const today = new Date();
         const formattedDate = today.toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 
         if (action === 'approve' && user) {
             if (request.type === 'deposit') {
                 user.balance += request.amount;
-                // إضافة إشعار إيداع بتاريخ اليوم
                 transactionHistory.push({
-                    message: `📥 تم شحن وإيداع ${request.amount} USDT بنجاح في حساب ${user.username}`,
+                    belongsTo: user.username,
+                    message: `📥 Başarılı Yatırma: ${request.amount} USDT (شحن ناجح)`,
                     date: formattedDate
                 });
             } else if (request.type === 'withdraw') {
                 user.balance -= request.amount;
-                // إضافة إشعار سحب بتاريخ اليوم
                 transactionHistory.push({
-                    message: `📤 تم سحب ${request.amount} USDT بنجاح إلى المحفظة ${request.wallet}`,
+                    belongsTo: user.username,
+                    message: `📤 Başarılı Çekme: ${request.amount} USDT (سحب ناجح)`,
                     date: formattedDate
                 });
             } else if (request.type === 'invite_bonus') {
                 user.bonus += request.amount;
                 user.balance += request.amount;
-                user.teamCount += 1; // ⚡ زيادة عدد الفريق تلقائياً عند موافقة المشرف
+                user.teamCount += 1; 
                 
                 transactionHistory.push({
-                    message: `👥 تم قبول مكافأة الدعوة لـ ${user.username} وزيادة أعضاء الفريق (+1)`,
+                    belongsTo: user.username,
+                    message: `👥 Takım Ödülü Onaylandı (مكافأة فريق +1)`,
                     date: formattedDate
                 });
             }
         }
 
-        // إزالة الطلب من القائمة المعلقة بعد اتخاذ الإجراء
         pendingRequests.splice(requestIndex, 1);
-        return res.json({ success: true, message: `تمت معالجة الطلب وتحديث البيانات بتاريخ اليوم: ${formattedDate}` });
+        return res.json({ success: true, message: "تمت معالجة الطلب وتحديث إشعارات المستخدم بنجاح" });
     }
     res.status(404).json({ success: false, message: "الطلب غير موجود" });
 });
 
-// مسار تفعيل أرباح الـ 15% لجميع المشتركين
 app.post('/api/admin/activate-profit', (req, res) => {
     users = users.map(user => {
         if (user.balance > 0) {
@@ -120,6 +124,5 @@ app.post('/api/admin/activate-profit', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`السيرفر المطور يعمل الآن على المنفذ: ${PORT}`);
+    console.log(`السيرفر يعمل الآن على المنفذ: ${PORT}`);
 });
-          
