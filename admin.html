@@ -3,107 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulut Platformu - Kullanıcı Paneli</title>
+    <title>Bulut Platformu Yonetim Paneli</title>
     <style>
-        body { background-color: #0b132b; color: #ffffff; font-family: sans-serif; margin: 20px; text-align: center; }
-        .container { max-width: 500px; margin: 0 auto; background: #1c2541; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2 { color: #5bc0be; }
-        .input-group { margin: 15px 0; }
-        input { width: 90%; padding: 10px; border-radius: 5px; border: 1px solid #3a506b; background: #0b132b; color: white; text-align: center; }
-        .btn { background-color: #007bff; color: white; border: none; padding: 12px; width: 94%; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; }
-        .btn-green { background-color: #2ecc71; }
-        .btn-red { background-color: #e74c3c; }
-        .btn-support { background-color: #f39c12; margin-top: 20px; display: inline-block; width: 94%; text-decoration: none; line-height: 40px; border-radius: 5px; color: white; font-weight: bold; }
-        .balance-box { background: #3a506b; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 18px; }
-        .deposit-address-box { background: #0b132b; border: 1px dashed #2ecc71; padding: 10px; margin: 15px 0; border-radius: 5px; font-size: 13px; word-break: break-all; color: #2ecc71; }
+        body { background-color: #0b132b; color: #ffffff; font-family: sans-serif; margin: 20px; text-align: right; direction: rtl; }
+        .container { max-width: 900px; margin: 0 auto; background: #1c2541; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2, h3 { text-align: center; color: #5bc0be; border-bottom: 1px solid #3a506b; padding-bottom: 10px; }
+        .btn-blue { background-color: #007bff; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
+        .btn-approve { background-color: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .btn-reject { background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .stats { background: #3a506b; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 16px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #1c2541; direction: ltr; }
+        th, td { padding: 12px; border: 1px solid #3a506b; text-align: center; }
+        th { background-color: #0b132b; color: #5bc0be; }
+        .text-green { color: #2ecc71; font-weight: bold; }
+        .text-blue { color: #3498db; }
+        .history-box { background: #0b132b; padding: 15px; border-radius: 5px; border: 1px solid #3a506b; max-height: 200px; overflow-y: auto; text-align: right; }
+        .history-item { border-bottom: 1px solid #1c2541; padding: 8px 0; font-size: 14px; display: flex; justify-content: space-between; }
+        .history-date { color: #95a5a6; font-size: 12px; }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <h2>☁️ Bulut Platformu</h2>
+    <h2>☁️ Bulut Platformu Yonetim Paneli (المشرف)</h2>
+    <div class="stats">📊 Kayıtlı abone sayısı: <strong><span id="subscriber-count">0</span></strong></div>
     
-    <!-- حقل حفظ الاسم وتثبيته -->
-    <div class="input-group">
-        <input type="text" id="username-field" placeholder="Kullanıcı Adınızı Girin (اسم المستخدم)">
-        <button class="btn" onclick="loginUser()">Kaydet ve Kilitle</button>
-    </div>
-
-    <!-- عرض رصيد المستخدم وعداد الفريق حياً من السيرفر -->
-    <div class="balance-box">
-        <div>Hesap Bakiyesi: <strong id="user-balance" class="text-green">0.00 USDT</strong></div>
-        <div style="font-size: 14px; margin-top: 5px;">Takım Sayacı: <strong id="user-team">0/40</strong></div>
-    </div>
-
-    <!-- خانة الإيداع الرسمية المثبتة للمحفظة الخاصة بك -->
-    <div class="deposit-address-box">
-        📥 <strong>Resmi Para Yatırma Adresi (USDT TRC20):</strong><br>
-        <span id="admin-deposit-wallet">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</span>
-    </div>
-
-    <!-- حقول المعاملات المالية المربوطة بالمشرف -->
-    <h3>📥 Para Yatırma ve Çekme (الإيداع والسحب)</h3>
-    <div class="input-group">
-        <input type="number" id="amount-field" placeholder="Miktar / Amount (المبلغ)">
-    </div>
-    <div class="input-group">
-        <input type="text" id="wallet-field" placeholder="Kendi Cüzdan Adresiniz (عنوان محفظتك للسحب)">
-    </div>
+    <h3>📥 Bekleyen istekler (الدعوات، السحب، الإيداع)</h3>
+    <table>
+        <thead><tr><th>İşlem</th><th>Cüzdan / Detay</th><th>Miktar</th><th>Sipariş türü</th><th>Kullanıcı adı</th></tr></thead>
+        <tbody id="requests-table"><tr><td colspan="5">Yükleniyor...</td></tr></tbody>
+    </table>
     
-    <button class="btn btn-green" onclick="sendRequest('deposit')">Para Yatırma Talebi (طلب إيداع)</button>
-    <button class="btn btn-red" onclick="sendRequest('withdraw')">Para Çekme Talebi (طلب سحب)</button>
-    <button class="btn" style="background-color: #9b59b6;" onclick="sendRequest('invite_bonus')">Davet Bonusu Talebi (طلب مكافأة دعوة)</button>
-
-    <!-- زر الدعم الفني المربوط بحسابك الشخصي مباشرة -->
-    <a href="https://t.me" target="_blank" class="btn-support">💬 Canlı Destek (الدعم الفني)</a>
+    <h3>📊 Abonelerin canlı takibi</h3>
+    <table>
+        <thead><tr><th>Takım sayacı</th><th>Bonus</th><th>Bugünkü karlar</th><th>Sermaye</th><th>Kullanıcı adı</th></tr></thead>
+        <tbody id="users-table"><tr><td colspan="5">Yükleniyor...</td></tr></tbody>
+    </table>
+    
+    <h3>📜 İşlem Geçmişi (إشعارات اليوم الحالية)</h3>
+    <div class="history-box" id="history-list"><p style="color: #bdc3c7; text-align: center;">Henüz onaylanmış bir işlem yok...</p></div>
 </div>
-
 <script>
-    const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000' : '';
-
-    function loginUser() {
-        const username = document.getElementById('username-field').value;
-        if (!username) return alert('Lütfen kullanıcı adı girin!');
-
-        fetch(`\${API_URL}/api/user/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-        })
+    const API_URL = window.location.origin;
+    
+    function loadDashboard() {
+        fetch(API_URL + '/api/admin/dashboard')
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                alert('Giriş Başarılı! (تم الحفظ والاتصال)');
-                document.getElementById('user-balance').innerText = data.user.balance.toFixed(2) + ' USDT';
-                document.getElementById('user-team').innerText = data.user.teamCount;
+            document.getElementById('subscriber-count').innerText = data.totalSubscribers;
+            
+            const usersTable = document.getElementById('users-table');
+            usersTable.innerHTML = '';
+            data.users.forEach(user => {
+                usersTable.innerHTML += `<tr><td><strong>${user.teamCount}</strong></td><td class="text-blue">USDT ${user.bonus.toFixed(2)}</td><td class="text-blue">USDT ${user.todayProfit.toFixed(2)}</td><td class="text-green">${user.balance.toFixed(2)} USDT</td><td>${user.username}</td></tr>`;
+            });
+            
+            const reqTable = document.getElementById('requests-table');
+            reqTable.innerHTML = '';
+            if (data.pendingRequests.length === 0) {
+                reqTable.innerHTML = `<tr><td colspan="5" style="color: #bdc3c7;">Bekleyen talep bulunmamaktadır.</td></tr>`;
+            } else {
+                data.pendingRequests.forEach(req => {
+                    reqTable.innerHTML += `<tr><td><button class="btn-approve" onclick="actionRequest(${req.id}, 'approve')">Onayla</button><button class="btn-reject" onclick="actionRequest(${req.id}, 'reject')">Reddet</button></td><td>${req.wallet}</td><td>${req.amount} USDT</td><td class="text-blue">${req.type === 'deposit' ? 'İpotek' : req.type === 'withdraw' ? 'Para Çekme' : 'Davet Bonusu'}</td><td>${req.invitee}</td></tr>`;
+                });
+            }
+            
+            const historyList = document.getElementById('history-list');
+            if (data.history.length === 0) {
+                historyList.innerHTML = `<p style="color: #bdc3c7; text-align: center;">Henüz onaylanmış bir işlem yok...</p>`;
+            } else {
+                historyList.innerHTML = '';
+                data.history.forEach(item => {
+                    historyList.innerHTML += `<div class="history-item"><span class="history-date">${item.date}</span><span>${item.message}</span></div>`;
+                });
             }
         });
     }
-
-    function sendRequest(type) {
-        const username = document.getElementById('username-field').value;
-        const amount = document.getElementById('amount-field').value;
-        const wallet = document.getElementById('wallet-field').value;
-
-        if (!username) return alert('Lütfen önce kullanıcı adınızı kilitleyin!');
-        if (type !== 'invite_bonus' && !amount) return alert('Lütfen miktar girin!');
-
-        // إذا كان نوع الطلب إيداع، نرسل تلقائياً عنوان محفظتك للمشرف ليتحقق منه
-        const actualWallet = type === 'deposit' ? document.getElementById('admin-deposit-wallet').innerText : wallet;
-
-        fetch(`\${API_URL}/api/user/request`, {
+    
+    function actionRequest(requestId, action) {
+        fetch(API_URL + '/api/admin/action-request', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, amount, type, walletAddress: actualWallet })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-            }
-        });
+            body: JSON.stringify({ requestId, action })
+        }).then(res => res.json()).then(data => { alert(data.message); loadDashboard(); });
     }
+    
+    loadDashboard();
 </script>
-
 </body>
 </html>
