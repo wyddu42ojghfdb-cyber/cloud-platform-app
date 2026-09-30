@@ -10,14 +10,15 @@
         h2, h3 { color: #5bc0be; }
         .input-group { margin: 15px 0; }
         input { width: 90%; padding: 10px; border-radius: 5px; border: 1px solid #3a506b; background: #0b132b; color: white; text-align: center; }
+        /* تصميم الحقل المقفل */
+        input:disabled { background: #1a233a; color: #8892b0; border-color: #2ecc71; cursor: not-allowed; font-weight: bold; }
         .btn { background-color: #007bff; color: white; border: none; padding: 12px; width: 94%; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 10px; }
+        .btn:disabled { background-color: #3a506b; color: #8892b0; cursor: not-allowed; }
         .btn-green { background-color: #2ecc71; }
         .btn-red { background-color: #e74c3c; }
         .btn-support { background-color: #f39c12; margin-top: 20px; display: inline-block; width: 94%; text-decoration: none; line-height: 40px; border-radius: 5px; color: white; font-weight: bold; }
         .balance-box { background: #3a506b; padding: 15px; border-radius: 5px; margin: 20px 0; font-size: 18px; }
         .deposit-address-box { background: #0b132b; border: 1px dashed #2ecc71; padding: 10px; margin: 15px 0; border-radius: 5px; font-size: 13px; word-break: break-all; color: #2ecc71; }
-        
-        /* صندوق الإشعارات الجديد لشاشة المستخدم */
         .history-box { background: #0b132b; padding: 15px; border-radius: 5px; border: 1px solid #3a506b; max-height: 180px; overflow-y: auto; text-align: right; margin-top: 20px; }
         .history-item { border-bottom: 1px solid #1c2541; padding: 8px 0; font-size: 13px; display: flex; justify-content: space-between; direction: rtl; }
         .history-date { color: #95a5a6; font-size: 11px; }
@@ -28,21 +29,25 @@
 <div class="container">
     <h2>☁️ Bulut Platformu</h2>
     
+    <!-- حقل حفظ الاسم وتثبيته النهائي -->
     <div class="input-group">
         <input type="text" id="username-field" placeholder="Kullanıcı Adınızı Girin (اسم المستخدم)">
-        <button class="btn" onclick="loginUser()">Kaydet ve Kilitle</button>
+        <button class="btn" id="lock-btn" onclick="loginUser()">Kaydet ve Kilitle</button>
     </div>
 
+    <!-- عرض رصيد المستخدم وعداد الفريق حياً من السيرفر -->
     <div class="balance-box">
         <div>Hesap Bakiyesi: <strong id="user-balance" class="text-green">0.00 USDT</strong></div>
         <div style="font-size: 14px; margin-top: 5px;">Takım Sayacı: <strong id="user-team">0/40</strong></div>
     </div>
 
+    <!-- خانة الإيداع الرسمية المثبتة للمحفظة الخاصة بك -->
     <div class="deposit-address-box">
         📥 <strong>Resmi Para Yatırma Adresi (USDT TRC20):</strong><br>
         <span id="admin-deposit-wallet">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</span>
     </div>
 
+    <!-- حقول المعاملات المالية المربوطة بالمشرف -->
     <h3>📥 Para Yatırma ve Çekme (الإيداع والسحب)</h3>
     <div class="input-group">
         <input type="number" id="amount-field" placeholder="Miktar / Amount (المبلغ)">
@@ -55,12 +60,13 @@
     <button class="btn btn-red" onclick="sendRequest('withdraw')">Para Çekme Talebi (طلب سحب)</button>
     <button class="btn" style="background-color: #9b59b6;" onclick="sendRequest('invite_bonus')">Davet Bonusu Talebi (طلب مكافأة دعوة)</button>
 
-    <!-- 📜 سجل العمليات الخاص بالمستخدم الحالي -->
+    <!-- سجل العمليات الخاص بالمستخدم الحالي -->
     <h3>📜 İşlem Geçmişiniz (سجل عملياتك وإشعارات اليوم)</h3>
     <div class="history-box" id="user-history-list">
         <p style="color: #bdc3c7; text-align: center; font-size: 12px;">Henüz onaylanmış bir işleminiz yok...</p>
     </div>
 
+    <!-- زر الدعم الفني المربوط بحسابك الشخصي مباشرة -->
     <a href="https://t.me" target="_blank" class="btn-support">💬 Canlı Destek (الدعم الفني)</a>
 </div>
 
@@ -68,8 +74,11 @@
     const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000' : '';
 
     function loginUser() {
-        const username = document.getElementById('username-field').value;
-        if (!username) return alert('Lütfen kullanıcı adı girin!');
+        const usernameInput = document.getElementById('username-field');
+        const lockButton = document.getElementById('lock-btn');
+        const username = usernameInput.value.trim();
+
+        if (!username) return alert('Lütfen geçerli bir kullanıcı adı girin!');
 
         fetch(`\${API_URL}/api/user/login`, {
             method: 'POST',
@@ -79,13 +88,19 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                alert('Giriş Başarılı!');
+                alert('Giriş Başarılı ve Hesap Kilitlendi! (تم تسجيل الدخول وقفل التعديل)');
+                
+                // 🔒 تفعيل القفل البرمجي النهائي هنا لمنع التعديل
+                usernameInput.disabled = true;
+                lockButton.disabled = true;
+                lockButton.innerText = "🔒 Kilitlendi (تم القفل)";
+
                 document.getElementById('user-balance').innerText = data.user.balance.toFixed(2) + ' USDT';
                 document.getElementById('user-team').innerText = data.user.teamCount;
-                // جلب التاريخ والاشعارات الخاصة بهذا المستخدم فوراً بعد الحفظ
                 loadUserHistory(username);
             }
-        });
+        })
+        .catch(err => alert('Sunucu bağlantı hatası!'));
     }
 
     function sendRequest(type) {
@@ -93,7 +108,12 @@
         const amount = document.getElementById('amount-field').value;
         const wallet = document.getElementById('wallet-field').value;
 
-        if (!username) return alert('Lütfen önce kullanıcı adınızı kilitleyin!');
+        // التحقق من أن المستخدم قام بقفل حسابه أولاً لحماية النظام
+        const usernameInput = document.getElementById('username-field');
+        if (!usernameInput.disabled) {
+            return alert('Lütfen önce kullanıcı adınızı kaydedin ve kilitleyin!');
+        }
+
         if (type !== 'invite_bonus' && !amount) return alert('Lütfen miktar girin!');
 
         const actualWallet = type === 'deposit' ? document.getElementById('admin-deposit-wallet').innerText : wallet;
@@ -111,7 +131,6 @@
         });
     }
 
-    // دالة ذكية لجلب تاريخ الإشعارات الخاص بالمستخدم المقفل فقط
     function loadUserHistory(username) {
         fetch(`\${API_URL}/api/user/history?username=\${encodeURIComponent(username)}`)
         .then(res => res.json())
