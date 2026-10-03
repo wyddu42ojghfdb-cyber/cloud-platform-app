@@ -102,6 +102,7 @@
 </div>
 
 <script>
+    // الرابط الموحد الجديد للسيرفر الخلفي المباشر
     const API_URL = "https://onrender.com";
     let currentUsername = "";
 
@@ -110,7 +111,7 @@
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
         
         try {
-            const res = await fetch(`${API_URL}/api/user/login`, {
+            const res = await fetch(`${API_URL}/backend/user/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username })
@@ -124,7 +125,7 @@
                 setInterval(refreshUserData, 4000); 
             }
         } catch (err) {
-            alert("خطأ في الاتصال بالخادم، تأكد من تشغيل السيرفر.");
+            alert("خطأ في الاتصال بالخادم، تأكد من استيقاظ منصة Render");
         }
     }
 
@@ -138,21 +139,20 @@
     async function refreshUserData() {
         if(!currentUsername) return;
         try {
-            const res = await fetch(`${API_URL}/api/user/login`, {
+            const res = await fetch(`${API_URL}/backend/user/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUsername })
             });
             const data = await res.json();
             if(data.success) updateUI(data.user);
-            loadHistory();
         } catch(e) {}
     }
 
     async function loadHistory() {
         if(!currentUsername) return;
         try {
-            const res = await fetch(`${API_URL}/api/user/history?username=${currentUsername}`);
+            const res = await fetch(`${API_URL}/backend/user/history?username=${currentUsername}`);
             const data = await res.json();
             const container = document.getElementById('logs-container');
             if(data.history.length === 0) {
@@ -172,17 +172,17 @@
         if(!friend) return alert("يرجى كتابة اسم الصديق");
 
         try {
-            const res = await fetch(`${API_URL}/api/user/request`, {
+            const res = await fetch(`${API_URL}/backend/user/request`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUsername, amount: 10, type: 'invite_bonus', walletAddress: `دعوة: ${friend}` })
             });
             const data = await res.json();
-            if(data.success) alert(data.message);
+            if(data.success) {
+                alert(data.message);
+                document.getElementById('inviteInput').value = "";
+            }
         } catch(e) { alert("خطأ في الاتصال"); }
     }
 
-    async function sendWithdrawRequest(wType) {
-        if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
-        const amount = document.getElementById('withdrawAmount').value;
-        
+    
