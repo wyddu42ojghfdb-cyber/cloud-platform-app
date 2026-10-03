@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs'); // مكتبة النظام لقراءة وحفظ البيانات في ملفات
+const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -9,28 +11,55 @@ app.use(express.json());
 // تشغيل السيرفر لقراءة ملفات الواجهات الرسومية والتصاميم تلقائياً
 app.use(express.static(__dirname));
 
-// قاعدة بيانات داخلية مؤقتة ومستقرة في الذاكرة لتجنب أخطاء الملفات
-let db = {
-    users: [{ username: "Biz keskinleştiriyoruz", balance: 300.00, todayProfit: 0.00, bonus: 0.00, teamCount: 3, maxTeam: 40 }],
-    pendingRequests: [],
-    transactionHistory: []
-};
+// تحديد مسار ملف قاعدة البيانات الدائمة في السيرفر
+const DB_FILE = path.join(__dirname, 'database.json');
 
-// توجيه المسارات لعرض واجهاتك الرسومية
+// دالة ذكية لقراءة البيانات من الملف الدائم
+function readDatabase() {
+    try {
+        if (!fs.existsSync(DB_FILE)) {
+            // إذا كان الملف غير موجود بعد، ننشئ قاعدة بيانات أولية فارغة
+            const initialData = {
+                users: [{ username: "Biz keskinleştiriyoruz", balance: 300.00, todayProfit: 0.00, bonus: 0.00, teamCount: 3, maxTeam: 40 }],
+                pendingRequests: [],
+                transactionHistory: []
+            };
+            fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf8');
+            return initialData;
+        }
+        const fileContent = fs.readFileSync(DB_FILE, 'utf8');
+        return JSON.parse(fileContent);
+    } catch (error) {
+        console.error("خطأ أثناء قراءة الملف، تم تشغيل ذاكرة احتياطية:", error);
+        return { users: [], pendingRequests: [], transactionHistory: [] };
+    }
+}
+
+// دالة ذكية لحفظ التعديلات والأرصدة الجديدة داخل الملف فوراً بشكل دائم وثابت
+function writeDatabase(data) {
+    try {
+        fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+    } catch (error) {
+        console.error("فشل حفظ البيانات في الملف الدائم:", error);
+    }
+}
+
+// توجيه المسارات لعرض واجهاتك الرسومية بدقة
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/panel', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.get('/admin', (req, res) => {
-    res.sendFile(__dirname + '/admin.html');
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
 // مسار جلب إحصائيات لوحة التحكم للمشرف
 app.get('/api/admin/dashboard', (req, res) => {
+    const db = readDatabase();
     res.json({
         totalSubscribers: db.users.length,
         users: db.users,
@@ -42,25 +71,29 @@ app.get('/api/admin/dashboard', (req, res) => {
 // مسار مخصص لشاشة المستخدم لجلب إشعاراته
 app.get('/api/user/history', (req, res) => {
     const { username } = req.query;
+    const db = readDatabase();
     const userHistory = db.transactionHistory.filter(h => h.belongsTo === username);
     res.json({ history: userHistory });
 });
 
-// مسار تسجيل دخول أو حفظ اسم المستخدم الجديد في قاعدة البيانات
+// مسار تسجيل دخول أو حفظ اسم المستخدم الجديد في قاعدة البيانات الدائمة
 app.post('/api/user/login', (req, res) => {
     const { username } = req.body;
+    const db = readDatabase();
     
     let user = db.users.find(u => u.username === username);
     if (!user) {
         user = { username, balance: 0.00, todayProfit: 0.00, bonus: 0.00, teamCount: 0, maxTeam: 40 };
         db.users.push(user);
+        writeDatabase(db); // حفظ المشترك الجديد فوراً في الملف الدائم
     }
     res.json({ success: true, user });
 });
 
-// مسار إرسال طلبات من شاشة المستخدم وظهورها حياً عند المشرف
+// مسار إرسال طلبات من شاشة المستخدم وظهورها حياً عند المشرف وحفظها كمعلقة
 app.post('/api/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
+    const db = readDatabase();
     
     const newRequest = {
         id: Date.now(),
@@ -71,13 +104,15 @@ app.post('/api/user/request', (req, res) => {
         status: "معلق"
     };
     db.pendingRequests.push(newRequest);
+    writeDatabase(db); // حفظ الطلب في الملف لحمايته من الضياع
     
     res.json({ success: true, message: "تم إرسال طلبك بنجاح وهو قيد المراجعة من المشرف" });
 });
 
-// مسار اتخاذ إجراء من المشرف وتحديث قاعدة البيانات وتوليد التاريخ الحالي
+// مسار اتخاذ إجراء من المشرف (موافقة) وتحديث الأرصدة وحفظها للأبد
 app.post('/api/admin/action-request', (req, res) => {
     const { requestId, action } = req.body;
+    const db = readDatabase();
     
     const requestIndex = db.pendingRequests.findIndex(r => r.id === requestId);
     
@@ -117,13 +152,15 @@ app.post('/api/admin/action-request', (req, res) => {
         }
 
         db.pendingRequests.splice(requestIndex, 1);
+        writeDatabase(db); // حفظ تحديثات الأرصدة الجديدة للمستخدمين في الملف الدائم فوراً
         return res.json({ success: true, message: "تمت معالجة الطلب وتحديث قاعدة البيانات بأمان" });
     }
     res.status(404).json({ success: false, message: "الطلب غير موجود" });
 });
 
-// مسار تفعيل أرباح الـ 15% وحفظها في قاعدة البيانات
+// مسار تفعيل أرباح الـ 15% وتثبيتها في قاعدة البيانات الدائمة
 app.post('/api/admin/activate-profit', (req, res) => {
+    const db = readDatabase();
     db.users = db.users.map(user => {
         if (user.balance > 0) {
             user.todayProfit = (user.balance * 0.15);
@@ -131,9 +168,10 @@ app.post('/api/admin/activate-profit', (req, res) => {
         }
         return user;
     });
+    writeDatabase(db); // حفظ الأرباح التراكمية في الملف الدائم
     res.json({ success: true, message: "تم تفعيل الأرباح اليومية بنسبة 15% وحفظها للمشتركين!" });
 });
 
 app.listen(PORT, () => {
-    console.log(`السيرفر يعمل بنجاح على المنفذ: ${PORT}`);
+    console.log(`السيرفر الآمن يعمل الآن ويحفظ البيانات تلقائياً في قاعدة البيانات الدائمة على المنفذ: ${PORT}`);
 });
