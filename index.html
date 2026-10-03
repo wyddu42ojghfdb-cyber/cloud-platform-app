@@ -42,13 +42,13 @@
         <strong style="color: #4ade80; font-size: 14px;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</strong>
     </div>
 
-    <h4 id="txt-action-title">📥 الإيداع والسحب (الإيداع والسحب)</h4>
-    <input type="number" id="amountInput" placeholder="الكمية / المبلغ (المبلغ)">
+    <h4 id="txt-action-title">📥 الإيداع والسحب</h4>
+    <input type="number" id="amountInput" placeholder="الكمية / المبلغ">
     <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك">
 
-    <button class="btn-green" id="btn-deposit" onclick="sendRequest('deposit')">➕ طلب إيداع (طلب إيداع)</button>
-    <button class="btn-red" id="btn-withdraw" onclick="sendRequest('withdraw')"> Extracted طلب السحب (طلب السحب)</button>
-    <button class="btn-purple" id="btn-bonus" onclick="sendRequest('invite_bonus')">👥 طلب مكافأة الدعوة (طلب مكافأة تهنئة)</button>
+    <button class="btn-green" id="btn-deposit" onclick="sendRequest('deposit')">➕ طلب إيداع</button>
+    <button class="btn-red" id="btn-withdraw" onclick="sendRequest('withdraw')">➖ طلب السحب</button>
+    <button class="btn-purple" id="btn-bonus" onclick="sendRequest('invite_bonus')">👥 طلب مكافأة الدعوة</button>
     
     <hr style="border: 1px solid #334155; margin: 20px 0;">
     
@@ -65,17 +65,21 @@
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
         
-        const res = await fetch(`${API_URL}/api/user/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-        });
-        const data = await res.json();
-        if(data.success) {
-            currentUsername = username;
-            document.getElementById('val-balance').innerText = data.user.balance.toFixed(2);
-            document.getElementById('val-team').innerText = data.user.teamCount;
-            alert("تم التحقق وحفظ الحساب بنجاح!");
+        try {
+            const res = await fetch(`${API_URL}/api/user/login`, {
+                method: 'POST',
+                headers: { 'Type': 'application/json', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+            if(data.success) {
+                currentUsername = username;
+                document.getElementById('val-balance').innerText = data.user.balance.toFixed(2);
+                document.getElementById('val-team').innerText = data.user.teamCount;
+                alert("تم التحقق وحفظ الحساب بنجاح!");
+            }
+        } catch (err) {
+            alert("حدث خطأ أثناء الاتصال بالسيرفر، تأكد من استيقاظ منصة Render");
         }
     }
 
@@ -84,14 +88,18 @@
         const amount = document.getElementById('amountInput').value;
         const walletAddress = document.getElementById('walletInput').value;
 
-        const res = await fetch(`${API_URL}/api/user/request`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUsername, amount, type, walletAddress })
-        });
-        const data = await res.json();
-        if(data.success) {
-            alert(data.message);
+        try {
+            const res = await fetch(`${API_URL}/api/user/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, amount, type, walletAddress })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert(data.message);
+            }
+        } catch (err) {
+            alert("فشل إرسال الطلب للسيرفر.");
         }
     }
 
@@ -105,7 +113,7 @@
             document.getElementById('txt-team-label').innerText = "Takım Sayısı:";
             document.getElementById('txt-dep-title').innerText = "📌 Resmi Para Yatırma Adresi (USDT TRC20):";
             document.getElementById('txt-action-title').innerText = "📥 Para Yatırma ve Çekme";
-            document.getElementById('amountInput').placeholder = "Miktar / Amount";
+            document.getElementById('amountInput').placeholder = "Miktar";
             document.getElementById('walletInput').placeholder = "Kendi Cüzdan Adresiniz";
             document.getElementById('btn-deposit').innerText = "➕ Para Yatırma Talebi";
             document.getElementById('btn-withdraw').innerText = "➖ Para Çekme Talebi";
@@ -128,19 +136,18 @@
             document.getElementById('btn-support').innerText = "🎧 Customer Support";
             document.body.style.direction = "ltr";
         } else {
-            // العودة للعربية القياسية
             document.getElementById('txt-title').innerText = "☁️ منصة سحابية";
             document.getElementById('usernameInput').placeholder = "اكتب اسم المستخدم هنا";
             document.getElementById('btn-login').innerText = "💾 حفظ وقفل الحساب";
             document.getElementById('txt-balance-label').innerText = "دولار أمريكي رصيد الحساب:";
             document.getElementById('txt-team-label').innerText = "عداد الفريق:";
             document.getElementById('txt-dep-title').innerText = "📌 عنوان الإيداع الرسمي (USDT TRC20):";
-            document.getElementById('txt-action-title').innerText = "📥 الإيداع والسحب (الإيداع والسحب)";
-            document.getElementById('amountInput').placeholder = "الكمية / المبلغ (المبلغ)";
+            document.getElementById('txt-action-title').innerText = "📥 الإيداع والسحب";
+            document.getElementById('amountInput').placeholder = "الكمية / المبلغ";
             document.getElementById('walletInput').placeholder = "أدخل عنوان محفظة TRC-20 الخاصة بك";
-            document.getElementById('btn-deposit').innerText = "➕ طلب إيداع (طلب إيداع)";
-            document.getElementById('btn-withdraw').innerText = "➖ طلب السحب (طلب السحب)";
-            document.getElementById('btn-bonus').innerText = "👥 طلب مكافأة الدعوة (طلب مكافأة تهنئة)";
+            document.getElementById('btn-deposit').innerText = "➕ طلب إيداع";
+            document.getElementById('btn-withdraw').innerText = "➖ طلب السحب";
+            document.getElementById('btn-bonus').innerText = "👥 طلب مكافأة الدعوة";
             document.getElementById('btn-support').innerText = "🎧 Canlı Destek (الدعم الفني)";
             document.body.style.direction = "rtl";
         }
