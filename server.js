@@ -7,35 +7,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// قاعدة بيانات داخلية مستقرة في الذاكرة لمنع أخطاء التوقف
+// ذاكرة سحابية مستقرة لحفظ الحسابات والطلبات الحية
 let db = {
     users: [{ username: "Biz keskinleştiriyoruz", balance: 300.00, todayProfit: 0.00, bonus: 0.00, teamCount: 3, maxTeam: 40 }],
     pendingRequests: [],
     transactionHistory: []
 };
 
-// مسارات عرض الواجهات الرسومية والتصاميم
+// مسارات توجيه ملفات الواجهات الرسومية
 app.get('/', (req, res) => { res.sendFile(__dirname + '/index.html'); });
 app.get('/panel', (req, res) => { res.sendFile(__dirname + '/index.html'); });
 app.get('/admin', (req, res) => { res.sendFile(__dirname + '/admin.html'); });
 
-// مسارات برمجية مستقلة (Backend API) لمعالجة الأرصدة والطلبات
-app.get('/backend/admin/dashboard', (req, res) => {
-    res.json({ totalSubscribers: db.users.length, users: db.users, pendingRequests: db.pendingRequests, history: db.transactionHistory });
-});
-
-app.get('/backend/user/history', (req, res) => {
-    const { username } = req.query;
-    res.json({ history: db.transactionHistory.filter(h => h.belongsTo === username) });
-});
+// مسارات معالجة البيانات والربط (Backend API)
+app.get('/backend/admin/dashboard', (req, res) => { res.json({ totalSubscribers: db.users.length, users: db.users, pendingRequests: db.pendingRequests, history: db.transactionHistory }); });
+app.get('/backend/user/history', (req, res) => { const { username } = req.query; res.json({ history: db.transactionHistory.filter(h => h.belongsTo === username) }); });
 
 app.post('/backend/user/login', (req, res) => {
     const { username } = req.body;
     let user = db.users.find(u => u.username === username);
-    if (!user) {
-        user = { username, balance: 0.00, todayProfit: 0.00, bonus: 0.00, teamCount: 0, maxTeam: 40 };
-        db.users.push(user);
-    }
+    if (!user) { user = { username, balance: 0.00, todayProfit: 0.00, bonus: 0.00, teamCount: 0, maxTeam: 40 }; db.users.push(user); }
     res.json({ success: true, user });
 });
 
