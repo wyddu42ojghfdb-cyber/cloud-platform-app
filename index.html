@@ -102,8 +102,7 @@
 </div>
 
 <script>
-    // الرابط الموحد الجديد للسيرفر الخلفي المباشر
-    const API_URL = "https://onrender.com";
+    const API_URL = window.location.origin; // تحديد رابط السيرفر تلقائياً لمنع أي حظر
     let currentUsername = "";
 
     async function loginUser() {
@@ -185,4 +184,5 @@
         } catch(e) { alert("خطأ في الاتصال"); }
     }
 
-    
+    async function sendWithdrawRequest(wType) {
+        
