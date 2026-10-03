@@ -8,6 +8,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// تشغيل السيرفر لقراءة ملفات الواجهات الرسومية والتصاميم تلقائياً
+app.use(express.static(__dirname));
+
 const DB_FILE = path.join(__dirname, 'database.json');
 
 // دالة برمجية لقراءة البيانات من ملف قاعدة البيانات
@@ -31,10 +34,23 @@ function writeDatabase(data) {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
-// مسار رئيسي للتأكد من عمل السيرفر
+// === [الأجزاء المضافة لفتح واجهاتك الرسومية وتصاميمك تلقائياً] ===
+
+// 1. فتح شاشة المستخدم (التطبيق الرئيسي) عند دخول الرابط العام أو مسار panel
 app.get('/', (req, res) => {
-    res.send('سيرفر تطبيق المنصة السحابية مع قاعدة البيانات الذكية يعمل بنجاح!');
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+app.get('/panel', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// 2. فتح لوحة تحكم المسؤول الخاصة بك عند كتابة admin
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// =========================================================
 
 // مسار جلب إحصائيات لوحة التحكم للمشرف
 app.get('/api/admin/dashboard', (req, res) => {
