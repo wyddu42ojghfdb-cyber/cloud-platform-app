@@ -1,93 +1,151 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulut Platformu Yonetim Paneli</title>
+    <title>Yönetim Kontrol Paneli - لوحة المشرف</title>
     <style>
-        body { background-color: #0b132b; color: #ffffff; font-family: sans-serif; margin: 20px; text-align: right; direction: rtl; }
-        .container { max-width: 900px; margin: 0 auto; background: #1c2541; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
-        h2, h3 { text-align: center; color: #5bc0be; border-bottom: 1px solid #3a506b; padding-bottom: 10px; }
-        .btn-blue { background-color: #007bff; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; margin-bottom: 20px; }
-        .btn-approve { background-color: #2ecc71; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
-        .btn-reject { background-color: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; font-weight: bold; }
-        .stats { background: #3a506b; padding: 10px; border-radius: 5px; margin-bottom: 20px; font-size: 16px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #1c2541; direction: ltr; }
-        th, td { padding: 12px; border: 1px solid #3a506b; text-align: center; }
-        th { background-color: #0b132b; color: #5bc0be; }
-        .text-green { color: #2ecc71; font-weight: bold; }
-        .text-blue { color: #3498db; }
-        .history-box { background: #0b132b; padding: 15px; border-radius: 5px; border: 1px solid #3a506b; max-height: 200px; overflow-y: auto; text-align: right; }
-        .history-item { border-bottom: 1px solid #1c2541; padding: 8px 0; font-size: 14px; display: flex; justify-content: space-between; }
-        .history-date { color: #95a5a6; font-size: 12px; }
+        body { background-color: #0f172a; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: #0f172a; font-size: 14px; }
+        th, td { padding: 12px; border: 1px solid #334155; text-align: center; }
+        th { background: #1e293b; color: #3b82f6; }
+        button { padding: 10px 15px; margin: 4px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn-approve { background: #22c55e; color: white; }
+        .btn-profit { background: #3b82f6; color: white; width: 95%; padding: 12px; font-size: 15px; margin: 15px 0; border-radius: 8px; }
+        .counter-box { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 18px; font-weight: bold; border: 1px solid #334155; }
+        .section-title { color: #f43f5e; margin-top: 20px; font-size: 16px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+        .section-title-blue { color: #3b82f6; margin-top: 20px; font-size: 16px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <h2>☁️ Bulut Platformu Yonetim Paneli (المشرف)</h2>
-    <div class="stats">📊 Kayıtlı abone sayısı: <strong><span id="subscriber-count">0</span></strong></div>
+    <h2>💻 Bulut Platformu Yönetim Kontrol Paneli</h2>
     
-    <h3>📥 Bekleyen istekler (الدعوات، السحب، الإيداع)</h3>
+    <div class="counter-box">
+        <span style="float: right; color: #22c55e;" id="total-users">0</span>
+        <span style="float: left; color: #94a3b8;">👥 Kayıtlı üye sayısı toplamı:</span>
+        <div style="clear: both;"></div>
+    </div>
+
+    <div style="border: 1px dashed #334155; padding: 10px; border-radius: 8px; background: rgba(30, 41, 59, 0.5);">
+        <p style="font-size: 13px; color: #94a3b8;">⚙️ Günlük grup prosedürleri</p>
+        <button class="btn-profit" onclick="activateProfit()">💰 Doğrudan günlük kar dağıtımı (%15)</button>
+    </div>
+
+    <div class="section-title">📥 Üyelerin bekleyen talepleri yanıtlanmayı bekliyor (الدعوات، السحب، الإيداع)</div>
     <table>
-        <thead><tr><th>İşlem</th><th>Cüzdan / Detay</th><th>Miktar</th><th>Sipariş türü</th><th>Kullanıcı adı</th></tr></thead>
-        <tbody id="requests-table"><tr><td colspan="5">Yükleniyor...</td></tr></tbody>
+        <thead>
+            <tr>
+                <th>Kullanıcı adı</th>
+                <th>Talep türü</th>
+                <th>Miktar / Detaylar</th>
+                <th>Cüzdan adresi</th>
+                <th>Denetleyicinin kararı</th>
+            </tr>
+        </thead>
+        <tbody id="requests-table">
+            <tr><td colspan="5" style="color: #64748b;">Bekleyen talep bulunmamaktadır...</td></tr>
+        </tbody>
     </table>
-    
-    <h3>📊 Abonelerin canlı takibi</h3>
+
+    <div class="section-title-blue">📊 Üyelerin bakiyelerinin ve karlarının canlı takibi</div>
     <table>
-        <thead><tr><th>Takım sayacı</th><th>Bonus</th><th>Bugünkü karlar</th><th>Sermaye</th><th>Kullanıcı adı</th></tr></thead>
-        <tbody id="users-table"><tr><td colspan="5">Yükleniyor...</td></tr></tbody>
+        <thead>
+            <tr>
+                <th>Kullanıcı adı</th>
+                <th>Toplam sermaye</th>
+                <th>Bugünün güncel karları</th>
+                <th>Davetiye ve bilet ödülleri</th>
+                <th>Aktif takım üyeleri</th>
+            </tr>
+        </thead>
+        <tbody id="users-table">
+            <tr><td colspan="5" style="color: #64748b;">Henüz kayıtlı üye yok...</td></tr>
+        </tbody>
     </table>
-    
-    <h3>📜 İşlem Geçmişi (إشعارات اليوم الحالية)</h3>
-    <div class="history-box" id="history-list"><p style="color: #bdc3c7; text-align: center;">Henüz onaylanmış bir işlem yok...</p></div>
 </div>
+
 <script>
-    const API_URL = window.location.origin;
-    
-    function loadDashboard() {
-        fetch(API_URL + '/api/admin/dashboard')
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('subscriber-count').innerText = data.totalSubscribers;
+    // الرابط الموحد المربوط بسيرفر قاعدة البيانات المشترك
+    const API_URL = "https://onrender.com";
+
+    async function loadDashboard() {
+        try {
+            const res = await fetch(`${API_URL}/api/admin/dashboard`);
+            const data = await res.json();
             
-            const usersTable = document.getElementById('users-table');
-            usersTable.innerHTML = '';
-            data.users.forEach(user => {
-                usersTable.innerHTML += `<tr><td><strong>${user.teamCount}</strong></td><td class="text-blue">USDT ${user.bonus.toFixed(2)}</td><td class="text-blue">USDT ${user.todayProfit.toFixed(2)}</td><td class="text-green">${user.balance.toFixed(2)} USDT</td><td>${user.username}</td></tr>`;
-            });
-            
+            document.getElementById('total-users').innerText = data.totalSubscribers;
+
+            // 1. تحديث جدول الطلبات المعلقة فوراً
             const reqTable = document.getElementById('requests-table');
-            reqTable.innerHTML = '';
             if (data.pendingRequests.length === 0) {
-                reqTable.innerHTML = `<tr><td colspan="5" style="color: #bdc3c7;">Bekleyen talep bulunmamaktadır.</td></tr>`;
+                reqTable.innerHTML = "<tr><td colspan='5' style='color: #64748b;'>Bekleyen talep bulunmamaktadır...</td></tr>";
             } else {
+                reqTable.innerHTML = "";
                 data.pendingRequests.forEach(req => {
-                    reqTable.innerHTML += `<tr><td><button class="btn-approve" onclick="actionRequest(${req.id}, 'approve')">Onayla</button><button class="btn-reject" onclick="actionRequest(${req.id}, 'reject')">Reddet</button></td><td>${req.wallet}</td><td>${req.amount} USDT</td><td class="text-blue">${req.type === 'deposit' ? 'İpotek' : req.type === 'withdraw' ? 'Para Çekme' : 'Davet Bonusu'}</td><td>${req.invitee}</td></tr>`;
+                    let typeText = req.type === 'deposit' ? '📥 İlaç (إيداع)' : req.type === 'withdraw' ? '📤 Çekme (سحب)' : '👥 Bonus (مكافأة)';
+                    reqTable.innerHTML += `
+                        <tr>
+                            <td><strong>${req.invitee}</strong></td>
+                            <td>${typeText}</td>
+                            <td style="color: #eab308; font-weight: bold;">${req.amount} USDT</td>
+                            <td><small>${req.wallet}</small></td>
+                            <td><button class="btn-approve" onclick="actionRequest(${req.id}, 'approve')">✅ Onayla (موافقة)</button></td>
+                        </tr>
+                    `;
                 });
             }
-            
-            const historyList = document.getElementById('history-list');
-            if (data.history.length === 0) {
-                historyList.innerHTML = `<p style="color: #bdc3c7; text-align: center;">Henüz onaylanmış bir işlem yok...</p>`;
+
+            // 2. تحديث جدول حسابات المشتركين النشطين فوراً
+            const userTable = document.getElementById('users-table');
+            if (data.users.length === 0) {
+                userTable.innerHTML = "<tr><td colspan='5' style='color: #64748b;'>Henüz kayıtlı üye yok...</td></tr>";
             } else {
-                historyList.innerHTML = '';
-                data.history.forEach(item => {
-                    historyList.innerHTML += `<div class="history-item"><span class="history-date">${item.date}</span><span>${item.message}</span></div>`;
+                userTable.innerHTML = "";
+                data.users.forEach(u => {
+                    userTable.innerHTML += `
+                        <tr>
+                            <td>${u.username}</td>
+                            <td style="color: #22c55e; font-weight: bold;">${u.balance.toFixed(2)} USDT</td>
+                            <td style="color: #3b82f6;">${u.todayProfit.toFixed(2)} USDT</td>
+                            <td style="color: #a855f7;">${u.bonus.toFixed(2)} USDT</td>
+                            <td><span style="background: #334155; padding: 4px 8px; border-radius: 4px;">${u.teamCount}</span></td>
+                        </tr>
+                    `;
                 });
             }
-        });
+        } catch (error) {
+            console.error("قاعدة البيانات غير متصلة بالسيرفر الرئيسي بعد:", error);
+        }
     }
-    
-    function actionRequest(requestId, action) {
-        fetch(API_URL + '/api/admin/action-request', {
+
+    async function actionRequest(requestId, action) {
+        const res = await fetch(`${API_URL}/api/admin/action-request`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ requestId, action })
-        }).then(res => res.json()).then(data => { alert(data.message); loadDashboard(); });
+        });
+        const data = await res.json();
+        if(data.success) {
+            alert("تمت معالجة الطلب بنجاح وتحديث الحساب المالي للمستخدم!");
+            loadDashboard();
+        }
     }
-    
-    loadDashboard();
+
+    async function activateProfit() {
+        const res = await fetch(`${API_URL}/api/admin/activate-profit`, { method: 'POST' });
+        const data = await res.json();
+        if(data.success) {
+            alert("✓ " + data.message);
+            loadDashboard();
+        }
+    }
+
+    // تحديث البيانات حياً كل 4 ثوانٍ لمراقبة الإيداعات والسحوبات تلقائياً
+    setInterval(loadDashboard, 4000);
+    window.onload = loadDashboard;
 </script>
 </body>
 </html>
