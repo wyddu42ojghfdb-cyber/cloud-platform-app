@@ -44,8 +44,7 @@
     <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" id="btn-login" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
-
-    <div class="info-box">
+        <div class="info-box">
         <div style="text-align: center; font-size: 12px; color: #eab308; margin-bottom: 8px;" id="txt-gift-title">🏆 جائزة الكبرى (40 عضو)</div>
         <div style="text-align: center; font-size: 15px; font-weight: bold; color: #22c55e; margin-bottom: 8px;">2500 دولار أمريكي</div>
         <div class="info-row">
@@ -90,8 +89,7 @@
         <span style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px;" id="txt-dep-sub">⚠️ الحد الأدنى للإيداع هو 100 USDT</span>
         <button class="btn-green" onclick="sendDepositRequest()" id="btn-dep-action">⚡ إرسال طلب الإيداع للمشرف</button>
     </div>
-
-    <div class="info-box">
+        <div class="info-box">
         <div style="text-align: center; font-size: 13px; color: #3b82f6; margin-bottom: 5px;" id="txt-logs-title">📋 سجل معاملاتك وإشعاراتك الحية</div>
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding: 10px;">
             يرجى قفل الاسم لعرض الإشعارات...
@@ -102,7 +100,7 @@
 </div>
 
 <script>
-    const API_URL = window.location.origin; // تحديد رابط السيرفر تلقائياً لمنع أي حظر
+    const API_URL = window.location.origin; // تحديد الرابط ديناميكياً لكسر أي حظر
     let currentUsername = "";
 
     async function loginUser() {
@@ -145,6 +143,7 @@
             });
             const data = await res.json();
             if(data.success) updateUI(data.user);
+            loadHistory();
         } catch(e) {}
     }
 
@@ -185,4 +184,87 @@
     }
 
     async function sendWithdrawRequest(wType) {
-        
+        if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
+        const amount = document.getElementById('withdrawAmount').value;
+        const wallet = document.getElementById('walletInput').value.trim();
+        if(!amount || !wallet) return alert("يرجى ملء خانات المبلغ والمحفظة!");
+
+        try {
+            const res = await fetch(`${API_URL}/backend/user/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, amount, type: 'withdraw', walletAddress: `نوع: ${wType} | محفظة: ${wallet}` })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert(data.message);
+                document.getElementById('withdrawAmount').value = "";
+                document.getElementById('walletInput').value = "";
+            }
+        } catch(e) { alert("خطأ في الاتصال"); }
+    }
+
+    async function sendDepositRequest() {
+        if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
+        const amount = document.getElementById('depositAmount').value;
+        if(!amount || amount < 100) return alert("الحد الأدنى للايداع هو 100 USDT!");
+
+        try {
+            const res = await fetch(`${API_URL}/backend/user/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, amount, type: 'deposit', walletAddress: 'شحن TRC20' })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert(data.message);
+                document.getElementById('depositAmount').value = "";
+            }
+        } catch(e) { alert("خطأ في الاتصال"); }
+    }
+
+    function switchLanguage(lang) {
+        if(lang === 'tr') {
+            document.getElementById('txt-title').innerText = "☁️ Bulut Platformu";
+            document.getElementById('txt-user-label').innerText = "👤 Mevcut kullanıcı adı";
+            document.getElementById('txt-user-sub').innerText = "Lütfen önce kullanıcı adını kilitleyin ve yükleyin.";
+            document.getElementById('usernameInput').placeholder = "Kullanıcı adınızı buraya girin";
+            document.getElementById('btn-login').innerText = "Hesabı kaydet ve kilitle";
+            document.getElementById('txt-gift-title').innerText = "🏆 Büyük Ödül (40 üye)";
+            document.getElementById('txt-team-status').innerText = "Aktif ekip üyeleri:";
+            document.getElementById('txt-invite-label').innerText = "🔗 Referans bonusu (davet) isteği gönderin:";
+            document.getElementById('inviteInput').placeholder = "Aranan arkadaşın adı";
+            document.getElementById('btn-bonus').innerText = "Ödülü amire gönderin";
+            document.getElementById('txt-total-cap').innerText = "Toplam sermaye:";
+            document.getElementById('txt-daily-prof').innerText = "Günlük karlar:";
+            document.getElementById('txt-bonus-prof').innerText = "Bilet gelirleri ve davetiye bonusları:";
+            document.getElementById('txt-withdraw-title').innerText = "🚨 Anında Para Çekme İşlemleri Paneli (TRC-20 Ağı):";
+            document.getElementById('withdrawAmount').placeholder = "USDT cinsinden tutar";
+            document.getElementById('walletInput').placeholder = "TRC-20 cüzdan adresinizi girin";
+            document.getElementById('btn-w1').innerText = "Sermayenin tamamının çekilmesi";
+            document.getElementById('btn-w2').innerText = "Günlük karlarınızı çekin";
+            document.getElementById('btn-w3').innerText = "Davet bonusu çekimi";
+            document.getElementById('txt-dep-title').innerText = "📥 Para yatırma talebi gönderin (USDT TRC-20):";
+            document.getElementById('depositAmount').placeholder = "Transferden sonra tutarı girin";
+            document.getElementById('txt-dep-sub').innerText = "⚠️ Minimum para yatırma tutarı 100 USDT'dir";
+            document.getElementById('btn-dep-action').innerText = "Para yatırma talebini yöneticiye gönderin";
+            document.getElementById('txt-logs-title').innerText = "📋 İşlemlerinizi ve canlı bildirimlerinizi kaydedin";
+            document.getElementById('btn-support').innerText = "Teknik destek ekibiyle doğrudan Telegram üzerinden iletişime geçin.";
+            document.querySelector('.container').style.textAlign = "left";
+            document.body.style.direction = "ltr";
+        } else if(lang === 'en') {
+            document.getElementById('txt-title').innerText = "☁️ Cloud Platform";
+            document.getElementById('txt-user-label').innerText = "👤 Current Username";
+            document.getElementById('txt-user-sub').innerText = "Please lock and save your username first.";
+            document.getElementById('usernameInput').placeholder = "Enter your username here";
+            document.getElementById('btn-login').innerText = "Save and Lock Account";
+            document.getElementById('txt-gift-title').innerText = "🏆 Grand Prize (40 Members)";
+            document.getElementById('txt-team-status').innerText = "Active Team Members:";
+            document.getElementById('txt-invite-label').innerText = "🔗 Send Referral (Invite) Bonus Request:";
+            document.getElementById('inviteInput').placeholder = "Invited friend's name";
+            document.getElementById('btn-bonus').innerText = "Send Request to Admin";
+            document.getElementById('txt-total-cap').innerText = "Total Capital:";
+            document.getElementById('txt-daily-prof').innerText = "Daily Profits:";
+            document.getElementById('txt-bonus-prof').innerText = "Ticket & Invite Bonuses:";
+            document.getElementById('txt-withdraw-title').innerText = "🚨 Instant Withdrawal Panel (TRC-20 Network):";
+            
