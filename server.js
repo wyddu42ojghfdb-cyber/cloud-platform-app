@@ -16,7 +16,6 @@ const DB_FILE = path.join(__dirname, 'database.json');
 // دالة برمجية لقراءة البيانات من ملف قاعدة البيانات
 function readDatabase() {
     if (!fs.existsSync(DB_FILE)) {
-        // إذا كان الملف غير موجود، ننشئ قاعدة بيانات أولية
         const initialData = {
             users: [{ username: "Biz keskinleştiriyoruz", balance: 300.00, todayProfit: 0.00, bonus: 0.00, teamCount: 3, maxTeam: 40 }],
             pendingRequests: [],
@@ -34,9 +33,7 @@ function writeDatabase(data) {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
 }
 
-// === [الأجزاء المضافة لفتح واجهاتك الرسومية وتصاميمك تلقائياً] ===
-
-// 1. فتح شاشة المستخدم (التطبيق الرئيسي) عند دخول الرابط العام أو مسار panel
+// توجيه المسارات لعرض واجهاتك الرسومية
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -45,30 +42,22 @@ app.get('/panel', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// 2. فتح لوحة تحكم المسؤول الخاصة بك عند كتابة admin
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// =========================================================
-
 // مسار جلب إحصائيات لوحة التحكم للمشرف
 app.get('/api/admin/dashboard', (req, res) => {
     const db = readDatabase();
-    const formattedUsers = db.users.map(u => ({
-        ...u,
-        teamCount: `${u.teamCount}/${u.maxTeam}`
-    }));
-    
     res.json({
         totalSubscribers: db.users.length,
-        users: formattedUsers,
+        users: db.users,
         pendingRequests: db.pendingRequests,
         history: db.transactionHistory
     });
 });
 
-// مسار مخصص لشاشة المستخدم لجلب إشعاراته الخاصة فقط
+// مسار مخصص لشاشة المستخدم لجلب إشعاراته
 app.get('/api/user/history', (req, res) => {
     const { username } = req.query;
     const db = readDatabase();
@@ -85,12 +74,12 @@ app.post('/api/user/login', (req, res) => {
     if (!user) {
         user = { username, balance: 0.00, todayProfit: 0.00, bonus: 0.00, teamCount: 0, maxTeam: 40 };
         db.users.push(user);
-        writeDatabase(db); // حفظ المشترك الجديد فوراً في الملف
+        writeDatabase(db);
     }
-    res.json({ success: true, user: { ...user, teamCount: `${user.teamCount}/${user.maxTeam}` } });
+    res.json({ success: true, user });
 });
 
-// مسار إرسال طلبات من شاشة المستخدم
+// مسار إرسال طلبات من شاشة المستخدم وظهورها حياً عند المشرف
 app.post('/api/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
     const db = readDatabase();
@@ -104,7 +93,7 @@ app.post('/api/user/request', (req, res) => {
         status: "معلق"
     };
     db.pendingRequests.push(newRequest);
-    writeDatabase(db); // حفظ الطلب معلقاً في ملف قاعدة البيانات
+    writeDatabase(db); 
     
     res.json({ success: true, message: "تم إرسال طلبك بنجاح وهو قيد المراجعة من المشرف" });
 });
@@ -128,14 +117,14 @@ app.post('/api/admin/action-request', (req, res) => {
                 user.balance += request.amount;
                 db.transactionHistory.push({
                     belongsTo: user.username,
-                    message: `📥 Başarılı Yatırma: ${request.amount} USDT (شحن ناجح)`,
+                    message: `📥 شحن ناجح: ${request.amount} USDT`,
                     date: formattedDate
                 });
             } else if (request.type === 'withdraw') {
                 user.balance -= request.amount;
                 db.transactionHistory.push({
                     belongsTo: user.username,
-                    message: `📤 Başarılı Çekme: ${request.amount} USDT (سحب ناجح)`,
+                    message: `📤 سحب ناجح: ${request.amount} USDT`,
                     date: formattedDate
                 });
             } else if (request.type === 'invite_bonus') {
@@ -145,14 +134,14 @@ app.post('/api/admin/action-request', (req, res) => {
                 
                 db.transactionHistory.push({
                     belongsTo: user.username,
-                    message: `👥 Takım Ödülü Onaylandı (مكافأة فريق +1)`,
+                    message: `👥 تم اعتماد مكافأة إحالة صديق`,
                     date: formattedDate
                 });
             }
         }
 
         db.pendingRequests.splice(requestIndex, 1);
-        writeDatabase(db); // حفظ جميع التحديثات المالية والأرصدة الجديدة بشكل دائم
+        writeDatabase(db); 
         return res.json({ success: true, message: "تمت معالجة الطلب وتحديث قاعدة البيانات بأمان" });
     }
     res.status(404).json({ success: false, message: "الطلب غير موجود" });
@@ -168,10 +157,10 @@ app.post('/api/admin/activate-profit', (req, res) => {
         }
         return user;
     });
-    writeDatabase(db); // حفظ الأرباح الجديدة لجميع المستخدمين في الملف
+    writeDatabase(db); 
     res.json({ success: true, message: "تم تفعيل الأرباح اليومية بنسبة 15% وحفظها للمشتركين!" });
 });
 
 app.listen(PORT, () => {
-    console.log(`السيرفر الآمن يعمل الآن ويحفظ البيانات تلقائياً على المنفذ: ${PORT}`);
+    console.log(`السيرفر يعمل بنجاح على المنفذ: ${PORT}`);
 });
