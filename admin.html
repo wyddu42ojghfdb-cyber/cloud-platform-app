@@ -34,7 +34,7 @@
         <button class="btn-profit" onclick="activateProfit()">💰 Doğrudan günlük kar dağıtımı (%15)</button>
     </div>
 
-    <div class="section-title">📥 Üyelerin bekleyen talepleri yanıtlanmayı bekliyor (الدعوات، السحب، الإيداع)</div>
+    <div class="section-title">📥 Üyelerin bekleyen talepleri yanıtlanmayı bekliyor (الطلبات المعلقة)</div>
     <table>
         <thead>
             <tr>
@@ -50,7 +50,7 @@
         </tbody>
     </table>
 
-    <div class="section-title-blue">📊 Üyelerin bakiyelerinin ve karlarının canlı takibi</div>
+    <div class="section-title-blue">📊 Üyelerin bakiyelerinin ve karlarının canlı takibi (مراقبة الأعضاء)</div>
     <table>
         <thead>
             <tr>
@@ -68,19 +68,20 @@
 </div>
 
 <script>
-    // الرابط الموحد المربوط بسيرفر قاعدة البيانات المشترك
-    const API_URL = "https://onrender.com";
+    // الرابط الموحد المربوط بسيرفر قاعدة البيانات المشترك على Render
+    const API_URL = "https://cloud-platform-app.onrender.com";
 
     async function loadDashboard() {
         try {
-            const res = await fetch(`${API_URL}/api/admin/dashboard`);
+            // استخدام المسار البرمجي المحدث المتوافق مع السيرفر
+            const res = await fetch(`${API_URL}/backend/admin/dashboard`);
             const data = await res.json();
             
             document.getElementById('total-users').innerText = data.totalSubscribers;
 
             // 1. تحديث جدول الطلبات المعلقة فوراً
             const reqTable = document.getElementById('requests-table');
-            if (data.pendingRequests.length === 0) {
+            if (!data.pendingRequests || data.pendingRequests.length === 0) {
                 reqTable.innerHTML = "<tr><td colspan='5' style='color: #64748b;'>Bekleyen talep bulunmamaktadır...</td></tr>";
             } else {
                 reqTable.innerHTML = "";
@@ -100,7 +101,7 @@
 
             // 2. تحديث جدول حسابات المشتركين النشطين فوراً
             const userTable = document.getElementById('users-table');
-            if (data.users.length === 0) {
+            if (!data.users || data.users.length === 0) {
                 userTable.innerHTML = "<tr><td colspan='5' style='color: #64748b;'>Henüz kayıtlı üye yok...</td></tr>";
             } else {
                 userTable.innerHTML = "";
@@ -117,30 +118,34 @@
                 });
             }
         } catch (error) {
-            console.error("قاعدة البيانات غير متصلة بالسيرفر الرئيسي بعد:", error);
+            console.error("خطأ في الاتصال بالخادم الخلفي:", error);
         }
     }
 
     async function actionRequest(requestId, action) {
-        const res = await fetch(`${API_URL}/api/admin/action-request`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ requestId, action })
-        });
-        const data = await res.json();
-        if(data.success) {
-            alert("تمت معالجة الطلب بنجاح وتحديث الحساب المالي للمستخدم!");
-            loadDashboard();
-        }
+        try {
+            const res = await fetch(`${API_URL}/backend/admin/action-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ requestId, action })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert("تمت معالجة الطلب بنجاح وتحديث الحساب المالي!");
+                loadDashboard();
+            }
+        } catch(e) { alert("حدث خطأ أثناء معالجة الطلب"); }
     }
 
     async function activateProfit() {
-        const res = await fetch(`${API_URL}/api/admin/activate-profit`, { method: 'POST' });
-        const data = await res.json();
-        if(data.success) {
-            alert("✓ " + data.message);
-            loadDashboard();
-        }
+        try {
+            const res = await fetch(`${API_URL}/backend/admin/activate-profit`, { method: 'POST' });
+            const data = await res.json();
+            if(data.success) {
+                alert("✓ " + data.message);
+                loadDashboard();
+            }
+        } catch(e) { alert("حدث خطأ أثناء تفعيل الأرباح"); }
     }
 
     // تحديث البيانات حياً كل 4 ثوانٍ لمراقبة الإيداعات والسحوبات تلقائياً
