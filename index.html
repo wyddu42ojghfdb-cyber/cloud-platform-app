@@ -17,7 +17,6 @@
         .btn-green { background: #16a34a; color: white; }
         .btn-red { background: #dc2626; color: white; }
         .btn-purple { background: #7c3aed; color: white; }
-        .btn-orange { background: #d97706; color: white; }
         .btn-cyan { background: #0891b2; color: white; }
         .info-box { background: #0d1527; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #1e293b; }
         .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
@@ -32,7 +31,7 @@
 <body>
 
 <div class="container">
-    <!-- زر اختيار اللغات الذكي في أعلى الصفحة -->
+    <!-- قائمة اختيار اللغات الذكية في أعلى الصفحة -->
     <select id="langSelect" onchange="switchLanguage(this.value)" style="margin-bottom: 20px; background: #1e293b;">
         <option value="ar">🇸🇦 العربية</option>
         <option value="tr">🇹🇷 Türkçe</option>
@@ -57,7 +56,7 @@
 
     <label class="label-text" id="txt-invite-label">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
     <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
-    <button class="btn-purple" id="btn-bonus" onclick="sendRequest('invite_bonus')">🍇 إرسال المكافأة إلى المشرف</button>
+    <button class="btn-purple" id="btn-bonus" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
 
     <div class="info-box">
         <div class="info-row">
@@ -79,9 +78,9 @@
         <input type="number" id="withdrawAmount" placeholder="المبلغ بـ USDT">
         <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك">
         
-        <button class="btn-red" onclick="sendWithdraw('capital')" id="btn-w1">💥 سحب إجمالي رأس المال</button>
-        <button class="btn-red" onclick="sendWithdraw('daily')" id="btn-w2">📊 سحب الأرباح اليومية</button>
-        <button class="btn-red" onclick="sendWithdraw('bonus')" id="btn-w3">💸 سحب مكافأة الدعوة</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('capital')" id="btn-w1">💥 سحب إجمالي رأس المال</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('daily')" id="btn-w2">📊 سحب الأرباح اليومية</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('bonus')" id="btn-w3">💸 سحب مكافأة الدعوة</button>
     </div>
 
     <div class="crypto-box">
@@ -89,7 +88,7 @@
         <strong class="crypto-address">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</strong>
         <input type="number" id="depositAmount" placeholder="أدخل المبلغ بعد التحويل" style="margin-top: 10px;">
         <span style="font-size: 11px; color: #94a3b8; display: block; margin-bottom: 5px;" id="txt-dep-sub">⚠️ الحد الأدنى للإيداع هو 100 USDT</span>
-        <button class="btn-green" onclick="sendDeposit()" id="btn-dep-action">⚡ إرسال طلب الإيداع للمشرف</button>
+        <button class="btn-green" onclick="sendDepositRequest()" id="btn-dep-action">⚡ إرسال طلب الإيداع للمشرف</button>
     </div>
 
     <div class="info-box">
@@ -103,7 +102,7 @@
 </div>
 
 <script>
-    const API_URL = "https://cloud-platform-app.onrender.com";
+    const API_URL = "https://onrender.com";
     let currentUsername = "";
 
     async function loginUser() {
@@ -122,7 +121,7 @@
                 updateUI(data.user);
                 alert("تم التحقق وحفظ الحساب بنجاح!");
                 loadHistory();
-                setInterval(refreshUserData, 5000); 
+                setInterval(refreshUserData, 4000); 
             }
         } catch (err) {
             alert("خطأ في الاتصال بالخادم، تأكد من تشغيل السيرفر.");
@@ -138,50 +137,52 @@
 
     async function refreshUserData() {
         if(!currentUsername) return;
-        const res = await fetch(`${API_URL}/api/user/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUsername })
-        });
-        const data = await res.json();
-        if(data.success) updateUI(data.user);
+        try {
+            const res = await fetch(`${API_URL}/api/user/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername })
+            });
+            const data = await res.json();
+            if(data.success) updateUI(data.user);
+            loadHistory();
+        } catch(e) {}
     }
 
     async function loadHistory() {
         if(!currentUsername) return;
-        const res = await fetch(`${API_URL}/api/user/history?username=${currentUsername}`);
-        const data = await res.json();
-        const container = document.getElementById('logs-container');
-        if(data.history.length === 0) {
-            container.innerText = "لا توجد إشعارات أو عمليات معتمدة حالياً.";
-        } else {
-            container.innerHTML = "";
-            data.history.forEach(h => {
-                container.innerHTML += `<div style='border-bottom: 1px solid #1e293b; padding: 4px 0;'>${h.message} <br><small style='color:#64748b;'>${h.date}</small></div>`;
-            });
-        }
+        try {
+            const res = await fetch(`${API_URL}/api/user/history?username=${currentUsername}`);
+            const data = await res.json();
+            const container = document.getElementById('logs-container');
+            if(data.history.length === 0) {
+                container.innerText = "لا توجد إشعارات أو عمليات معتمدة حالياً.";
+            } else {
+                container.innerHTML = "";
+                data.history.forEach(h => {
+                    container.innerHTML += `<div style='border-bottom: 1px solid #1e293b; padding: 4px 0;'>${h.message} <br><small style='color:#64748b;'>${h.date}</small></div>`;
+                });
+            }
+        } catch(e) {}
     }
 
-    async function sendRequest(type) {
+    async function sendInviteRequest() {
         if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
-        const friend = document.getElementById('inviteInput').value;
+        const friend = document.getElementById('inviteInput').value.trim();
         if(!friend) return alert("يرجى كتابة اسم الصديق");
 
-        const res = await fetch(`${API_URL}/api/user/request`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUsername, amount: 10, type: type, walletAddress: `دعوة: ${friend}` })
-        });
-        const data = await res.json();
-        if(data.success) alert(data.message);
+        try {
+            const res = await fetch(`${API_URL}/api/user/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, amount: 10, type: 'invite_bonus', walletAddress: `دعوة: ${friend}` })
+            });
+            const data = await res.json();
+            if(data.success) alert(data.message);
+        } catch(e) { alert("خطأ في الاتصال"); }
     }
 
-    async function sendWithdraw(wType) {
+    async function sendWithdrawRequest(wType) {
         if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
         const amount = document.getElementById('withdrawAmount').value;
-        const wallet = document.getElementById('walletInput').value;
-        if(!amount || !wallet) return alert("يرجى ملء خانات المبلغ والمحفظة!");
-
-        const res = await fetch(`${API_URL}/api/user/request`, {
-            method: 'POST',
-            
+        
