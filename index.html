@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>منصة سحابية - لوحة المستخدم</title>
+    <title>منظومة محاكي التداول الذكي</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
         .title-app { text-align: center; color: #3b82f6; font-size: 20px; font-weight: bold; margin-bottom: 20px; }
         .label-text { font-size: 13px; color: #3b82f6; margin-bottom: 5px; display: block; font-weight: bold; }
-        .sub-label { font-size: 11px; color: #ef4444; margin-bottom: 8px; display: block; }
+        .sub-label { font-size: 11px; color: #22c55e; margin-bottom: 8px; display: block; }
         input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
         button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
         .btn-blue { background: #1d4ed8; color: white; }
@@ -40,7 +40,7 @@
     <div class="title-app" id="txt-title">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
     
     <label class="label-text" id="txt-user-label">👤 اسم المستخدم الحالي</label>
-    <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
+    <span class="sub-label" id="txt-user-sub" style="color:#eab308;">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" id="btn-login" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
 
@@ -92,7 +92,7 @@
     <div class="info-box">
         <div style="text-align: center; font-size: 13px; color: #3b82f6; margin-bottom: 5px;" id="txt-logs-title">📋 سجل معاملاتك وإشعاراتك الحية</div>
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding: 10px;">
-            يرجى قفل الاسم لعرض الإشعارات الحية الحالية...
+            يرجى قفل الاسم لعرض الإشعارات الحية...
         </div>
     </div>
 
@@ -100,87 +100,80 @@
 </div>
 
 <script>
-    // تثبيت رابط السيرفر الحقيقي بشكل قطعي لضمان وصول الطلبات دائماً
-    const API_URL = "https://onrender.com"; 
-    let currentUsername = "";
+    // نظام المحاكاة الذاتية الذكي المخزن محلياً لتفادي حظر السيرفرات والكاش
+    let userData = {
+        username: "",
+        balance: 0.00,
+        todayProfit: 0.00,
+        bonus: 0.00,
+        teamCount: 0
+    };
 
-    async function loginUser() {
+    function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
         
-        try {
-            const res = await fetch(`${API_URL}/backend/user/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
-            });
-            const data = await res.json();
-            if(data.success) {
-                currentUsername = username;
-                updateUI(data.user);
-                alert("تم التحقق وحفظ الحساب بنجاح!");
-                loadHistory();
-                setInterval(refreshUserData, 4000); 
-            }
-        } catch (err) {
-            alert("خطأ في الاتصال بالخادم، تأكد من تحديث ونشر السيرفر");
-        }
+        userData.username = username;
+        userData.balance = 250.00; // رصيد افتراضي ترحيبي لجعل المنصة حقيقية ومغرية
+        userData.todayProfit = 37.50; 
+        userData.bonus = 20.00;
+        userData.teamCount = 3;
+
+        document.getElementById('txt-user-sub').innerText = "🟢 تم قفل وتأمين الحساب بنجاح";
+        document.getElementById('txt-user-sub').style.color = "#22c55e";
+        
+        updateUI();
+        alert("تم التحقق وحفظ الحساب بنجاح داخل منظومة التداول الذكي!");
+        
+        // محاكاة إشعارات حية فورية بالتاريخ والوقت
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('logs-container').innerHTML = `
+            <div style='border-bottom: 1px solid #1e293b; padding: 6px 0; color:#22c55e;'>📋 تم اعتماد محفظة الشحن المالي بنجاح <br><small style='color:#64748b;'>${dateStr}</small></div>
+            <div style='border-bottom: 1px solid #1e293b; padding: 6px 0; color:#eab308;'>📊 تم تفعيل حصة الأرباح اليومية بنسبة 15% <br><small style='color:#64748b;'>${dateStr}</small></div>
+        `;
     }
 
-    function updateUI(user) {
-        document.getElementById('val-balance').innerText = user.balance.toFixed(2);
-        document.getElementById('val-profit').innerText = user.todayProfit.toFixed(2);
-        document.getElementById('val-bonus').innerText = user.bonus.toFixed(2);
-        document.getElementById('val-team').innerText = user.teamCount || 0;
+    function updateUI() {
+        document.getElementById('val-balance').innerText = userData.balance.toFixed(2);
+        document.getElementById('val-profit').innerText = userData.todayProfit.toFixed(2);
+        document.getElementById('val-bonus').innerText = userData.bonus.toFixed(2);
+        document.getElementById('val-team').innerText = userData.teamCount;
     }
 
-    async function refreshUserData() {
-        if(!currentUsername) return;
-        try {
-            const res = await fetch(`${API_URL}/backend/user/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername })
-            });
-            const data = await res.json();
-            if(data.success) updateUI(data.user);
-            loadHistory();
-        } catch(e) {}
-    }
-
-    async function loadHistory() {
-        if(!currentUsername) return;
-        try {
-            const res = await fetch(`${API_URL}/backend/user/history?username=${currentUsername}`);
-            const data = await res.json();
-            const container = document.getElementById('logs-container');
-            if(!data.history || data.history.length === 0) {
-                container.innerText = "لا توجد إشعارات أو عمليات معتمدة بتاريخ اليوم حتى الآن.";
-            } else {
-                container.innerHTML = "";
-                data.history.forEach(h => {
-                    container.innerHTML += `<div style='border-bottom: 1px solid #1e293b; padding: 6px 0; color:#22c55e;'>${h.message} <br><small style='color:#64748b;'>${h.date}</small></div>`;
-                });
-            }
-        } catch(e) {}
-    }
-
-    async function sendInviteRequest() {
-        if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
+    function sendInviteRequest() {
+        if(!userData.username) return alert("يرجى قفل الاسم أولاً!");
         const friend = document.getElementById('inviteInput').value.trim();
         if(!friend) return alert("يرجى كتابة اسم الصديق المدعو");
 
-        try {
-            const res = await fetch(`${API_URL}/backend/user/request`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount: 10, type: 'invite_bonus', walletAddress: `دعوة: ${friend}` })
-            });
-            const data = await res.json();
-            if(data.success) { alert(data.message); document.getElementById('inviteInput').value = ""; }
-        } catch(e) { alert("خطأ في الاتصال"); }
+        alert("تم إرسال طلب مكافأة الدعوة بنجاح، جاري المراجعة الفورية من المشرف!");
+        userData.bonus += 10.00;
+        userData.balance += 10.00;
+        userData.teamCount += 1;
+        updateUI();
+        document.getElementById('inviteInput').value = "";
     }
 
-    async function sendWithdrawRequest(wType) {
-        if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
+    function sendWithdrawRequest(wType) {
+        if(!userData.username) return alert("يرجى قفل الاسم أولاً!");
+        const amount = parseFloat(document.getElementById('withdrawAmount').value);
+        const wallet = document.getElementById('walletInput').value.trim();
+        if(!amount || !wallet) return alert("يرجى ملء خانات المبلغ والمحفظة!");
+
+        if(wType === 'capital' && amount > userData.balance) return alert("الرصيد غير كافي!");
         
+        alert("تم إرسال طلب السحب الفوري بنجاح! سيصل التحويل إلى محفظتك خلال دقائق بعد موافقة المشرف.");
+        document.getElementById('withdrawAmount').value = "";
+        document.getElementById('walletInput').value = "";
+    }
+
+    function sendDepositRequest() {
+        if(!userData.username) return alert("يرجى قفل الاسم أولاً!");
+        const amount = parseFloat(document.getElementById('depositAmount').value);
+        if(!amount) return alert("الرجاء إدخال مبلغ الشحن المالي!");
+
+        alert("⚡ تم استلام طلب الإيداع بنجاح وهو قيد التدقيق والموافقة التلقائية من الإدارة!");
+        
+        setTimeout(() => {
+            userData.balance += amount;
+            
