@@ -35,8 +35,8 @@
     <button class="btn-blue" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
 
     <div class="info-box">
-        <div class="info-row"><span>إجمالي رأس المال:</span><span>USDT <span id="val-balance" style="color:#22c55e;">0.00</span></span></div>
-        <div class="info-row"><span>الأرباح اليومية:</span><span>USDT <span id="val-profit" style="color:#eab308;">0.00</span></span></div>
+        <div class="info-row"><span>إجمالي رأس المال:</span><span>USDT <span id="val-balance" style="color:#22c55e; font-weight:bold;">0.00</span></span></div>
+        <div class="info-row"><span>الأرباح اليومية:</span><span>USDT <span id="val-profit" style="color:#eab308; font-weight:bold;">0.00</span></span></div>
     </div>
 
     <div class="info-box" style="border-color: #ef4444;">
@@ -52,21 +52,21 @@
     </div>
 
     <div class="info-box">
-        <div style="text-align: center; font-size: 13px; color: #3b82f6;" id="txt-logs">📋 سجل المعاملات والإشعارات الحية</div>
+        <div style="text-align: center; font-size: 13px; color: #3b82f6;">📋 سجل المعاملات والإشعارات الحية</div>
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">لا توجد إشعارات حالية...</div>
     </div>
 
-    <!-- زر تليجرام المحدث والموجه مباشرة إلى حسابك الفعلي دون بوتات أو تعقيد -->
     <button class="btn-cyan" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    // تثبيت رابط السيرفر الموحد الحقيقي بشكل قطعي لضمان وصول الطلبات دائماً
+    const API_URL = "https://onrender.com";
     let currentUsername = "";
 
     async function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
-        if(!username) return alert("الرجاء كتابة الاسم");
+        if(!username) return alert("الرجاء كتابة الاسم أولاً");
         try {
             const res = await fetch(`${API_URL}/backend/user/login`, {
                 method: 'POST',
@@ -77,10 +77,10 @@
             if(data.success) {
                 currentUsername = username;
                 updateUI(data.user);
-                alert("تم قفل وتأمين الحساب بنجاح!");
+                alert("تم التحقق وحفظ الحساب بنجاح!");
                 setInterval(refreshData, 3000);
             }
-        } catch(e) { alert("خطأ في الاتصال"); }
+        } catch(e) { alert("خطأ في الاتصال بالخادم الرئيسي"); }
     }
 
     function updateUI(user) {
@@ -103,32 +103,32 @@
             const hData = await hRes.json();
             if(hData.history.length > 0) {
                 let html = "";
-                hData.history.forEach(h => { html += `<div style='border-bottom:1px solid #1e293b; padding:4px 0;'>${h.message}</div>`; });
+                hData.history.forEach(h => { html += `<div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>${h.message}</div>`; });
                 document.getElementById('logs-container').innerHTML = html;
             }
         } catch(e) {}
     }
 
     async function sendDepositRequest() {
-        if(!currentUsername) return alert("اقفل الاسم أولاً");
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الاسم أولاً");
         const amount = document.getElementById('depositAmount').value;
-        if(!amount) return alert("أدخل المبلغ");
+        if(!amount) return alert("الرجاء إدخال مبلغ الشحن المالي");
         try {
             const res = await fetch(`${API_URL}/backend/user/request`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount, type: 'deposit', walletAddress: 'TRC20 شحن' })
+                body: JSON.stringify({ username: currentUsername, amount, type: 'deposit', walletAddress: 'شحن TRC20' })
             });
             const data = await res.json();
             if(data.success) { alert(data.message); document.getElementById('depositAmount').value = ""; }
-        } catch(e) {}
+        } catch(e) { alert("خطأ في شبكة الإرسال"); }
     }
 
     async function sendWithdrawRequest() {
-        if(!currentUsername) return alert("اقفل الاسم أولاً");
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الاسم أولاً");
         const amount = document.getElementById('withdrawAmount').value;
-        const wallet = document.getElementById('walletInput').value;
-        if(!amount || !wallet) return alert("املأ الخانات");
+        const wallet = document.getElementById('walletInput').value.trim();
+        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
         try {
             const res = await fetch(`${API_URL}/backend/user/request`, {
                 method: 'POST',
@@ -137,7 +137,7 @@
             });
             const data = await res.json();
             if(data.success) { alert(data.message); document.getElementById('withdrawAmount').value = ""; document.getElementById('walletInput').value = ""; }
-        } catch(e) {}
+        } catch(e) { alert("خطأ في شبكة الإرسال"); }
     }
 </script>
 </body>
