@@ -10,13 +10,12 @@
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
         .title-app { text-align: center; color: #3b82f6; font-size: 20px; font-weight: bold; margin-bottom: 20px; }
         .label-text { font-size: 13px; color: #3b82f6; margin-bottom: 5px; display: block; font-weight: bold; }
+        .sub-label { font-size: 11px; color: #eab308; margin-bottom: 8px; display: block; }
         input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
         button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
         .btn-blue { background: #1d4ed8; color: white; }
         .btn-green { background: #16a34a; color: white; }
         .btn-red { background: #dc2626; color: white; }
-        .btn-purple { background: #7c3aed; color: white; }
-        .btn-cyan { background: #0891b2; color: white; }
         .info-box { background: #0d1527; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #1e293b; }
         .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
         .info-row:last-child { border-bottom: none; }
@@ -31,6 +30,9 @@
     </select>
 
     <div class="title-app" id="txt-title">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
+    
+    <label class="label-text" id="txt-user-label">👤 اسم المستخدم الحالي</label>
+    <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
 
@@ -56,12 +58,12 @@
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">لا توجد إشعارات حالية...</div>
     </div>
 
-    <button class="btn-cyan" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+    <button class="btn-cyan" style="background:#0891b2;" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
-    // تثبيت رابط السيرفر الموحد الحقيقي بشكل قطعي لضمان وصول الطلبات دائماً
-    const API_URL = "https://onrender.com";
+    // استخدام نطاق الصفحة الحالي أوتوماتيكياً لتفادي الحظر الأمني وشهادات SSL المعطلة
+    const API_URL = window.location.origin;
     let currentUsername = "";
 
     async function loginUser() {
@@ -77,10 +79,12 @@
             if(data.success) {
                 currentUsername = username;
                 updateUI(data.user);
-                alert("تم التحقق وحفظ الحساب بنجاح!");
+                document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الحساب بنجاح";
+                document.getElementById('txt-user-sub').style.color = "#22c55e";
+                alert("تم التحقق وحفظ الاسم بنجاح!");
                 setInterval(refreshData, 3000);
             }
-        } catch(e) { alert("خطأ في الاتصال بالخادم الرئيسي"); }
+        } catch(e) { alert("خطأ في الاتصال بالسيرفر، تأكد من إتمام النشر النظيف"); }
     }
 
     function updateUI(user) {
@@ -110,9 +114,9 @@
     }
 
     async function sendDepositRequest() {
-        if(!currentUsername) return alert("يرجى قفل وتثبيت الاسم أولاً");
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = document.getElementById('depositAmount').value;
-        if(!amount) return alert("الرجاء إدخال مبلغ الشحن المالي");
+        if(!amount) return alert("الرجاء إدخال المبلغ");
         try {
             const res = await fetch(`${API_URL}/backend/user/request`, {
                 method: 'POST',
@@ -121,11 +125,11 @@
             });
             const data = await res.json();
             if(data.success) { alert(data.message); document.getElementById('depositAmount').value = ""; }
-        } catch(e) { alert("خطأ في شبكة الإرسال"); }
+        } catch(e) { alert("خطأ في الاتصال"); }
     }
 
     async function sendWithdrawRequest() {
-        if(!currentUsername) return alert("يرجى قفل وتثبيت الاسم أولاً");
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = document.getElementById('withdrawAmount').value;
         const wallet = document.getElementById('walletInput').value.trim();
         if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
@@ -137,7 +141,7 @@
             });
             const data = await res.json();
             if(data.success) { alert(data.message); document.getElementById('withdrawAmount').value = ""; document.getElementById('walletInput').value = ""; }
-        } catch(e) { alert("خطأ في شبكة الإرسال"); }
+        } catch(e) { alert("خطأ في الاتصال"); }
     }
 </script>
 </body>
