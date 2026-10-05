@@ -1,20 +1,18 @@
 const express = require('express');
 const path = require('path');
-const cors = require('cors');
 const app = express();
 
-app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// قاعدة بيانات سحابية مؤقتة داخل الذاكرة لحفظ البيانات حياً
+// قاعدة بيانات مؤقتة مرنة لحفظ العمليات الحسابية والطلبات حياً
 let users = {};
 let pendingRequests = [];
 
-// 1. مسار حفظ وقفل الحساب وقراءة الأرصدة
+// 1. مسار تسجيل الدخول وقفل الحساب لشاشة المستخدم
 app.post('/backend/user/login', (req, res) => {
     const { username } = req.body;
-    if (!username) return res.status(400).json({ success: false, message: 'Kullanıcı adı gerekli' });
+    if (!username) return res.status(400).json({ success: false, message: 'اسم المستخدم مطلوب' });
     
     if (!users[username]) {
         users[username] = {
@@ -29,10 +27,9 @@ app.post('/backend/user/login', (req, res) => {
     res.json({ success: true, user: users[username] });
 });
 
-// 2. مسار صَفْق واستقبال الطلبات من شاشة المستخدم وتحويلها للمشرف فوراً
+// 2. مسار استقبال طلبات الإيداع والسحب من شاشة المستخدم
 app.post('/backend/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
-    if (!username || !amount) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
     
     const newRequest = {
         id: Date.now(),
@@ -45,37 +42,38 @@ app.post('/backend/user/request', (req, res) => {
     };
     
     pendingRequests.push(newRequest);
-    res.json({ success: true, message: '⚡ Talebiniz başarıyla yöneticiye gönderildi!' });
+    res.json({ success: true, message: '⚡ تم استلام طلبك بنجاح وجاري المراجعة الفورية من الإدارة!' });
 });
 
-// 3. مسار بث وتحديث البيانات حياً داخل لوحة المشرف
+// 3. مسار بث التحديثات داخل لوحة المشرف
 app.get('/backend/admin/requests', (req, res) => {
-    res.json({ success: true, requests: pendingRequests, totalUsers: Object.keys(users).length, allUsers: Object.values(users) });
+    res.json({ 
+        success: true, 
+        requests: pendingRequests, 
+        totalUsers: Object.keys(users).length, 
+        allUsers: Object.values(users) 
+    });
 });
 
-// 4. مسار معالجة الموافقات وبث الأرباح بنسبة 15% من لوحة المشرف
+// 4. مسار معالجة الموافقات من لوحة المشرف
 app.post('/backend/admin/action', (req, res) => {
     const { id, action, username, type, amount } = req.body;
     
-    if (action === 'approve') {
-        if (users[username]) {
-            if (type === 'deposit') {
-                users[username].balance += parseFloat(amount);
-                users[username].todayProfit += (parseFloat(amount) * 0.15);
-                users[username].history.push({ message: `✅ Onaylanan Para Yatırma: +${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
-            } else if (type === 'withdraw') {
-                users[username].balance -= parseFloat(amount);
-                users[username].history.push({ message: `💸 Onaylanan Para Çekme: -${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
-            }
+    if (action === 'approve' && users[username]) {
+        if (type === 'deposit') {
+            users[username].balance += parseFloat(amount);
+            users[username].todayProfit += (parseFloat(amount) * 0.15);
+            users[username].history.push({ message: `✅ إيداع معتمد ومؤكد: +${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
+        } else if (type === 'withdraw') {
+            users[username].balance -= parseFloat(amount);
+            users[username].history.push({ message: `💸 سحب معتمد ومؤكد: -${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     }
-    
-    // إزالة الطلب المعالج من القائمة بعد صَفْقه بنجاح
-    pendingRequests = pendingRequests.filter(r => r.id !== id);
+    pendingRequests = pendingRequests.filter(r => r.id !== parseInt(id));
     res.json({ success: true });
 });
 
-// 5. مسار بث الأرباح الجماعي اليومي بنسبة 15% للمشتركين النشطين
+// 5. مسار بث الأرباح بنسبة 15% للمشتركين النشطين
 app.post('/backend/admin/distribute-profit', (req, res) => {
     Object.keys(users).forEach(username => {
         let u = users[username];
@@ -83,13 +81,13 @@ app.post('/backend/admin/distribute-profit', (req, res) => {
             let profitGenerated = u.balance * 0.15;
             u.todayProfit += profitGenerated;
             u.balance += profitGenerated;
-            u.history.push({ message: `📊 Günlük %15 kar dağıtımı eklendi: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
+            u.history.push({ message: `📊 تم بث عوائد التداول اليومية بنسبة 15%: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     });
-    res.json({ success: true, message: 'Kar dağıtımı tamamlandı!' });
+    res.json({ success: true });
 });
 
-// 6. مسار جلب سجل المعاملات التاريخية لشاشة المستخدم
+// 6. مسار جلب سجل المعاملات لشاشة المستخدم
 app.get('/backend/user/history', (req, res) => {
     const { username } = req.query;
     if (users[username]) {
@@ -99,9 +97,15 @@ app.get('/backend/user/history', (req, res) => {
     }
 });
 
-// توجيه المسارات الرابطة لعرض الواجهات
-app.get('/panel', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+// فتح شاشة المستخدم عبر مسار فرعي منظم ونظيف لمنع حظر الأمان
+app.get('/panel', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// فتح شاشة المشرف عبر مسار سرّي مستقل
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('سيرفر الربط الحي يعمل بأعلى كفاءة...'));
+app.listen(PORT, () => console.log(`المنظومة متصلة حياً ومباشراً...`));
