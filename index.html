@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>منصة سحابية - المنظومة المتكاملة</title>
+    <title>منصة سحابية - لوحة المستخدم الحية</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
@@ -37,16 +37,16 @@
     <div class="title-app" id="txt-title">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
     
     <label class="label-text" id="txt-user-label">👤 اسم المستخدم الحالي</label>
-    <span class="sub-label" id="txt-user-sub" style="color: #22c55e;">🟢 نظام التوصيل الحي المباشر مفعل وجاهز</span>
+    <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
-    <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وتنشيط الحساب</button>
+    <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
 
     <div class="info-box">
         <div style="text-align: center; font-size: 12px; color: #eab308; margin-bottom: 8px;" id="txt-gift-title">🏆 جائزة الكبرى (40 عضو)</div>
         <div style="text-align: center; font-size: 15px; font-weight: bold; color: #22c55e; margin-bottom: 8px;">2500 دولار أمريكي</div>
         <div class="info-row">
             <span id="txt-team-status">أعضاء الفريق النشطين:</span>
-            <span id="val-team" style="color: #4ade80; font-weight: bold;">12/40</span>
+            <span id="val-team" style="color: #4ade80; font-weight: bold;">0/40</span>
         </div>
     </div>
 
@@ -55,8 +55,8 @@
     <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
 
     <div class="info-box">
-        <div class="info-row"><span id="txt-total-cap">إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">345.00</span></span></div>
-        <div class="info-row"><span id="txt-daily-prof">الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">45.00</span></span></div>
+        <div class="info-row"><span id="txt-total-cap">إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
+        <div class="info-row"><span id="txt-daily-prof">الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">0.00</span></span></div>
         <div class="info-row"><span id="txt-bonus-prof">أرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
     </div>
 
@@ -79,31 +79,38 @@
 
     <div class="info-box">
         <div style="text-align: center; font-size: 13px; color: #3b82f6;" id="txt-logs-title">📋 سجل المعاملات والإشعارات الحية</div>
-        <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">لا توجد إشعارات حالية...</div>
+        <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
     </div>
 
-    <!-- زر الدعم الفني المعدل والموجه ديناميكياً ليفتح حسابك الشخصي مباشرة وبأعلى سرعة ممكنة -->
     <button class="btn-cyan" id="btn-support" style="background:#0891b2;" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
+    // ربط قطعي وديناميكي كامل مع السيرفر الرئيسي لمنع الأرقام الوهمية وحظر الأمان
     const API_URL = window.location.origin;
     let currentUsername = "";
 
-    function loginUser() {
+    async function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
-        
-        currentUsername = username;
-        alert("تم حفظ الاسم وتنشيط نفق الاتصال الحي بنجاح!");
-        
-        fetch(API_URL + "/backend/user/login", {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUsername })
-        }).catch(e => {});
-
-        setInterval(refreshData, 3000);
+        try {
+            const res = await fetch(API_URL + "/backend/user/login", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username })
+            });
+            const data = await res.json();
+            if(data.success) {
+                currentUsername = username;
+                updateUI(data.user);
+                
+                document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الحساب بنجاح حياً";
+                document.getElementById('txt-user-sub').style.color = "#22c55e";
+                alert("تم التحقق وقفل اسم الحساب بنجاح حياً!");
+                
+                setInterval(refreshData, 3000);
+            }
+        } catch(e) { alert("خطأ في الاتصال بالسيرفر، يرجى إعادة النشر الفعلي"); }
     }
 
     function updateUI(user) {
@@ -135,36 +142,27 @@
     }
 
     async function sendDepositRequest() {
-        const username = document.getElementById('usernameInput').value.trim() || "مستعمل";
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = document.getElementById('depositAmount').value;
         if(!amount) return alert("الرجاء إدخال المبلغ");
         try {
-            await fetch(API_URL + "/backend/user/request", {
+            const res = await fetch(API_URL + "/backend/user/request", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: username, amount: amount, type: 'deposit', walletAddress: 'شحن TRC20' })
+                body: JSON.stringify({ username: currentUsername, amount: amount, type: 'deposit', walletAddress: 'شحن TRC20' })
             });
-            alert("⚡ تم استلام طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة!");
-            document.getElementById('depositAmount').value = "";
+            const data = await res.json();
+            if(data.success) { alert(data.message); document.getElementById('depositAmount').value = ""; }
         } catch(e) { alert("خطأ في الاتصال"); }
     }
 
     async function sendWithdrawRequest(wType) {
-        const username = document.getElementById('usernameInput').value.trim() || "مستعمل";
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = document.getElementById('withdrawAmount').value;
         const wallet = document.getElementById('walletInput').value.trim();
         if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
         try {
-            await fetch(API_URL + "/backend/user/request", {
+            const res = await fetch(API_URL + "/backend/user/request", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: username, amount: amount, type: wType, walletAddress: "محفظة: " + wallet })
-            });
-            alert("تم إرسال طلب السحب بنجاح وجاري تدقيقه!");
-            document.getElementById('withdrawAmount').value = "";
-            document.getElementById('walletInput').value = "";
-        } catch(e) { alert("خطأ في الاتصال"); }
-    }
-
-    async function sendInviteRequest() {
-        
+                
