@@ -12,7 +12,7 @@
         .label-text { font-size: 13px; color: #3b82f6; margin-bottom: 5px; display: block; font-weight: bold; }
         .sub-label { font-size: 11px; color: #eab308; margin-bottom: 8px; display: block; }
         input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
-        input:disabled { background: #1e293b; color: #94a3b8; cursor: not-allowed; }
+        input:disabled { background: #1e293b; color: #94a3b8; cursor: not-allowed; border-color: #334155; }
         button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
         .btn-blue { background: #1d4ed8; color: white; }
         .btn-green { background: #16a34a; color: white; }
@@ -83,8 +83,7 @@
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
     </div>
 
-    <!-- زر التليجرام بنظام البث السحابي المباشر لحسابك الشخصي دون قيود أو شاشات معلقة -->
-    <button class="btn-cyan" id="btn-support" style="background:#0891b2;" onclick="window.location.href='tg://resolve?domain=invest_support_bot'">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+    <button class="btn-cyan" id="btn-support" style="background:#0891b2;" onclick="window.open('tg://resolve?domain=invest_support_bot', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
@@ -97,23 +96,21 @@
         
         currentUsername = username;
         
-        // التنشيط الفوري للأرقام والعدادات لإبهار أصدقائك فور قفل الاسم
-        document.getElementById('val-balance').innerText = "345.00";
-        document.getElementById('val-profit').innerText = "45.00";
-        document.getElementById('val-bonus').innerText = "0.00";
-        document.getElementById('val-team').innerText = "12/40";
-        
+        // تنفيذ خطة القفل التفاعلي بدون جمود للأكواد
         document.getElementById('usernameInput').disabled = true;
-        document.getElementById('btn-login-action').disabled = true;
+        document.getElementById('btn-login-action').style.display = "none"; // إخفاء زر الحفظ تماماً لمنع التعليق
         
         document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الحساب بنجاح حياً";
         document.getElementById('txt-user-sub').style.color = "#22c55e";
-        alert("تم التحقق وقفل اسم الحساب بنجاح حياً!");
+        alert("تم التحقق وقفل اسم الحساب بنجاح حياً وبدء التوصيل المباشر!");
         
+        // إرسال فوري للسيرفر وقراءة البيانات بدون أي قيود
         fetch(API_URL + "/backend/user/login", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: currentUsername })
+        }).then(res => res.json()).then(data => {
+            if(data.success) updateUI(data.user);
         }).catch(e => {});
 
         setInterval(refreshData, 3000);
@@ -123,7 +120,7 @@
         document.getElementById('val-balance').innerText = user.balance.toFixed(2);
         document.getElementById('val-profit').innerText = user.todayProfit.toFixed(2);
         document.getElementById('val-bonus').innerText = user.bonus.toFixed(2);
-        document.getElementById('val-team').innerText = (user.teamCount || 12) + "/40";
+        document.getElementById('val-team').innerText = (user.teamCount || 0) + "/40";
     }
 
     async function refreshData() {
@@ -150,7 +147,7 @@
     async function sendDepositRequest() {
         if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = document.getElementById('depositAmount').value;
-        if(!amount) return alert("الالرجاء إدخال المبلغ");
+        if(!amount) return alert("الرجاء إدخال المبلغ");
         try {
             await fetch(API_URL + "/backend/user/request", {
                 method: 'POST',
@@ -165,4 +162,7 @@
     async function sendWithdrawRequest(wType) {
         if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = document.getElementById('withdrawAmount').value;
-        
+        const wallet = document.getElementById('walletInput').value.trim();
+        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
+        try {
+            
