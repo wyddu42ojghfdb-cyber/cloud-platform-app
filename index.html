@@ -18,6 +18,7 @@
         .btn-green { background: #16a34a; color: white; }
         .btn-red { background: #dc2626; color: white; }
         .btn-purple { background: #7c3aed; color: white; }
+        .btn-gray { background: #475569; color: white; font-size: 14px; margin-top: 5px; margin-bottom: 15px; display: block; }
         .btn-cyan { background: #0891b2; color: white; }
         .info-box { background: #0d1527; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #1e293b; }
         .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
@@ -41,6 +42,9 @@
     <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
+    
+    <!-- زر تسجيل الخروج السحري المطلوب تحت حفظ الاسم لنسف الكاش المعطل فوراً -->
+    <button class="btn-gray" id="btn-logout-action" onclick="logoutUser()">🚪 تسجيل الخروج وإعادة تنشيط الذاكرة</button>
 
     <div class="info-box">
         <div style="text-align: center; font-size: 12px; color: #eab308; margin-bottom: 8px;" id="txt-gift-title">🏆 جائزة الكبرى (40 عضو)</div>
@@ -90,30 +94,49 @@
     const API_URL = window.location.origin;
     let currentUsername = "";
 
+    // استعادة الحساب المقفل أوتوماتيكياً طالما لم يتم الضغط على تسجيل الخروج
+    window.onload = function() {
+        let savedUser = localStorage.getItem("app_user");
+        if(savedUser) {
+            currentUsername = savedUser;
+            document.getElementById('usernameInput').value = savedUser;
+            document.getElementById('usernameInput').disabled = true;
+            document.getElementById('btn-login-action').style.display = "none";
+            document.getElementById('txt-user-sub').innerText = "🟢 تم استعادة الحساب المقفل والمؤمن بنجاح حياً";
+            document.getElementById('txt-user-sub').style.color = "#22c55e";
+            setInterval(refreshData, 3000);
+        }
+    };
+
     function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
         
         currentUsername = username;
+        localStorage.setItem("app_user", currentUsername); // حفظ صلب في الهاتف لمنع التصفير التلقائي
         
-        // تنفيذ خطة القفل التفاعلي بدون جمود للأكواد
         document.getElementById('usernameInput').disabled = true;
-        document.getElementById('btn-login-action').style.display = "none"; // إخفاء زر الحفظ تماماً لمنع التعليق
+        document.getElementById('btn-login-action').style.display = "none"; 
         
         document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الحساب بنجاح حياً";
         document.getElementById('txt-user-sub').style.color = "#22c55e";
-        alert("تم التحقق وقفل اسم الحساب بنجاح حياً وبدء التوصيل المباشر!");
+        alert("تم التحقق وقفل اسم الحساب بنجاح حياً وبدء البث!");
         
-        // إرسال فوري للسيرفر وقراءة البيانات بدون أي قيود
         fetch(API_URL + "/backend/user/login", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: currentUsername })
-        }).then(res => res.json()).then(data => {
-            if(data.success) updateUI(data.user);
         }).catch(e => {});
 
         setInterval(refreshData, 3000);
+    }
+
+    // دالة نسف وإلغاء قفل الذاكرة المعطلة كلياً بلمسة واحدة وإعادة الإحياء
+    function logoutUser() {
+        localStorage.clear();
+        sessionStorage.clear();
+        alert("💥 تم نسف وتصفير الذاكرة المعطلة بنجاح! سيتم إعادة تحميل شاشتك الحرة النظيفة الآن.");
+        window.location.reload();
     }
 
     function updateUI(user) {
@@ -141,28 +164,4 @@
                 hData.history.forEach(h => { html += "<div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>" + h.message + "</div>"; });
                 document.getElementById('logs-container').innerHTML = html;
             }
-        } catch(e) {}
-    }
-
-    async function sendDepositRequest() {
-        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
-        const amount = document.getElementById('depositAmount').value;
-        if(!amount) return alert("الرجاء إدخال المبلغ");
-        try {
-            await fetch(API_URL + "/backend/user/request", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount: amount, type: 'deposit', walletAddress: 'شحن TRC20' })
-            });
-            alert("⚡ تم استلام طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة!");
-            document.getElementById('depositAmount').value = "";
-        } catch(e) { alert("خطأ في الاتصال"); }
-    }
-
-    async function sendWithdrawRequest(wType) {
-        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
-        const amount = document.getElementById('withdrawAmount').value;
-        const wallet = document.getElementById('walletInput').value.trim();
-        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
-        try {
             
