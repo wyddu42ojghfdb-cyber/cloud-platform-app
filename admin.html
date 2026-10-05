@@ -114,7 +114,7 @@
         </div>
     </div>
 
-    <!-- زر الإجراءات اليومية والربح المباشر بنسبة 15% -->
+    <!-- زر الإجراءات الجماعية اليومية للربح المباشر بنسبة 15% -->
     <button class="btn-distribute" onclick="distributeDailyProfit()">⚙️ الإجراءات الجماعية اليومية: توزيع الأرباح المباشرة للمجموعات (%15) 💰</button>
 
     <!-- الجدول الأول: طلبات المستخدمين المعلقة -->
@@ -157,16 +157,15 @@
 
 </div>
 
-<!-- نظام البث والربط السحابي المباشر لتحديث البيانات تلقائياً -->
 <script>
-    // دالة جلب البيانات وتحديث الجداول دورياً كل ثانيتين
+    // دالة البث الحي لجلب البيانات من السيرفر السحابي وتحديث الجداول تلقائياً كل ثانيتين
     function fetchDashboardData() {
         // 1. جلب وتحديث جدول طلبات السحب والشحن والمعاملات المعلقة
         fetch('/api/admin/requests')
         .then(res => res.json())
         .then(requests => {
             const reqBody = document.getElementById('requests-table-body');
-            if (requests.length === 0) {
+            if (!requests || requests.length === 0) {
                 reqBody.innerHTML = `<tr><td colspan="5" class="no-data">لا توجد أي طلبات معلقة حالياً.</td></tr>`;
                 return;
             }
@@ -189,14 +188,14 @@
         })
         .catch(err => console.error("خطأ أثناء جلب طلبات الأعضاء المعلقة:", err));
 
-        // 2. جلب وتحديث جدول الأرصدة الحية ومراقبة الضحايا أو المستخدمين الجدد
+        // 2. جلب وتحديث جدول الأرصدة الحية ومراقبة المستخدمين الجدد
         fetch('/api/admin/users')
         .then(res => res.json())
         .then(users => {
             const userBody = document.getElementById('users-table-body');
             document.getElementById('total-users-count').innerText = users.length;
 
-            if (users.length === 0) {
+            if (!users || users.length === 0) {
                 userBody.innerHTML = `<tr><td colspan="5" class="no-data">لم يقم أي عضو بتسجيل الدخول بعد.</td></tr>`;
                 return;
             }
@@ -206,10 +205,10 @@
                 userBody.innerHTML += `
                     <tr>
                         <td style="color: #38BDF8; font-weight: bold;">${user.username}</td>
-                        <td>${user.totalBalance}</td>
-                        <td style="color: #A855F7;">${user.dailyProfit}</td>
-                        <td>${user.bonus}</td>
-                        <td style="color: #22C55E;">${user.activeTeam}/40</td>
+                        <td style="color: #FFF;">${user.totalBalance}</td>
+                        <td style="color: #A855F7; font-weight: bold;">${user.dailyProfit}</td>
+                        <td style="color: #FBBF24;">${user.bonus}</td>
+                        <td style="color: #22C55E; font-weight: bold;">${user.activeTeam}/40</td>
                     </tr>
                 `;
             });
@@ -217,7 +216,7 @@
         .catch(err => console.error("خطأ أثناء جلب بيانات أرصدة الحسابات:", err));
     }
 
-    // دالة اتخاذ القرار للمشرف (قبول أو رفض طلب معلق)
+    // دالة اتخاذ القرار للمشرف (قبول أو رفض طلب معلق) وتعديل أرصدة الضحية تلقائياً
     function processAction(requestId, actionType) {
         fetch('/api/admin/action', {
             method: 'POST',
@@ -225,18 +224,25 @@
             body: JSON.stringify({ requestId: requestId, action: actionType })
         })
         .then(res => res.json())
-        .then(() => {
-            alert(actionType === 'onayla' ? "تمت الموافقة على طلب العضو بنجاح!" : "تم رفض طلب العضو بنجاح.");
-            fetchDashboardData(); // تحديث فوري للجداول بعد القرار
-        });
+        .then(data => {
+            alert(actionType === 'onayla' ? "تمت الموافقة على طلب العضو وتحديث حساباته بنجاح!" : "تم رفض طلب العضو بنجاح.");
+            fetchDashboardData(); // تحديث فوري للجداول بعد اتخاذ القرار
+        })
+        .catch(err => console.error("خطأ في معالجة طلب المشرف:", err));
     }
 
-    // دالة محاكاة توزيع الأرباح اليومية بنسبة 15% للمشتركين
+    // دالة الإجراءات الجماعية لتوزيع الأرباح اليومية بنسبة 15% وتحديث سيرفر Express حياً
     function distributeDailyProfit() {
-        alert("تم إطلاق الإجراءات اليومية بنجاح! جاري احتساب وتوزيع الأرباح بنسبة 15% للأعضاء.");
+        fetch('/api/admin/distribute-profits', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            alert("تم إطلاق الإجراءات اليومية بنجاح! جاري احتساب وتوزيع الأرباح بنسبة 15% لجميع الأعضاء حياً.");
+            fetchDashboardData();
+        })
+        .catch(err => console.error("خطأ أثناء توزيع الأرباح:", err));
     }
 
-    // تشغيل نظام التحديث الآلي المستمر كل ثانيتين حياً ومباشرة لضمان ثبات اللوحة
+    // تشغيل نظام التحديث الآلي المستمر كل ثانيتين حياً ومباشرة
     setInterval(fetchDashboardData, 2000);
     fetchDashboardData(); // تشغيل فوري لحظة تحميل الشاشة
 </script>
