@@ -12,7 +12,6 @@
         .label-text { font-size: 13px; color: #3b82f6; margin-bottom: 5px; display: block; font-weight: bold; }
         .sub-label { font-size: 11px; color: #eab308; margin-bottom: 8px; display: block; }
         input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
-        input:disabled, button:disabled { background: #1e293b; color: #94a3b8; cursor: not-allowed; border-color: #334155; }
         button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
         .btn-blue { background: #1d4ed8; color: white; }
         .btn-green { background: #16a34a; color: white; }
@@ -53,7 +52,7 @@
 
     <label class="label-text" id="txt-invite-label">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
     <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
-    <button class="btn-purple" id="btn-bonus" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
+    <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
 
     <div class="info-box">
         <div class="info-row"><span id="txt-total-cap">إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
@@ -66,16 +65,16 @@
         <input type="number" id="withdrawAmount" placeholder="المبلغ بـ USDT">
         <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
         
-        <button class="btn-red" onclick="sendWithdrawRequest('capital')" id="btn-w1">💥 سحب إجمالي رأس المال</button>
-        <button class="btn-red" onclick="sendWithdrawRequest('daily')" id="btn-w2">📊 سحب الأرباح اليومية</button>
-        <button class="btn-red" onclick="sendWithdrawRequest('bonus')" id="btn-w3">💸 سحب مكافأة الدعوة</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('withdraw_capital')">💥 سحب إجمالي رأس المال</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('withdraw_daily')">📊 سحب الأرباح اليومية</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('withdraw_bonus')">💸 سحب مكافأة الدعوة</button>
     </div>
 
     <div class="crypto-box" style="border: 1px dashed #22c55e; padding: 10px; margin: 15px 0; border-radius: 6px; background: rgba(34, 197, 94, 0.05); text-align: center;">
         <span id="txt-dep-title" style="font-size: 13px; color: #eab308;">📥 محفظة الإيداع الرسمية - شبكة USDT (TRC-20):</span>
         <strong style="color: #4ade80; font-size: 13px; word-break: break-all; display: block; margin-top: 5px;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</strong>
         <input type="number" id="depositAmount" placeholder="أدخل مبلغ الشحن بـ USDT" style="margin-top: 10px;">
-        <button class="btn-green" onclick="sendDepositRequest()" id="btn-dep-action">⚡ إرسال طلب الإيداع للمشرف</button>
+        <button class="btn-green" onclick="sendDepositRequest()">⚡ إرسال طلب الإيداع للمشرف</button>
     </div>
 
     <div class="info-box">
@@ -87,7 +86,7 @@
 </div>
 
 <script>
-    // استخدام نطاق الصفحة التلقائي والحي لربط كافة أزرار الشاشة الكبيرة فوراً بالسيرفر
+    // ربط ديناميكي مباشر لمنع شلل وحظر الأزرار نهائياً
     const API_URL = window.location.origin;
     let currentUsername = "";
 
@@ -95,10 +94,10 @@
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
         try {
-            const res = await fetch(`${API_URL}/backend/user/login`, {
+            const res = await fetch(API_URL + "/backend/user/login", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username })
+                body: JSON.stringify({ username: username })
             });
             const data = await res.json();
             if(data.success) {
@@ -114,7 +113,7 @@
                 
                 setInterval(refreshData, 3000);
             }
-        } catch(e) { alert("خطأ في الاتصال"); }
+        } catch(e) { alert("خطأ في قفل الاسم، يرجى تحديث ونشر السيرفر"); }
     }
 
     function updateUI(user) {
@@ -127,7 +126,7 @@
     async function refreshData() {
         if(!currentUsername) return;
         try {
-            const res = await fetch(`${API_URL}/backend/user/login`, {
+            const res = await fetch(API_URL + "/backend/user/login", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: currentUsername })
@@ -135,11 +134,11 @@
             const data = await res.json();
             if(data.success) updateUI(data.user);
             
-            const hRes = await fetch(`${API_URL}/backend/user/history?username=${currentUsername}`);
+            const hRes = await fetch(API_URL + "/backend/user/history?username=" + currentUsername);
             const hData = await hRes.json();
             if(hData.history.length > 0) {
                 let html = "";
-                hData.history.forEach(h => { html += `<div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>${h.message}</div>`; });
+                hData.history.forEach(h => { html += "<div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>" + h.message + "</div>"; });
                 document.getElementById('logs-container').innerHTML = html;
             }
         } catch(e) {}
@@ -150,10 +149,10 @@
         const amount = document.getElementById('depositAmount').value;
         if(!amount) return alert("الرجاء إدخال المبلغ");
         try {
-            const res = await fetch(`${API_URL}/backend/user/request`, {
+            const res = await fetch(API_URL + "/backend/user/request", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount, type: 'deposit', walletAddress: 'شحن TRC20' })
+                body: JSON.stringify({ username: currentUsername, amount: amount, type: 'deposit', walletAddress: 'شحن TRC20' })
             });
             const data = await res.json();
             if(data.success) { alert(data.message); document.getElementById('depositAmount').value = ""; }
@@ -164,4 +163,7 @@
         if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = document.getElementById('withdrawAmount').value;
         const wallet = document.getElementById('walletInput').value.trim();
-        
+        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
+        try {
+            const res = await fetch(API_URL + "/backend/user/request", {
+                
