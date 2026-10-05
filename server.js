@@ -8,17 +8,16 @@ let pendingRequests = [];
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// مسار شاشة المشرف (اللوحة)
+// مسارات صفحة المشرف
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
 app.get('/admin-panel', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// استقبال تسجيل اسم المستخدم
-app.post('/api/register-user', (req, res) => {
-    res.json({ success: true });
-});
-
-// استقبال المعاملات حياً
+// استقبال طلبات واجهة المستخدم
 app.post('/api/submit-request', (req, res) => {
     pendingRequests.push(req.body);
     res.json({ success: true });
@@ -29,7 +28,7 @@ app.get('/api/admin/requests', (req, res) => {
     res.json(pendingRequests);
 });
 
-// مسار شاشة المستخدم الافتراضي
+// المسار الافتراضي لواجهة المستخدم (دائماً في نهاية الملف)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
