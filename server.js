@@ -5,12 +5,14 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+
+// تشغيل وقراءة الملفات الثابتة في نفس المجلد
+app.use(express.static(path.join(__dirname)));
 
 let users = {};
 let pendingRequests = [];
 
-// 1. مسار تسجيل الدخول للحساب وتحديث الخانات الثلاثية للشاشة الكبرى
+// 1. مسار تسجيل الدخول وحفظ الحساب لشاشتك الكبرى
 app.post('/backend/user/login', (req, res) => {
     const { username } = req.body;
     if (!username) return res.status(400).json({ success: false, message: 'Kullanıcı adı gerekli' });
@@ -28,7 +30,7 @@ app.post('/backend/user/login', (req, res) => {
     res.json({ success: true, user: users[username] });
 });
 
-// 2. مسار استقبال وصَفْق طلبات الإيداع والسحب الثلاثي ومكافآت الإحالة
+// 2. مسار استقبال طلبات الإيداع والسحب ومكافأة الدعوة البنفسجية
 app.post('/backend/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
     if (!username || !amount || !type) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
@@ -37,17 +39,17 @@ app.post('/backend/user/request', (req, res) => {
         id: Date.now(),
         username,
         amount: parseFloat(amount),
-        type, // deposit أو withdraw_capital أو withdraw_daily أو withdraw_bonus أو invite_bonus
+        type, 
         walletAddress,
         status: 'pending',
         date: new Date().toLocaleString('tr-TR')
     };
     
     pendingRequests.push(newRequest);
-    res.json({ success: true, message: '⚡ تم استلام طلبك بنجاح وهو قيد المراجعة الفورية من الإدارة!' });
+    res.json({ success: true, message: 'Talebiniz başarıyla gönderildi!' });
 });
 
-// 3. مسار جلب كافة العمليات والحسابات الحية لتظهر في جداول المشرف المحدثة
+// 3. مسار بث التحديثات داخل لوحة المشرف
 app.get('/backend/admin/requests', (req, res) => {
     res.json({ 
         success: true, 
@@ -57,7 +59,7 @@ app.get('/backend/admin/requests', (req, res) => {
     });
 });
 
-// 4. مسار معالجة الموافقات والرفض من لوحة المشرف وتحديث الأرصدة الثلاثية المنفصلة
+// 4. مسار معالجة الموافقات والرفض من لوحة المشرف
 app.post('/backend/admin/action', (req, res) => {
     const { id, action, username, type, amount } = req.body;
     
@@ -65,22 +67,22 @@ app.post('/backend/admin/action', (req, res) => {
         const amt = parseFloat(amount);
         if (type === 'deposit') {
             users[username].balance += amt;
-            users[username].todayProfit += (amt * 0.15); // إضافة ربحية الـ 15% مباشرة عند موافقة الشحن
-            users[username].history.push({ message: `✅ شحن رصيد معتمد ومؤكد: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].todayProfit += (amt * 0.15); 
+            users[username].history.push({ message: `✅ Onaylanan Para Yatırma: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'withdraw_capital') {
             users[username].balance -= amt;
-            users[username].history.push({ message: `💸 سحب رأس مال معتمد ومؤكد: -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].history.push({ message: `💸 Onaylanan Para Çekme (Sermaye): -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'withdraw_daily') {
             users[username].todayProfit -= amt;
-            users[username].history.push({ message: `📊 سحب أرباح يومية معتمد ومؤكد: -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].history.push({ message: `📊 Onaylanan Para Çekme (Kar): -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'withdraw_bonus') {
             users[username].bonus -= amt;
-            users[username].history.push({ message: `💸 سحب مكافآت معتمد ومؤكد: -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].history.push({ message: `💸 Onaylanan Para Çekme (Bonus): -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'invite_bonus') {
             users[username].bonus += amt;
-            users[username].balance += amt; // إضافة المكافأة البنفسجية للرصيد
-            users[username].teamCount += 1; // زيادة عداد الفريق 0/40 تلقائياً
-            users[username].history.push({ message: `🍇 مكافأة دعوة صديق معتمدة: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].balance += amt; 
+            users[username].teamCount += 1; 
+            users[username].history.push({ message: `🍇 Onaylanan Davet Ödülü: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     }
     
@@ -88,7 +90,7 @@ app.post('/backend/admin/action', (req, res) => {
     res.json({ success: true });
 });
 
-// 5. مسار بث الأرباح الجماعي بنسبة 15% للمشتركين النشطين عبر زر المدير
+// 5. مسار بث الأرباح الجماعي بنسبة 15% للمشتركين النشطين
 app.post('/backend/admin/distribute-profit', (req, res) => {
     Object.keys(users).forEach(username => {
         let u = users[username];
@@ -96,13 +98,13 @@ app.post('/backend/admin/distribute-profit', (req, res) => {
             let profitGenerated = u.balance * 0.15;
             u.todayProfit += profitGenerated;
             u.balance += profitGenerated;
-            u.history.push({ message: `📊 تم بث عوائد تداول يومية بنسبة 15%: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
+            u.history.push({ message: `📊 Günlük %15 kar dağıtımı eklendi: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     });
     res.json({ success: true });
 });
 
-// 6. مسار قراءة سجل الإشعارات الحية لشاشة المستخدم الكبرى
+// 6. مسار جلب سجل المعاملات لشاشة المستخدم
 app.get('/backend/user/history', (req, res) => {
     const { username } = req.query;
     if (users[username]) {
@@ -112,8 +114,19 @@ app.get('/backend/user/history', (req, res) => {
     }
 });
 
-app.get('/panel', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+// توجيه المسارات لعرض الواجهات ومنع ظهور الصفحة البيضاء نهائياً
+app.get('/panel', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// تعديل لتوجيه الرابط الرئيسي الافتراضي إلى شاشة المستخدم
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('محرّك السيرفر المحدث متصل حياً...'));
+app.listen(PORT, () => console.log('Sunucu calisiyor...'));
