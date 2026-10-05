@@ -39,7 +39,7 @@
     <label class="label-text">👤 اسم المستخدم الحالي</label>
     <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     
-    <!-- حقل الاسم وزر الحفظ المفتوحان والمعدلان للربط الفوري -->
+    <!-- حقل الاسم وزر الحفظ لقفل حقل الاسم وحده وتنشيط نفق الاتصال الحقيقي -->
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
 
@@ -52,7 +52,7 @@
         </div>
     </div>
 
-    <!-- كامل أزرار وعناصر الشاشة بالأسفل حرة، نشطة، وشغالة دائماً ولا تتأثر بأي تجميد -->
+    <!-- كامل العناصر والأزرار حرة ونشطة وشغالة دائماً ولا تتأثر بقفل الاسم -->
     <label class="label-text">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
     <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
     <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
@@ -60,7 +60,7 @@
     <div class="info-box">
         <div class="info-row"><span>إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
         <div class="info-row"><span>الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">0.00</span></span></div>
-        <div class="info-row"><span>أرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
+        <div class="info-row"><span>أرباح التذاكر وممكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
     </div>
 
     <div class="info-box" style="border-color: #ef4444;">
@@ -85,22 +85,21 @@
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
     </div>
 
-    <!-- كود البث الحي المباشر الموجه بالملي لفتح حسابك التليجرام الفعلي دون شاشات معلقة -->
-    <button class="btn-cyan" style="background:#0891b2;" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+    <!-- كود الربط السحابي الحقيقي والمغلق لإطلاق حساب التليجرام الشخصي مباشرة بنجاح -->
+    <button class="btn-cyan" style="background:#0891b2;" onclick="window.open('https://telegram.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
     const API_URL = window.location.origin;
     let currentUsername = "";
 
-    // تطبيق خطة القفل المحددة لحقل الاسم فقط دون شل حركة بقية أزرار الواجهة الفخمة
     function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("الرجاء كتابة الاسم أولاً");
         
         currentUsername = username;
         
-        // قفل حقل الإدخال وزر الحفظ الخاص بالاسم وحده لتأمين الهوية
+        // تطبيق خطة القفل المخصصة لحقل الاسم وحده بنجاح دون المساس ببقية الشاشة الشغالة
         document.getElementById('usernameInput').disabled = true;
         document.getElementById('btn-login-action').disabled = true;
         
@@ -168,4 +167,5 @@
         try {
             await fetch(API_URL + "/backend/user/request", {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 
