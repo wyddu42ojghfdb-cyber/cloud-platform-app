@@ -1,21 +1,244 @@
-function loadDashboardData() {
-    // 1. ملء جدول الطلبات المعلقة (Üyelerin bekleyen talepleri)
-    fetch('/api/admin/requests')
-    .then(res => res.json())
-    .then(requests => {
-        // ضع هنا معرف الكود الخاص بجدول الطلبات المعلقة في كودك التركي لتحديث الأسطر
-        console.log("الطلبات المعلقة الحية:", requests);
-        // الدالة ستقوم بإدراج المستخدم، نوع الطلب، المبلغ، والمحفظة حياً في الأسطر
-    });
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم وإدارة المنظومة السحابية 💻</title>
+    <style>
+        body {
+            background-color: #0B1425;
+            color: #E2E8F0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .admin-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .header-panel {
+            background-color: #111C32;
+            border: 1px solid #1E293B;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h2 { color: #38BDF8; margin: 0; font-size: 20px; }
+        .counter-box {
+            background-color: #070D19;
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid #1E293B;
+            font-weight: bold;
+        }
+        .section-title {
+            font-size: 15px;
+            color: #F8FAFC;
+            margin: 20px 0 10px 0;
+            display: block;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #111C32;
+            border: 1px solid #1E293B;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        th {
+            background-color: #1E293B;
+            color: #38BDF8;
+            padding: 12px;
+            text-align: center;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #1E293B;
+            color: #94A3B8;
+        }
+        tr:hover { background-color: #16253F; }
+        .btn-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            margin: 0 2px;
+        }
+        .btn-approve { background-color: #16A34A; color: white; }
+        .btn-reject { background-color: #DC2626; color: white; }
+        .btn-distribute {
+            background-color: #2563EB;
+            color: white;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .btn-distribute:hover { background-color: #1D4ED8; }
+        .status-badge {
+            background-color: #B45309;
+            color: #FBBF24;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .no-data {
+            text-align: center;
+            color: #64748B;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
 
-    // 2. ملء جدول مراقبة الأرصدة (Üyelerin bakiyelerinin canlı takibi)
-    fetch('/api/admin/users')
-    .then(res => res.json())
-    .then(users => {
-        console.log("أرصدة الأعضاء الحالية:", users);
-        // الدالة ستقوم بتحديث جدول الأرصدة المصفرة تلقائياً عند تسجيل أي ضحية أو مستخدم
-    });
-}
+<div class="admin-container">
+    
+    <!-- القسم العلوي وإجمالي عدد المشتركين -->
+    <div class="header-panel">
+        <h2>💻 لوحة تحكم وإدارة المنظومة السحابية</h2>
+        <div class="counter-box">
+            👥 إجمالي عدد الأعضاء المسجلين: <span id="total-users-count" style="color: #22C55E;">0</span>
+        </div>
+    </div>
 
-// تحديث مستمر تلقائي كل ثانيتين دون الحاجة لتحديث الصفحة
-setInterval(loadDashboardData, 2000);
+    <!-- زر الإجراءات اليومية والربح المباشر بنسبة 15% -->
+    <button class="btn-distribute" onclick="distributeDailyProfit()">⚙️ الإجراءات الجماعية اليومية: توزيع الأرباح المباشرة للمجموعات (%15) 💰</button>
+
+    <!-- الجدول الأول: طلبات المستخدمين المعلقة -->
+    <span class="section-title">📥 طلبات الأعضاء المعلقة في انتظار المراجعة</span>
+    <table>
+        <thead>
+            <tr>
+                <th>اسم المستخدم</th>
+                <th>نوع الطلب</th>
+                <th>المبلغ / التفاصيل</th>
+                <th>عنوان المحفظة المستلمة</th>
+                <th>قرار المشرف المباشر</th>
+            </tr>
+        </thead>
+        <tbody id="requests-table-body">
+            <tr>
+                <td colspan="5" class="no-data">لا توجد أي طلبات معلقة حالياً...</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- الجدول الثاني: مراقبة الأرصدة الحية للأعضاء -->
+    <span class="section-title">📊 المراقبة الحية والمباشرة لأرصدة وحسابات الأعضاء</span>
+    <table>
+        <thead>
+            <tr>
+                <th>اسم المستخدم</th>
+                <th>إجمالي رأس المال</th>
+                <th>الأرباح اليومية المحدثة</th>
+                <th>مكافآت التذاكر والدعوات</th>
+                <th>أعضاء الفريق النشطين</th>
+            </tr>
+        </thead>
+        <tbody id="users-table-body">
+            <tr>
+                <td colspan="5" class="no-data">لم يقم أي عضو بتسجيل الدخول بعد...</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+
+<!-- نظام البث والربط السحابي المباشر لتحديث البيانات تلقائياً -->
+<script>
+    // دالة جلب البيانات وتحديث الجداول دورياً كل ثانيتين
+    function fetchDashboardData() {
+        // 1. جلب وتحديث جدول طلبات السحب والشحن والمعاملات المعلقة
+        fetch('/api/admin/requests')
+        .then(res => res.json())
+        .then(requests => {
+            const reqBody = document.getElementById('requests-table-body');
+            if (requests.length === 0) {
+                reqBody.innerHTML = `<tr><td colspan="5" class="no-data">لا توجد أي طلبات معلقة حالياً.</td></tr>`;
+                return;
+            }
+
+            reqBody.innerHTML = '';
+            requests.forEach(req => {
+                reqBody.innerHTML += `
+                    <tr>
+                        <td style="color: #FFF; font-weight: bold;">${req.username}</td>
+                        <td><span class="status-badge">${req.type}</span></td>
+                        <td style="color: #22C55E; font-weight: bold;">USDT ${req.amount}</td>
+                        <td style="font-size: 12px; color: #FBBF24; word-break: break-all;">${req.wallet}</td>
+                        <td>
+                            <button class="btn-action btn-approve" onclick="processAction(${req.id}, 'onayla')">موافقة</button>
+                            <button class="btn-action btn-reject" onclick="processAction(${req.id}, 'reddet')">رفض</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        })
+        .catch(err => console.error("خطأ أثناء جلب طلبات الأعضاء المعلقة:", err));
+
+        // 2. جلب وتحديث جدول الأرصدة الحية ومراقبة الضحايا أو المستخدمين الجدد
+        fetch('/api/admin/users')
+        .then(res => res.json())
+        .then(users => {
+            const userBody = document.getElementById('users-table-body');
+            document.getElementById('total-users-count').innerText = users.length;
+
+            if (users.length === 0) {
+                userBody.innerHTML = `<tr><td colspan="5" class="no-data">لم يقم أي عضو بتسجيل الدخول بعد.</td></tr>`;
+                return;
+            }
+
+            userBody.innerHTML = '';
+            users.forEach(user => {
+                userBody.innerHTML += `
+                    <tr>
+                        <td style="color: #38BDF8; font-weight: bold;">${user.username}</td>
+                        <td>${user.totalBalance}</td>
+                        <td style="color: #A855F7;">${user.dailyProfit}</td>
+                        <td>${user.bonus}</td>
+                        <td style="color: #22C55E;">${user.activeTeam}/40</td>
+                    </tr>
+                `;
+            });
+        })
+        .catch(err => console.error("خطأ أثناء جلب بيانات أرصدة الحسابات:", err));
+    }
+
+    // دالة اتخاذ القرار للمشرف (قبول أو رفض طلب معلق)
+    function processAction(requestId, actionType) {
+        fetch('/api/admin/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId: requestId, action: actionType })
+        })
+        .then(res => res.json())
+        .then(() => {
+            alert(actionType === 'onayla' ? "تمت الموافقة على طلب العضو بنجاح!" : "تم رفض طلب العضو بنجاح.");
+            fetchDashboardData(); // تحديث فوري للجداول بعد القرار
+        });
+    }
+
+    // دالة محاكاة توزيع الأرباح اليومية بنسبة 15% للمشتركين
+    function distributeDailyProfit() {
+        alert("تم إطلاق الإجراءات اليومية بنجاح! جاري احتساب وتوزيع الأرباح بنسبة 15% للأعضاء.");
+    }
+
+    // تشغيل نظام التحديث الآلي المستمر كل ثانيتين حياً ومباشرة لضمان ثبات اللوحة
+    setInterval(fetchDashboardData, 2000);
+    fetchDashboardData(); // تشغيل فوري لحظة تحميل الشاشة
+</script>
+</body>
+</html>
