@@ -3,138 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منظومة محاكي التداول الذكي</title>
+    <title>منظومة محاكي التداول</title>
     <style>
-        body {
-            background-color: #0B1425;
-            color: #FFFFFF;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 15px;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        .lang-bar {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        .btn-lang {
-            background-color: #1E293B;
-            color: #38BDF8;
-            border: 1px solid #38BDF8;
-            padding: 6px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .header-title {
-            text-align: center;
-            font-size: 18px;
-            color: #38BDF8;
-            margin-bottom: 20px;
-            font-weight: bold;
-        }
-        .card {
-            background-color: #111C32;
-            border: 1px solid #1E293B;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-        .label-text {
-            font-size: 13px;
-            color: #94A3B8;
-            margin-bottom: 8px;
-            display: block;
-        }
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
-            border-radius: 6px;
-            border: 1px solid #1E293B;
-            background-color: #070D19;
-            color: #FFFFFF;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        input:disabled {
-            background-color: #1E293B !important;
-            color: #64748B !important;
-            cursor: not-allowed;
-        }
+        body { background-color: #0B1425; color: #FFFFFF; font-family: sans-serif; padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .lang-bar { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; }
+        .btn-lang { background-color: #1E293B; color: #38BDF8; border: 1px solid #38BDF8; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .header-title { text-align: center; font-size: 18px; color: #38BDF8; margin-bottom: 20px; font-weight: bold; }
+        .card { background-color: #111C32; border: 1px solid #1E293B; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        .label-text { font-size: 13px; color: #94A3B8; margin-bottom: 8px; display: block; }
+        input { width: 100%; padding: 12px; box-sizing: border-box; border-radius: 6px; border: 1px solid #1E293B; background-color: #070D19; color: #FFFFFF; text-align: center; margin-bottom: 10px; }
+        .btn-block { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 8px; display: block; }
         .btn-blue { background-color: #2563EB; color: white; }
         .btn-purple { background-color: #7C3AED; color: white; }
         .btn-red { background-color: #DC2626; color: white; }
         .btn-green { background-color: #16A34A; color: white; }
         .btn-cyan { background-color: #0088cc; color: white; }
-        
-        .btn-block {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 8px;
-            display: block;
-        }
-        .balance-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #1E293B;
-            font-size: 14px;
-        }
+        .balance-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1E293B; }
         .balance-val { color: #A855F7; font-weight: bold; }
-        .log-box {
-            background-color: #070D19;
-            border: 1px solid #1E293B;
-            border-radius: 6px;
-            height: 90px;
-            overflow-y: auto;
-            padding: 10px;
-            font-size: 12px;
-            color: #A0AEC0;
-            text-align: center;
-        }
-        .wallet-address {
-            color: #FBBF24;
-            font-size: 12px;
-            word-break: break-all;
-            text-align: center;
-            margin-bottom: 10px;
-            display: block;
-        }
+        .log-box { background-color: #070D19; border: 1px solid #1E293B; border-radius: 6px; height: 60px; padding: 10px; font-size: 12px; color: #A0AEC0; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- أزرار تبديل اللغة -->
     <div class="lang-bar">
-        <button class="btn-lang" onclick="switchLanguage('ar')">العربية 🇸🇦</button>
-        <button class="btn-lang" onclick="switchLanguage('en')">English 🇬🇧</button>
+        <button class="btn-lang" onclick="changeLanguage('ar')">العربية 🇸🇦</button>
+        <button class="btn-lang" onclick="changeLanguage('en')">English 🇬🇧</button>
     </div>
 
     <div class="header-title" id="txt-title">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
 
+    <!-- 1. الاسم -->
     <div class="card">
         <label class="label-text" id="lbl-username">👤 اسم المستخدم الحالي:</label>
         <input type="text" id="username" placeholder="يرجى إدخال وتثبيت اسم المستخدم أولاً">
-        <button id="save-btn" class="btn-block btn-blue" onclick="lockUsernameOnly()">💾 حفظ وقفل الحساب</button>
+        <button id="save-btn" class="btn-block btn-blue" onclick="lockUser()">💾 حفظ وقفل الحساب</button>
     </div>
 
+    <!-- 2. الجائزة والفريق -->
     <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
             <span class="label-text" id="lbl-prize">🏆 الجائزة الكبرى (40 عضو)</span>
-            <span style="color: #FBBF24; font-weight: bold;" id="val-prize">2500 دولار أمريكي</span>
+            <span style="color: #FBBF24; font-weight: bold;">2500$</span>
         </div>
         <div>
             <span class="label-text" id="lbl-team">أعضاء الفريق النشطين:</span>
@@ -142,96 +54,112 @@
         </div>
     </div>
 
+    <!-- 3. الإحالة البنفسجية -->
     <div class="card" style="border-color: #6D28D9;">
         <label class="label-text" id="lbl-invite">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
-        <input type="text" id="invite-code" placeholder="أدخل كود أو اسم الشخص الذي دعاك">
-        <button class="btn-block btn-purple" id="btn-invite" onclick="sendActionToAdmin('Referans İsteği')">✨ إرسال المكافأة إلى المشرف</button>
+        <input type="text" id="invite-code" placeholder="أدخل كود الشخص الذي دعاك">
+        <button class="btn-block btn-purple" id="btn-invite" onclick="sendToAdmin('طلب مكافأة إحالة')">✨ إرسال المكافأة إلى المشرف</button>
     </div>
 
+    <!-- 4. الأرصدة الثلاثة -->
     <div class="card">
         <div class="balance-row"><span id="lbl-b1">إجمالي رأس المال:</span> <span class="balance-val">USDT 0.00</span></div>
         <div class="balance-row"><span id="lbl-b2">الأرباح اليومية:</span> <span class="balance-val">USDT 0.00</span></div>
         <div class="balance-row"><span id="lbl-b3">أرباح التذاكر ومكافآت الدعوة:</span> <span class="balance-val">USDT 0.00</span></div>
     </div>
 
+    <!-- 5. السحب المباشر (الأزرار الحمراء) -->
     <div class="card" style="border-color: #DC2626;">
         <label class="label-text" style="color: #EF4444; text-align: center; font-weight: bold;" id="lbl-w-title">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20)</label>
         <input type="number" id="withdraw-amount" placeholder="المبلغ بـ USDT">
-        <input type="text" id="withdraw-wallet" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
+        <input type="text" id="withdraw-wallet" placeholder="عنوان محفظة TRC-20">
         
-        <button class="btn-block btn-red" id="btn-w1" onclick="triggerWithdraw('Toplam Sermaye')">💥 سحب إجمالي رأس المال</button>
-        <button class="btn-block btn-red" id="btn-w2" onclick="triggerWithdraw('Günlük Karlar')">📊 سحب الأرباح اليومية</button>
-        <button class="btn-block btn-red" id="btn-w3" onclick="triggerWithdraw('Davetiye ve Bilet Ödülleri')">💸 سحب مكافأة الدعوة</button>
+        <button class="btn-block btn-red" id="btn-w1" onclick="sendToAdmin('سحب إجمالي رأس المال')">💥 سحب إجمالي رأس المال</button>
+        <button class="btn-block btn-red" id="btn-w2" onclick="sendToAdmin('سحب الأرباح اليومية')">📊 سحب الأرباح اليومية</button>
+        <button class="btn-block btn-red" id="btn-w3" onclick="sendToAdmin('سحب مكافأة الدعوة')">💸 سحب مكافأة الدعوة</button>
     </div>
 
+    <!-- 6. الشحن الأخضر -->
     <div class="card" style="border-color: #16A34A;">
         <label class="label-text" style="color: #22C55E; text-align: center; font-weight: bold;" id="lbl-d-title">💳 محفظة الإيداع الرسمية - شبكة (USDT TRC-20)</label>
-        <span class="wallet-address">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</span>
+        <span style="color: #FBBF24; display:block; text-align:center; font-size:12px; margin-bottom:5px;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</span>
         <input type="number" id="deposit-amount" value="100">
-        <button class="btn-block btn-green" id="btn-deposit" onclick="sendActionToAdmin('Kontör yükleme bakiyesi')">⚡ إرسال طلب الإيداع للمشرف</button>
+        <button class="btn-block btn-green" id="btn-deposit" onclick="sendToAdmin('طلب شحن رصيد')">⚡ إرسال طلب الإيداع للمشرف</button>
     </div>
 
+    <!-- 7. سجل الإشعارات -->
     <div class="card">
         <label class="label-text" id="lbl-logs">📋 سجل المعاملات والإشعارات الحية</label>
-        <div class="log-box" id="status-logs">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
+        <div class="log-box" id="status-logs">يرجى قفل الاسم أولاً...</div>
     </div>
 
-    <button class="btn-block btn-cyan" id="btn-telegram" onclick="redirectToTelegram()">💬 تواصل مع الدعم الفني عبر تليجرام (invest_support_bot)</button>
+    <!-- 8. زر التليجرام -->
+    <button class="btn-block btn-cyan" id="btn-telegram" onclick="window.open('https://t.me', '_blank')">💬 تواصل مع الدعم الفني (invest_support_bot)</button>
 </div>
 
 <script>
-    let currentUsername = "";
-    let currentLang = "ar";
-
-    const translations = {
+    const txt = {
         ar: {
-            title: "☁️ منظومة محاكي التداول الذكي والتحليل السحابي",
-            username: "👤 اسم المستخدم الحالي:",
-            userPlaceholder: "يرجى إدخال وتثبيت اسم المستخدم أولاً",
-            saveBtn: "💾 حفظ وقفل الحساب",
-            prize: "🏆 الجائزة الكبرى (40 عضو)",
-            prizeVal: "2500 دولار أمريكي",
-            team: "أعضاء الفريق النشطين:",
-            invite: "🔗 إرسال طلب مكافأة الإحالة (الدعوة):",
-            invitePlaceholder: "أدخل كود أو اسم الشخص الذي دعاك",
-            inviteBtn: "✨ إرسال المكافأة إلى المشرف",
-            b1: "إجمالي رأس المال:",
-            b2: "الأرباح اليومية:",
-            b3: "أرباح التذاكر ومكافآت الدعوة:",
-            wTitle: "🚨 بوابة السحب الفوري المباشر (شبكة TRC-20)",
-            wPlaceholderAmount: "المبلغ بـ USDT",
-            wPlaceholderWallet: "أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة",
-            w1: "💥 سحب إجمالي رأس المال",
-            w2: "📊 سحب الأرباح اليومية",
-            w3: "💸 سحب مكافأة الدعوة",
-            dTitle: "💳 محفظة الإيداع الرسمية - شبكة (USDT TRC-20)",
-            depositBtn: "⚡ إرسال طلب الإيداع للمشرف",
-            logs: "📋 سجل المعاملات والإشعارات الحية",
-            logsInit: "يرجى قفل الاسم لعرض الإشعارات الحية...",
-            telegram: "💬 تواصل مع الدعم الفني عبر تليجرام (invest_support_bot)"
+            title: "☁️ منظومة محاكي التداول الذكي والتحليل السحابي", username: "👤 اسم المستخدم الحالي:",
+            save: "💾 حفظ وقفل الحساب", prize: "🏆 الجائزة الكبرى (40 عضو)", team: "أعضاء الفريق النشطين:",
+            invite: "🔗 إرسال طلب مكافأة الإحالة (الدعوة):", inviteBtn: "✨ إرسال المكافأة إلى المشرف",
+            b1: "إجمالي رأس المال:", b2: "الأرباح اليومية:", b3: "أرباح التذاكر ومكافآت الدعوة:",
+            wTitle: "🚨 بوابة السحب الفوري المباشر (شبكة TRC-20)", w1: "💥 سحب إجمالي رأس المال",
+            w2: "📊 سحب الأرباح اليومية", w3: "💸 سحب مكافأة الدعوة", dTitle: "💳 محفظة الإيداع الرسمية - شبكة (USDT TRC-20)",
+            depositBtn: "⚡ إرسال طلب الإيداع للمشرف", logs: "📋 سجل المعاملات والإشعارات الحية",
+            telegram: "💬 تواصل مع الدعم الفني (invest_support_bot)"
         },
         en: {
-            title: "☁️ Intelligent Trading Simulator & Cloud Analysis System",
-            username: "👤 Current Username:",
-            userPlaceholder: "Please enter and confirm your username first",
-            saveBtn: "💾 Save and Lock Account",
-            prize: "🏆 Grand Prize (40 Members)",
-            prizeVal: "2500 USD",
-            team: "Active Team Members:",
-            invite: "🔗 Send Referral Reward Request (Invite):",
-            invitePlaceholder: "Enter the code or name of the person who invited you",
-            inviteBtn: "✨ Send Reward to Admin",
-            b1: "Total Capital:",
-            b2: "Daily Profit:",
-            b3: "Ticket & Invitation Rewards:",
-            wTitle: "🚨 Instant Withdrawal Portal (TRC-20 Network)",
-            wPlaceholderAmount: "Amount in USDT",
-            wPlaceholderWallet: "Enter your receiving TRC-20 wallet address",
-            w1: "💥 Withdraw Total Capital",
-            w2: "📊 Withdraw Daily Profits",
-            w3: "💸 Withdraw Invitation Rewards",
-            dTitle: "💳 Official Deposit Wallet - (USDT TRC-20) Network",
-            depositBtn: "⚡ Send Deposit Request to Admin",
-            logs: "📋 Live Transactions & Status Logs",
-            logsInit: "Please lock your name to display live notifications...",
-            
+            title: "☁️ Intelligent Trading Simulator System", username: "👤 Current Username:",
+            save: "💾 Save and Lock Account", prize: "🏆 Grand Prize (40 Members)", team: "Active Team Members:",
+            invite: "🔗 Send Referral Reward Request:", inviteBtn: "✨ Send Reward to Admin",
+            b1: "Total Capital:", b2: "Daily Profit:", b3: "Ticket & Invitation Rewards:",
+            wTitle: "🚨 Instant Withdrawal Portal (TRC-20)", w1: "💥 Withdraw Total Capital",
+            w2: "📊 Withdraw Daily Profits", w3: "💸 Withdraw Invitation Rewards", dTitle: "💳 Official Deposit Wallet (USDT TRC-20)",
+            depositBtn: "⚡ Send Deposit Request to Admin", logs: "📋 Live Activity & Logs",
+            telegram: "💬 Contact Support (invest_support_bot)"
+        }
+    };
+
+    function changeLanguage(lang) {
+        const tag = document.getElementById('html-tag');
+        tag.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+        
+        document.getElementById('txt-title').innerText = txt[lang].title;
+        document.getElementById('lbl-username').innerText = txt[lang].username;
+        document.getElementById('save-btn').innerText = txt[lang].save;
+        document.getElementById('lbl-prize').innerText = txt[lang].prize;
+        document.getElementById('lbl-team').innerText = txt[lang].team;
+        document.getElementById('lbl-invite').innerText = txt[lang].invite;
+        document.getElementById('btn-invite').innerText = txt[lang].inviteBtn;
+        document.getElementById('lbl-b1').innerText = txt[lang].b1;
+        document.getElementById('lbl-b2').innerText = txt[lang].b2;
+        document.getElementById('lbl-b3').innerText = txt[lang].b3;
+        document.getElementById('lbl-w-title').innerText = txt[lang].wTitle;
+        document.getElementById('btn-w1').innerText = txt[lang].w1;
+        document.getElementById('btn-w2').innerText = txt[lang].w2;
+        document.getElementById('btn-w3').innerText = txt[lang].w3;
+        document.getElementById('lbl-d-title').innerText = txt[lang].dTitle;
+        document.getElementById('btn-deposit').innerText = txt[lang].depositBtn;
+        document.getElementById('lbl-logs').innerText = txt[lang].logs;
+        document.getElementById('btn-telegram').innerText = txt[lang].telegram;
+    }
+
+    function lockUser() {
+        const name = document.getElementById('username').value;
+        if(!name.trim()) return alert("الرجاء إدخال الاسم");
+        currentUsername = name;
+        document.getElementById('username').disabled = true;
+        document.getElementById('save-btn').disabled = true;
+        document.getElementById('status-logs').innerText = "تم تأكيد وتثبيت الاسم بنجاح بنظام السيرفر.";
+        
+        fetch('/api/register-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUsername })
+        });
+    }
+
+    function sendToAdmin(type) {
+        const logBox = document.getElementById('status-logs');
+        
