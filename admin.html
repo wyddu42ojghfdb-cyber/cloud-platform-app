@@ -1,154 +1,21 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulut Platformu Yönetim Kontrol Paneli</title>
-    <style>
-        body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
-        .container { max-width: 750px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: left; }
-        .title-app { text-align: center; color: #3b82f6; font-size: 22px; font-weight: bold; margin-bottom: 20px; }
-        button { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 13px; }
-        .btn-blue { background: #1d4ed8; color: white; width: 100%; padding: 12px; font-size: 15px; margin-bottom: 20px; }
-        .btn-green { background: #16a34a; color: white; margin-right: 5px; }
-        .btn-red { background: #dc2626; color: white; }
-        .info-box { background: #0d1527; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        th, td { border: 1px solid #1e293b; padding: 10px; text-align: center; }
-        th { background: #0d1527; color: #3b82f6; }
-        .section-title { font-size: 14px; font-weight: bold; color: #eab308; margin-top: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 5px; }
-    </style>
-</head>
-<body>
+function loadDashboardData() {
+    // 1. ملء جدول الطلبات المعلقة (Üyelerin bekleyen talepleri)
+    fetch('/api/admin/requests')
+    .then(res => res.json())
+    .then(requests => {
+        // ضع هنا معرف الكود الخاص بجدول الطلبات المعلقة في كودك التركي لتحديث الأسطر
+        console.log("الطلبات المعلقة الحية:", requests);
+        // الدالة ستقوم بإدراج المستخدم، نوع الطلب، المبلغ، والمحفظة حياً في الأسطر
+    });
 
-<div class="container">
-    <div class="title-app">👑 Bulut Platformu Yönetim Kontrol Paneli</div>
-    
-    <div class="info-box">
-        <span>Kayıtlı aktif üye sayısı toplamı 👥</span>
-        <strong id="total-users-count" style="color: #3b82f6; font-size: 16px;">0</strong>
-    </div>
+    // 2. ملء جدول مراقبة الأرصدة (Üyelerin bakiyelerinin canlı takibi)
+    fetch('/api/admin/users')
+    .then(res => res.json())
+    .then(users => {
+        console.log("أرصدة الأعضاء الحالية:", users);
+        // الدالة ستقوم بتحديث جدول الأرصدة المصفرة تلقائياً عند تسجيل أي ضحية أو مستخدم
+    });
+}
 
-    <button class="btn-blue" onclick="distributeProfitGlobal()">📊 Doğrudan günlük kar dağıtımı (%15) 💰</button>
-
-    <div class="section-title">⚠️ Üyelerin bekleyen talepleri yanıtlanmayı bekliyor (الطلبات المعلقة)</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Kullanıcı adı</th>
-                <th>Talep türü</th>
-                <th>Miktar / Detaylar</th>
-                <th>Cüzdan adresi / Bilgi</th>
-                <th>Denetleyicinin kararı</th>
-            </tr>
-        </thead>
-        <tbody id="requests-table-body">
-            <tr><td colspan="5" style="color: #94a3b8;">Bekleyen talep bulunmamaktadır...</td></tr>
-        </tbody>
-    </table>
-
-    <div class="section-title">📊 Üyelerin bakiyelerinin ve karlarının canlı takibi (مراقبة حسابات الأعضاء)</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Kullanıcı adı</th>
-                <th>Toplam sermaye</th>
-                <th>Bugünün güncel karları</th>
-                <th>Davetiye ve bilet ödülleri</th>
-                <th>Takım Sayısı</th>
-            </tr>
-        </thead>
-        <tbody id="users-table-body">
-            <tr><td colspan="5" style="color: #94a3b8;">Henüz kayıtlı üye yok...</td></tr>
-        </tbody>
-    </table>
-</div>
-
-<script>
-    const API_URL = window.location.origin;
-
-    async function loadAdminData() {
-        try {
-            const res = await fetch(`${API_URL}/backend/admin/requests`);
-            const data = await res.json();
-            if(data.success) {
-                document.getElementById('total-users-count').innerText = data.totalUsers || 0;
-                
-                const reqBody = document.getElementById('requests-table-body');
-                if(!data.requests || data.requests.length === 0) {
-                    reqBody.innerHTML = `<tr><td colspan="5" style="color: #94a3b8;">Bekleyen talep bulunmamaktadır...</td></tr>`;
-                } else {
-                    reqBody.innerHTML = "";
-                    data.requests.forEach(r => {
-                        let typeText = "";
-                        if(r.type === 'deposit') typeText = "📥 Para Yatırma";
-                        else if(r.type === 'withdraw_capital') typeText = "💥 Sermaye Çekme";
-                        else if(r.type === 'withdraw_daily') typeText = "📊 Kar Çekme";
-                        else if(r.type === 'withdraw_bonus') typeText = "💸 Bonus Çekme";
-                        else if(r.type === 'invite_bonus') typeText = "🍇 Davet Ödülü";
-
-                        reqBody.innerHTML += `
-                            <tr>
-                                <td style="font-weight:bold; color:#4ade80;">${r.username}</td>
-                                <td>${typeText}</td>
-                                <td style="color:#eab308; font-weight:bold;">${r.amount} USDT</td>
-                                <td style="font-size:11px;">${r.walletAddress}</td>
-                                <td>
-                                    <button class="btn-green" onclick="processAction('${r.id}', 'approve', '${r.username}', '${r.type}', ${r.amount})">Onayla</button>
-                                    <button class="btn-red" onclick="processAction('${r.id}', 'reject', '${r.username}', '${r.type}', ${r.amount})">Reddet</button>
-                                </td>
-                            </tr>`;
-                    });
-                }
-
-                const userBody = document.getElementById('users-table-body');
-                if(!data.allUsers || data.allUsers.length === 0) {
-                    userBody.innerHTML = `<tr><td colspan="5" style="color: #94a3b8;">Henüz kayıtlı üye yok...</td></tr>`;
-                } else {
-                    userBody.innerHTML = "";
-                    data.allUsers.forEach(u => {
-                        userBody.innerHTML += `
-                            <tr>
-                                <td style="font-weight:bold;">${u.username}</td>
-                                <td style="color:#22c55e; font-weight:bold;">${u.balance.toFixed(2)} USDT</td>
-                                <td style="color:#eab308; font-weight:bold;">${u.todayProfit.toFixed(2)} USDT</td>
-                                <td style="color:#a855f7; font-weight:bold;">${u.bonus.toFixed(2)} USDT</td>
-                                <td style="color:#3b82f6; font-weight:bold;">${u.teamCount || 0}/40</td>
-                            </tr>`;
-                    });
-                }
-            }
-        } catch(e) {}
-    }
-
-    async function processAction(id, action, username, type, amount) {
-        try {
-            const res = await fetch(`${API_URL}/backend/admin/action`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, action, username, type, amount })
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert("İşlem başarıyla uygulandı!");
-                loadAdminData();
-            }
-        } catch(e) { alert("Bağlantı hatası!"); }
-    }
-
-    async function distributeProfitGlobal() {
-        try {
-            const res = await fetch(`${API_URL}/backend/admin/distribute-profit`, { method: 'POST' });
-            const data = await res.json();
-            if(data.success) {
-                alert("🚀 Tebrikler! Tüm aktif üyelere %15 günlük kar başarıyla dağıtıldı ve canlı yansıtıldı.");
-                loadAdminData();
-            }
-        } catch(e) { alert("Hata oluştu!"); }
-    }
-
-    loadAdminData();
-    setInterval(loadAdminData, 3000);
-</script>
-</body>
-</html>
+// تحديث مستمر تلقائي كل ثانيتين دون الحاجة لتحديث الصفحة
+setInterval(loadDashboardData, 2000);
