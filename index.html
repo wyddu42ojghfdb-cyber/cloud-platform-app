@@ -31,10 +31,9 @@
 <body>
 
 <div class="container">
-    <!-- قائمة اختيار اللغات التفاعلية -->
     <select id="langSelect" onchange="switchLanguage(this.value)" style="margin-bottom: 20px; background: #1e293b;">
-        <option value="ar">🇸🇦 العربية</option>
-        <option value="tr" selected>🇹🇷 Türkçe</option>
+        <option value="ar" selected>🇸🇦 العربية</option>
+        <option value="tr">🇹🇷 Türkçe</option>
         <option value="en">🇺🇸 English</option>
     </select>
 
@@ -106,7 +105,7 @@
 
     async function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
-        if(!username) return alert("الرجاء كتابة الاسم أولاً / Lütfen kullanıcı adı girin");
+        if(!username) return alert("الرجاء كتابة الاسم أولاً");
         
         try {
             const res = await fetch(`${API_URL}/backend/user/login`, {
@@ -118,22 +117,21 @@
             if(data.success) {
                 currentUsername = username;
                 updateUI(data.user);
-                document.getElementById('txt-user-sub').innerText = "🟢 Hesap Aktif Edildi";
+                document.getElementById('txt-user-sub').innerText = "🟢 تم قفل وتأمين الحساب بنجاح";
                 document.getElementById('txt-user-sub').style.color = "#22c55e";
-                alert("تم التحقق وحفظ الحساب بنجاح / Hesap doğrulandı!");
-                
-                // تحديث تلقائي مستمر للأرصدة كل 3 ثوانٍ
-                setInterval(refreshUserData, 3000); 
+                alert("تم التحقق وحفظ الحساب بنجاح!");
+                loadHistory();
+                setInterval(refreshUserData, 4000); 
             }
         } catch (err) {
-            alert("خطأ في الاتصال / Sunucu hatası");
+            alert("خطأ في الاتصال بالخادم");
         }
     }
 
     function updateUI(user) {
-        document.getElementById('val-balance').innerText = user.balance.toFixed(2).replace('.', ',');
-        document.getElementById('val-profit').innerText = user.todayProfit.toFixed(2).replace('.', ',');
-        document.getElementById('val-bonus').innerText = user.bonus.toFixed(2).replace('.', ',');
+        document.getElementById('val-balance').innerText = user.balance.toFixed(2);
+        document.getElementById('val-profit').innerText = user.todayProfit.toFixed(2);
+        document.getElementById('val-bonus').innerText = user.bonus.toFixed(2);
         document.getElementById('val-team').innerText = user.teamCount || 0;
     }
 
@@ -147,13 +145,31 @@
             });
             const data = await res.json();
             if(data.success) updateUI(data.user);
+            loadHistory();
+        } catch(e) {}
+    }
+
+    async function loadHistory() {
+        if(!currentUsername) return;
+        try {
+            const res = await fetch(`${API_URL}/backend/user/history?username=${currentUsername}`);
+            const data = await res.json();
+            const container = document.getElementById('logs-container');
+            if(!data.history || data.history.length === 0) {
+                container.innerText = "لا توجد إشعارات أو عمليات معتمدة بتاريخ اليوم حتى الآن.";
+            } else {
+                container.innerHTML = "";
+                data.history.forEach(h => {
+                    container.innerHTML += `<div style='border-bottom: 1px solid #1e293b; padding: 6px 0; color:#22c55e;'>${h.message} <br><small style='color:#64748b;'>${h.date}</small></div>`;
+                });
+            }
         } catch(e) {}
     }
 
     async function sendInviteRequest() {
-        if(!currentUsername) return alert("يرجى قفل الاسم أولاً / Önce giriş yapın");
+        if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
         const friend = document.getElementById('inviteInput').value.trim();
-        if(!friend) return alert("يرجى كتابة اسم الصديق");
+        if(!friend) return alert("يرجى كتابة اسم الصديق المدعو");
 
         try {
             const res = await fetch(`${API_URL}/backend/user/request`, {
@@ -163,19 +179,7 @@
             });
             const data = await res.json();
             if(data.success) { alert(data.message); document.getElementById('inviteInput').value = ""; }
-        } catch(e) { alert("خطأ"); }
+        } catch(e) { alert("خطأ في الاتصال"); }
     }
 
-    async function sendWithdrawRequest(wType) {
-        if(!currentUsername) return alert("يرجى قفل الاسم أولاً / Önce giriş yapın");
-        const amount = document.getElementById('withdrawAmount').value;
-        const wallet = document.getElementById('walletInput').value.trim();
-        if(!amount || !wallet) return alert("يرجى ملء خانات المبلغ والمحفظة!");
-
-        try {
-            const res = await fetch(`${API_URL}/backend/user/request`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount, type: 'withdraw', walletAddress: `نوع: ${wType} | محفظة: ${wallet}` })
-            });
-            
+    
