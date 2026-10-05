@@ -87,6 +87,7 @@
 </div>
 
 <script>
+    // استخدام نطاق الصفحة التلقائي والحي لربط كافة أزرار الشاشة الكبيرة فوراً بالسيرفر
     const API_URL = window.location.origin;
     let currentUsername = "";
 
@@ -163,6 +164,4 @@
         if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
         const amount = document.getElementById('withdrawAmount').value;
         const wallet = document.getElementById('walletInput').value.trim();
-        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
-        try {
-    
+        
