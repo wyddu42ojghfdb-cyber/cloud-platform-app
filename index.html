@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" translate="no">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
     <title>Bulut Platformu</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
@@ -51,37 +52,90 @@
 </div>
 
 <script>
-    let isLogged = false;
+    // ربط الواجهة مباشرة وبشكل قطعي بسيرفر Render الموحد الخاص بك
+    const API_URL = window.location.origin;
+    let currentUsername = "";
 
-    function loginUser() {
+    async function loginUser() {
         const username = document.getElementById('usernameInput').value.trim();
         if(!username) return alert("Lütfen önce kullanıcı adınızı girin!");
         
-        isLogged = true;
-        document.getElementById('val-balance').innerText = "345,00";
-        document.getElementById('val-profit').innerText = "45,00";
-        document.getElementById('val-bonus').innerText = "0,00";
-        alert("Hesap doğrulandı ve akıllı işlem sistemi başarıyla kaydedildi!");
+        try {
+            const res = await fetch(`${API_URL}/backend/user/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+            if(data.success) {
+                currentUsername = username;
+                updateUI(data.user);
+                alert("Hesap doğrulandı ve akıllı işlem sistemi başarıyla kaydedildi!");
+                // تشغيل التحديث التلقائي المستمر للأرصدة كل 4 ثوانٍ لقراءة قراراتك
+                setInterval(refreshUserData, 4000);
+            }
+        } catch (err) {
+            alert("Sunucu bağlantı hatası!");
+        }
     }
 
-    function sendDepositRequest() {
-        if(!isLogged) return alert("Lütfen önce hesabı kilitleyin!");
+    function updateUI(user) {
+        document.getElementById('val-balance').innerText = user.balance.toFixed(2).replace('.', ',');
+        document.getElementById('val-profit').innerText = user.todayProfit.toFixed(2).replace('.', ',');
+        document.getElementById('val-bonus').innerText = user.bonus.toFixed(2).replace('.', ',');
+    }
+
+    async function refreshUserData() {
+        if(!currentUsername) return;
+        try {
+            const res = await fetch(`${API_URL}/backend/user/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername })
+            });
+            const data = await res.json();
+            if(data.success) updateUI(data.user);
+        } catch(e) {}
+    }
+
+    async function sendDepositRequest() {
+        if(!currentUsername) return alert("Lütfen önce hesabı kilitleyin!");
         const amount = document.getElementById('depositAmount').value;
         if(!amount) return alert("Lütfen önce kargo tutarını girin!");
-        
-        alert("⚡ Para yatırma talebi başarıyla alındı ve yönetim tarafından otomatik olarak incelenip onaylanıyor!");
-        document.getElementById('depositAmount').value = "";
+
+        try {
+            const res = await fetch(`${API_URL}/backend/user/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, amount, type: 'deposit', walletAddress: 'Şarj TRC20' })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert("⚡ Para yatırma talebi başarıyla alındı ve yönetim tarafından otomatik olarak incelenip onaylanıyor!");
+                document.getElementById('depositAmount').value = "";
+            }
+        } catch(e) { alert("Bağlantı hatası!"); }
     }
 
-    function sendWithdrawRequest() {
-        if(!isLogged) return alert("Lütfen önce hesabı kilitleyin!");
+    async function sendWithdrawRequest() {
+        if(!currentUsername) return alert("Lütfen önce hesabı kilitleyin!");
         const amount = document.getElementById('withdrawAmount').value;
         const wallet = document.getElementById('walletInput').value.trim();
         if(!amount || !wallet) return alert("Lütfen tutar ve cüzdan alanlarını doldurun!");
-        
-        alert("Para çekme talebiniz başarıyla gönderildi! İşlem en kısa sürede incelenecektir.");
-        document.getElementById('withdrawAmount').value = "";
-        document.getElementById('walletInput').value = "";
+
+        try {
+            const res = await fetch(`${API_URL}/backend/user/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, amount, type: 'withdraw', walletAddress: `Cüzdan: ${wallet}` })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert("Para çekme talebiniz başarıyla gönderildi! İşlem en kısa sürede incelenecektir.");
+                document.getElementById('withdrawAmount').value = "";
+                document.getElementById('walletInput').value = "";
+            }
+        } catch(e) { alert("Bağlantı hatası!"); }
     }
 </script>
 </body>
