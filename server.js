@@ -1,111 +1,173 @@
-const express = require('express');
-const path = require('path');
-const app = express();
+<!DOCTYPE html>
+<html lang="ar" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <title>منصة سحابية - المنظومة المتكاملة</title>
+    <style>
+        body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
+        .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
+        .title-app { text-align: center; color: #3b82f6; font-size: 20px; font-weight: bold; margin-bottom: 20px; }
+        .label-text { font-size: 13px; color: #3b82f6; margin-bottom: 5px; display: block; font-weight: bold; }
+        .sub-label { font-size: 11px; color: #eab308; margin-bottom: 8px; display: block; }
+        input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
+        input:disabled { background: #1e293b; color: #94a3b8; cursor: not-allowed; }
+        button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
+        .btn-blue { background: #1d4ed8; color: white; }
+        .btn-green { background: #16a34a; color: white; }
+        .btn-red { background: #dc2626; color: white; }
+        .btn-purple { background: #7c3aed; color: white; }
+        .info-box { background: #0d1527; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #1e293b; }
+        .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
+        .info-row:last-child { border-bottom: none; }
+        .val-green { color: #22c55e; font-weight: bold; }
+        .val-yellow { color: #eab308; font-weight: bold; }
+        .val-purple { color: #a855f7; font-weight: bold; }
+    </style>
+</head>
+<body>
 
-app.use(express.json());
-app.use(express.static(__dirname));
+<div class="container">
+    <select id="langSelect" onchange="switchLanguage(this.value)" style="margin-bottom: 20px; background: #1e293b;">
+        <option value="ar" selected>🇸🇦 العربية</option>
+        <option value="tr">🇹🇷 Türkçe</option>
+    </select>
 
-// قاعدة بيانات مؤقتة مرنة لحفظ العمليات الحسابية والطلبات حياً
-let users = {};
-let pendingRequests = [];
-
-// 1. مسار تسجيل الدخول وقفل الحساب لشاشة المستخدم
-app.post('/backend/user/login', (req, res) => {
-    const { username } = req.body;
-    if (!username) return res.status(400).json({ success: false, message: 'اسم المستخدم مطلوب' });
+    <div class="title-app" id="txt-title">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
     
-    if (!users[username]) {
-        users[username] = {
-            username: username,
-            balance: 0.00,
-            todayProfit: 0.00,
-            bonus: 0.00,
-            teamCount: 0,
-            history: []
-        };
+    <label class="label-text" id="txt-user-label">👤 اسم المستخدم الحالي</label>
+    <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
+    <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
+    <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
+
+    <div class="info-box">
+        <div style="text-align: center; font-size: 12px; color: #eab308; margin-bottom: 8px;">🏆 جائزة الكبرى (40 عضو)</div>
+        <div style="text-align: center; font-size: 15px; font-weight: bold; color: #22c55e; margin-bottom: 8px;">2500 دولار أمريكي</div>
+        <div class="info-row">
+            <span>أعضاء الفريق النشطين:</span>
+            <span id="val-team" style="color: #4ade80; font-weight: bold;">0/40</span>
+        </div>
+    </div>
+
+    <label class="label-text">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
+    <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
+    <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
+
+    <div class="info-box">
+        <div class="info-row"><span>إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
+        <div class="info-row"><span>الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">0.00</span></span></div>
+        <div class="info-row"><span>أرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
+    </div>
+
+    <div class="info-box" style="border-color: #ef4444;">
+        <div style="text-align: center; font-size: 13px; color: #ef4444; margin-bottom: 8px;">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20):</div>
+        <input type="number" id="withdrawAmount" placeholder="المبلغ بـ USDT">
+        <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
+        
+        <button class="btn-red" onclick="sendWithdrawRequest('capital')">💥 سحب إجمالي رأس المال</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('daily')">📊 سحب الأرباح اليومية</button>
+        <button class="btn-red" onclick="sendWithdrawRequest('bonus')">💸 سحب مكافأة الدعوة</button>
+    </div>
+
+    <div class="crypto-box" style="border: 1px dashed #22c55e; padding: 10px; margin: 15px 0; border-radius: 6px; background: rgba(34, 197, 94, 0.05); text-align: center;">
+        <span style="font-size: 13px; color: #eab308;">📥 محفظة الإيداع الرسمية - شبكة USDT (TRC-20):</span>
+        <strong style="color: #4ade80; font-size: 13px; word-break: break-all; display: block; margin-top: 5px;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</strong>
+        <input type="number" id="depositAmount" placeholder="أدخل مبلغ الشحن بـ USDT" style="margin-top: 10px;">
+        <button class="btn-green" onclick="sendDepositRequest()">⚡ إرسال طلب الإيداع للمشرف</button>
+    </div>
+
+    <div class="info-box">
+        <div style="text-align: center; font-size: 13px; color: #3b82f6;">📋 سجل المعاملات والإشعارات الحية</div>
+        <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
+    </div>
+
+    <button class="btn-cyan" style="background:#0891b2;" onclick="window.open('https://t.me', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+</div>
+
+<script>
+    const API_URL = window.location.origin;
+    let currentUsername = "";
+
+    async function loginUser() {
+        const username = document.getElementById('usernameInput').value.trim();
+        if(!username) return alert("الرجاء كتابة الاسم أولاً");
+        try {
+            const res = await fetch(`${API_URL}/backend/user/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username })
+            });
+            const data = await res.json();
+            if(data.success) {
+                currentUsername = username;
+                updateUI(data.user);
+                
+                document.getElementById('usernameInput').disabled = true;
+                document.getElementById('btn-login-action').disabled = true;
+                
+                document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الحساب بنجاح";
+                document.getElementById('txt-user-sub').style.color = "#22c55e";
+                alert("تم التحقق وقفل اسم الحساب بنجاح!");
+                
+                setInterval(refreshData, 3000);
+            }
+        } catch(e) { alert("خطأ في الاتصال"); }
     }
-    res.json({ success: true, user: users[username] });
-});
 
-// 2. مسار استقبال طلبات الإيداع والسحب من شاشة المستخدم
-app.post('/backend/user/request', (req, res) => {
-    const { username, amount, type, walletAddress } = req.body;
-    
-    const newRequest = {
-        id: Date.now(),
-        username,
-        amount: parseFloat(amount),
-        type, // deposit veya withdraw
-        walletAddress,
-        status: 'pending',
-        date: new Date().toLocaleString('tr-TR')
-    };
-    
-    pendingRequests.push(newRequest);
-    res.json({ success: true, message: '⚡ تم استلام طلبك بنجاح وجاري المراجعة الفورية من الإدارة!' });
-});
-
-// 3. مسار بث التحديثات داخل لوحة المشرف
-app.get('/backend/admin/requests', (req, res) => {
-    res.json({ 
-        success: true, 
-        requests: pendingRequests, 
-        totalUsers: Object.keys(users).length, 
-        allUsers: Object.values(users) 
-    });
-});
-
-// 4. مسار معالجة الموافقات من لوحة المشرف
-app.post('/backend/admin/action', (req, res) => {
-    const { id, action, username, type, amount } = req.body;
-    
-    if (action === 'approve' && users[username]) {
-        if (type === 'deposit') {
-            users[username].balance += parseFloat(amount);
-            users[username].todayProfit += (parseFloat(amount) * 0.15);
-            users[username].history.push({ message: `✅ إيداع معتمد ومؤكد: +${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
-        } else if (type === 'withdraw') {
-            users[username].balance -= parseFloat(amount);
-            users[username].history.push({ message: `💸 سحب معتمد ومؤكد: -${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
-        }
+    function updateUI(user) {
+        document.getElementById('val-balance').innerText = user.balance.toFixed(2);
+        document.getElementById('val-profit').innerText = user.todayProfit.toFixed(2);
+        document.getElementById('val-bonus').innerText = user.bonus.toFixed(2);
+        document.getElementById('val-team').innerText = user.teamCount || 0;
     }
-    pendingRequests = pendingRequests.filter(r => r.id !== parseInt(id));
-    res.json({ success: true });
-});
 
-// 5. مسار بث الأرباح بنسبة 15% للمشتركين النشطين
-app.post('/backend/admin/distribute-profit', (req, res) => {
-    Object.keys(users).forEach(username => {
-        let u = users[username];
-        if (u.balance > 0) {
-            let profitGenerated = u.balance * 0.15;
-            u.todayProfit += profitGenerated;
-            u.balance += profitGenerated;
-            u.history.push({ message: `📊 تم بث عوائد التداول اليومية بنسبة 15%: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
-        }
-    });
-    res.json({ success: true });
-});
-
-// 6. مسار جلب سجل المعاملات لشاشة المستخدم
-app.get('/backend/user/history', (req, res) => {
-    const { username } = req.query;
-    if (users[username]) {
-        res.json({ success: true, history: users[username].history });
-    } else {
-        res.json({ success: true, history: [] });
+    async function refreshData() {
+        if(!currentUsername) return;
+        try {
+            const res = await fetch(`${API_URL}/backend/user/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername })
+            });
+            const data = await res.json();
+            if(data.success) updateUI(data.user);
+            
+            const hRes = await fetch(`${API_URL}/backend/user/history?username=${currentUsername}`);
+            const hData = await hRes.json();
+            if(hData.history.length > 0) {
+                let html = "";
+                hData.history.forEach(h => { html += `<div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>${h.message}</div>`; });
+                document.getElementById('logs-container').innerHTML = html;
+            }
+        } catch(e) {}
     }
-});
 
-// فتح شاشة المستخدم عبر مسار فرعي منظم ونظيف لمنع حظر الأمان
-app.get('/panel', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+    async function sendDepositRequest() {
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
+        const amount = document.getElementById('depositAmount').value;
+        if(!amount) return alert("الرجاء إدخال المبلغ");
+        try {
+            const res = await fetch(`${API_URL}/backend/user/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, amount, type: 'deposit', walletAddress: 'شحن TRC20' })
+            });
+            const data = await res.json();
+            if(data.success) { alert(data.message); document.getElementById('depositAmount').value = ""; }
+        } catch(e) { alert("خطأ في الاتصال"); }
+    }
 
-// فتح شاشة المشرف عبر مسار سرّي مستقل
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`المنظومة متصلة حياً ومباشراً...`));
+    async function sendWithdrawRequest(wType) {
+        if(!currentUsername) return alert("يرجى قفل وتثبيت الحساب أولاً");
+        const amount = document.getElementById('withdrawAmount').value;
+        const wallet = document.getElementById('walletInput').value.trim();
+        if(!amount || !wallet) return alert("الرجاء ملء جميع الخانات");
+        try {
+            const res = await fetch(`${API_URL}/backend/user/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUsername, amount, type: 'withdraw', walletAddress: `نوع: ${wType} | محفظة: ${wallet}` })
+            });
+            const data = await res.json();
+        
