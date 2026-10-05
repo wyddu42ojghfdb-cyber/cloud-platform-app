@@ -1,79 +1,259 @@
-let currentUsername = "";
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة محاكي التداول الذكي والتحليل السحابي</title>
+    <style>
+        /* التنسيق الفاخر والمستقر بالأزرق الداكن لمنع تشتت الواجهة */
+        body {
+            background-color: #0B1425;
+            color: #FFFFFF;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .header-title {
+            text-align: center;
+            font-size: 18px;
+            color: #38BDF8;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        .card {
+            background-color: #111C32;
+            border: 1px solid #1E293B;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .label-text {
+            font-size: 13px;
+            color: #94A3B8;
+            margin-bottom: 8px;
+            display: block;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            border-radius: 6px;
+            border: 1px solid #1E293B;
+            background-color: #070D19;
+            color: #FFFFFF;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        input:disabled {
+            background-color: #1E293B !important;
+            color: #64748B !important;
+            cursor: not-allowed;
+        }
+        .btn-blue { background-color: #2563EB; color: white; }
+        .btn-blue:disabled { background-color: #1E3A8A; cursor: not-allowed; }
+        .btn-purple { background-color: #7C3AED; color: white; }
+        .btn-red { background-color: #DC2626; color: white; }
+        .btn-green { background-color: #16A34A; color: white; }
+        .btn-cyan { background-color: #06B6D4; color: white; }
+        
+        .btn-block {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .btn-block:hover { opacity: 0.9; }
 
-// حفظ وقفل الاسم وإرساله للسيرفر
-function lockUsernameOnly() {
-    const usernameInput = document.getElementById('username');
-    const saveButton = document.getElementById('save-btn');
-    const logBox = document.getElementById('status-logs');
+        .balance-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #1E293B;
+            font-size: 14px;
+        }
+        .balance-val { color: #A855F7; font-weight: bold; }
 
-    if (usernameInput.value.trim() === "") {
-        alert("من فضلك أدخل اسم مستخدم أولاً!");
-        return;
+        .log-box {
+            background-color: #070D19;
+            border: 1px solid #1E293B;
+            border-radius: 6px;
+            height: 90px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 12px;
+            color: #A0AEC0;
+            text-align: center;
+        }
+        .wallet-address {
+            color: #FBBF24;
+            font-size: 12px;
+            word-break: break-all;
+            text-align: center;
+            margin-bottom: 10px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-title">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
+
+    <!-- 1. قسم حفل اسم المستخدم -->
+    <div class="card">
+        <label class="label-text">👤 اسم المستخدم الحالي:</label>
+        <input type="text" id="username" placeholder="يرجى إدخال وتثبيت اسم المستخدم أولاً">
+        <button id="save-btn" class="btn-block btn-blue" onclick="lockUsernameOnly()">💾 حفظ وقفل الحساب</button>
+    </div>
+
+    <!-- 2. عداد الفريق والجائزة -->
+    <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <span class="label-text">🏆 الجائزة الكبرى (40 عضو)</span>
+            <span style="color: #FBBF24; font-weight: bold;">2500 دولار أمريكي</span>
+        </div>
+        <div style="text-align: left;">
+            <span class="label-text">أعضاء الفريق النشطين:</span>
+            <span style="color: #22C55E; font-weight: bold;">0/40</span>
+        </div>
+    </div>
+
+    <!-- 3. حقل الإحالات البنفسجي -->
+    <div class="card" style="border-color: #6D28D9;">
+        <label class="label-text">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
+        <input type="text" id="invite-code" placeholder="أدخل كود أو اسم الشخص الذي دعاك">
+        <button class="btn-block btn-purple" onclick="sendActionToAdmin('Referans İsteği')">✨ إرسال المكافأة إلى المشرف</button>
+    </div>
+
+    <!-- 4. حقول الأرصدة الثلاثة المصفرة -->
+    <div class="card">
+        <div class="balance-row">
+            <span>إجمالي رأس المال:</span> <span class="balance-val">USDT 0.00</span>
+        </div>
+        <div class="balance-row">
+            <span>الأرباح اليومية:</span> <span class="balance-val">USDT 0.00</span>
+        </div>
+        <div class="balance-row">
+            <span>أرباح التذاكر ومكافآت الدعوة:</span> <span class="balance-val">USDT 0.00</span>
+        </div>
+    </div>
+
+    <!-- 5. بوابة السحب الفوري المباشر بثلاثة أزرار حمراء منفصلة وحقول الإدخال -->
+    <div class="card" style="border-color: #DC2626;">
+        <label class="label-text" style="color: #EF4444; text-align: center;">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20)</label>
+        <input type="number" id="withdraw-amount" placeholder="المبلغ بـ USDT">
+        <input type="text" id="withdraw-wallet" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
+        
+        <button class="btn-block btn-red" onclick="triggerWithdraw('Toplam Sermaye')">💥 سحب إجمالي رأس المال</button>
+        <button class="btn-block btn-red" onclick="triggerWithdraw('Günlük Karlar')">📊 سحب الأرباح اليومية</button>
+        <button class="btn-block btn-red" onclick="triggerWithdraw('Davetiye ve Bilet Ödülleri')">💸 سحب مكافأة الدعوة</button>
+    </div>
+
+    <!-- 6. حقل الشحن المالي الأخضر -->
+    <div class="card" style="border-color: #16A34A;">
+        <label class="label-text" style="color: #22C55E; text-align: center;">💳 محفظة الإيداع الرسمية - شبكة (USDT TRC-20)</label>
+        <span class="wallet-address" id="admin-wallet">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</span>
+        <input type="number" id="deposit-amount" value="100" placeholder="المبلغ المراد شحنه">
+        <button class="btn-block btn-green" onclick="sendActionToAdmin('Kontör yükleme bakiyesi')">⚡ إرسال طلب الإيداع للمشرف</button>
+    </div>
+
+    <!-- 7. سجل الإشعارات الحية -->
+    <div class="card">
+        <label class="label-text">📋 سجل المعاملات والإشعارات الحية</label>
+        <div class="log-box" id="status-logs">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
+    </div>
+
+    <!-- 8. زر التليجرام المباشر والآمن دون تعليق المتصفح -->
+    <button class="btn-block btn-cyan" onclick="redirectToTelegram()">🛠️ تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+</div>
+
+<!-- عزلت البرمجة هنا بالكامل داخل وسم السكربت الشرعي والنظيف لمنع تسرب النصوص للواجهة -->
+<script>
+    let currentUsername = "";
+
+    function lockUsernameOnly() {
+        const usernameInput = document.getElementById('username');
+        const saveButton = document.getElementById('save-btn');
+        const logBox = document.getElementById('status-logs');
+
+        if (usernameInput.value.trim() === "") {
+            alert("Lütfen önce bir kullanıcı adı girin!");
+            return;
+        }
+
+        currentUsername = usernameInput.value.trim();
+        usernameInput.disabled = true;
+        saveButton.disabled = true;
+        
+        logBox.innerHTML = `<div>🟢 Hesabınız doğrulandı: ${currentUsername}</div>`;
+
+        fetch('/api/register-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUsername })
+        });
     }
 
-    currentUsername = usernameInput.value.trim();
-    usernameInput.disabled = true;
-    saveButton.disabled = true;
-    
-    logBox.innerHTML = `<div>🟢 تم تثبيت حسابك: ${currentUsername}</div>`;
+    function triggerWithdraw(type) {
+        const amount = document.getElementById('withdraw-amount').value;
+        const wallet = document.getElementById('withdraw-wallet').value;
+        
+        if (!amount || !wallet) {
+            alert("Lütfen tutar ve cüzdan adresini girin!");
+            return;
+        }
 
-    fetch('/api/register-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: currentUsername })
-    });
-}
-
-// دالة السحب الفوري المباشر للأزرار الحمراء المنفصلة
-function triggerWithdraw(type) {
-    const amount = document.getElementById('withdraw-amount').value;
-    const wallet = document.getElementById('withdraw-wallet').value;
-    
-    if (!amount || !wallet) {
-        alert("الرجاء إدخال المبلغ وعنوان المحفظة!");
-        return;
+        sendDataToServer({
+            username: currentUsername,
+            type: `Süreç: ${type} Para Çekme`,
+            amount: amount,
+            wallet: wallet,
+            details: 'TRC20 Anlık Para Çekme Talebi'
+        });
     }
 
-    sendDataToServer({
-        username: currentUsername,
-        type: `سحب ${type}`,
-        amount: amount,
-        wallet: wallet,
-        details: `طلب سحب فوري لشبكة TRC20`
-    });
-}
+    function sendActionToAdmin(actionMessage) {
+        const depositAmount = document.getElementById('deposit-amount').value;
+        
+        sendDataToServer({
+            username: currentUsername,
+            type: actionMessage,
+            amount: actionMessage.includes('Kontör') ? depositAmount : "0",
+            wallet: "TRC-20 Network",
+            details: "Süreç, denetim kurulu üyelerine canlı olarak başarıyla yayınlandı."
+        });
+    }
 
-// دالة الشحن الأخضر والإحالة البنفسجية الموحدة
-function sendActionToAdmin(actionMessage) {
-    const depositAmount = document.getElementById('deposit-amount').value;
-    
-    sendDataToServer({
-        username: currentUsername,
-        type: actionMessage.includes('إيداع') ? "شحن رصيد" : "طلب إحالة",
-        amount: actionMessage.includes('إيداع') ? depositAmount : "0",
-        wallet: "TRC-20 Network",
-        details: actionMessage
-    });
-}
+    function sendDataToServer(payload) {
+        const logBox = document.getElementById('status-logs');
+        
+        fetch('/api/submit-request', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(() => {
+            logBox.innerHTML += `<div style="color: #22C55E;">✔️ Süreç, denetim kurulu üyelerine canlı olarak başarıyla yayınlandı.</div>`;
+            logBox.scrollTop = logBox.scrollHeight;
+        })
+        .catch(() => {
+            logBox.innerHTML += `<div style="color: #EF4444;">❌ Bulut veri akışında hata oluştu.</div>`;
+        });
+    }
 
-// إرسال كود موحد ومنع تجمد الواجهة نهائياً
-function sendDataToServer(payload) {
-    const logBox = document.getElementById('status-logs');
-    
-    fetch('/api/submit-request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        logBox.innerHTML += `<div style="color: #22C55E;">✔️ تم بث العملية حياً إلى لوحة المشرف بنجاح.</div>`;
-        logBox.scrollTop = logBox.scrollHeight;
-    })
-    .catch(() => {
-        logBox.innerHTML += `<div style="color: #EF4444;">❌ خطأ في بث البيانات السحابية.</div>`;
-    });
-}
-
-function redirectToTelegram() {
-    window.open('https://t.me', '_blank');
-}
+    function redirectToTelegram() {
+        window.open('https://t.me', '_blank');
+    }
+</script>
+</body>
+</html>
