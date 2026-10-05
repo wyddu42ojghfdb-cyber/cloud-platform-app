@@ -7,50 +7,47 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// قاعدة بيانات سحابية مرنة داخل الذاكرة لحفظ الحسابات والطلبات حياً
 let users = {};
 let pendingRequests = [];
 
-// 1. مسار حفظ وقفل الحساب لشاشة المستخدم الكبرى
+// 1. مسار تسجيل الدخول للحساب وتحديث الخانات الثلاثية للشاشة الكبرى
 app.post('/backend/user/login', (req, res) => {
     const { username } = req.body;
     if (!username) return res.status(400).json({ success: false, message: 'Kullanıcı adı gerekli' });
     
-    // إذا كان المستخدم جديداً، يتم تصفير كافة الحقول لتطابق مظهر الشاشة النظيف
     if (!users[username]) {
         users[username] = {
             username: username,
-            balance: 0.00,      // إجمالي رأس المال
-            todayProfit: 0.00,  // الأرباح اليومية
-            bonus: 0.00,        // أرباح التذاكر ومكافآت الدعوة
-            teamCount: 0,       // عداد الفريق النشط
-            history: []         // سجل المعاملات والإشعارات
+            balance: 0.00,
+            todayProfit: 0.00,
+            bonus: 0.00,
+            teamCount: 0,
+            history: []
         };
     }
     res.json({ success: true, user: users[username] });
 });
 
-// 2. مسار صَفْق واستقبال طلبات الإيداع، السحب الثلاثي، ومكافآت الدعوة
+// 2. مسار استقبال وصَفْق طلبات الإيداع والسحب الثلاثي ومكافآت الإحالة
 app.post('/backend/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
-    if (!username || !amount) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
+    if (!username || !amount || !type) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
     
     const newRequest = {
         id: Date.now(),
         username,
         amount: parseFloat(amount),
-        type, // deposit أو withdraw أو invite_bonus
+        type, // deposit أو withdraw_capital أو withdraw_daily أو withdraw_bonus أو invite_bonus
         walletAddress,
         status: 'pending',
         date: new Date().toLocaleString('tr-TR')
     };
     
-    // تمرير وبث الطلب إلى جدول المشرف فوراً
     pendingRequests.push(newRequest);
-    res.json({ success: true, message: '⚡ تم إرسال طلبك بنجاح وهو قيد المراجعة الفورية من الإدارة!' });
+    res.json({ success: true, message: '⚡ تم استلام طلبك بنجاح وهو قيد المراجعة الفورية من الإدارة!' });
 });
 
-// 3. مسار بث وتحديث البيانات حياً داخل لوحة المشرف الموحدة
+// 3. مسار جلب كافة العمليات والحسابات الحية لتظهر في جداول المشرف المحدثة
 app.get('/backend/admin/requests', (req, res) => {
     res.json({ 
         success: true, 
@@ -60,34 +57,38 @@ app.get('/backend/admin/requests', (req, res) => {
     });
 });
 
-// 4. مسار معالجة الموافقات والرفض من لوحة المشرف وتحديث الخانات بالملي
+// 4. مسار معالجة الموافقات والرفض من لوحة المشرف وتحديث الأرصدة الثلاثية المنفصلة
 app.post('/backend/admin/action', (req, res) => {
     const { id, action, username, type, amount } = req.body;
     
     if (action === 'approve' && users[username]) {
+        const amt = parseFloat(amount);
         if (type === 'deposit') {
-            users[username].balance += parseFloat(amount);
-            users[username].todayProfit += (parseFloat(amount) * 0.15); // تفعيل أرباح الـ 15% تلقائياً عند الشحن
-            users[username].history.push({ message: `✅ إيداع معتمد ومؤكد: +${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
-        } else if (type === 'withdraw') {
-            // سحب ذكي مخصوم من إجمالي رأس المال
-            users[username].balance -= parseFloat(amount);
-            users[username].history.push({ message: `💸 سحب معتمد ومؤكد: -${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].balance += amt;
+            users[username].todayProfit += (amt * 0.15); // إضافة ربحية الـ 15% مباشرة عند موافقة الشحن
+            users[username].history.push({ message: `✅ شحن رصيد معتمد ومؤكد: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+        } else if (type === 'withdraw_capital') {
+            users[username].balance -= amt;
+            users[username].history.push({ message: `💸 سحب رأس مال معتمد ومؤكد: -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+        } else if (type === 'withdraw_daily') {
+            users[username].todayProfit -= amt;
+            users[username].history.push({ message: `📊 سحب أرباح يومية معتمد ومؤكد: -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+        } else if (type === 'withdraw_bonus') {
+            users[username].bonus -= amt;
+            users[username].history.push({ message: `💸 سحب مكافآت معتمد ومؤكد: -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'invite_bonus') {
-            // إضافة مكافأة الدعوة البنفسجية وتحديث العداد
-            users[username].bonus += parseFloat(amount);
-            users[username].balance += parseFloat(amount);
-            users[username].teamCount += 1;
-            users[username].history.push({ message: `🍇 مكافأة دعوة صديق معتمدة: +${amount} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].bonus += amt;
+            users[username].balance += amt; // إضافة المكافأة البنفسجية للرصيد
+            users[username].teamCount += 1; // زيادة عداد الفريق 0/40 تلقائياً
+            users[username].history.push({ message: `🍇 مكافأة دعوة صديق معتمدة: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     }
     
-    // إزالة الطلب بعد صَفْقه ومعالجته بنجاح
     pendingRequests = pendingRequests.filter(r => r.id !== parseInt(id));
     res.json({ success: true });
 });
 
-// 5. مسار بث الأرباح الجماعي اليومي بنسبة 15% للمشتركين النشطين
+// 5. مسار بث الأرباح الجماعي بنسبة 15% للمشتركين النشطين عبر زر المدير
 app.post('/backend/admin/distribute-profit', (req, res) => {
     Object.keys(users).forEach(username => {
         let u = users[username];
@@ -95,13 +96,13 @@ app.post('/backend/admin/distribute-profit', (req, res) => {
             let profitGenerated = u.balance * 0.15;
             u.todayProfit += profitGenerated;
             u.balance += profitGenerated;
-            u.history.push({ message: `📊 تم بث عوائد التداول اليومية بنسبة 15%: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
+            u.history.push({ message: `📊 تم بث عوائد تداول يومية بنسبة 15%: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     });
     res.json({ success: true });
 });
 
-// 6. مسار جلب سجل المعاملات التاريخية لشاشة المستخدم الكبرى
+// 6. مسار قراءة سجل الإشعارات الحية لشاشة المستخدم الكبرى
 app.get('/backend/user/history', (req, res) => {
     const { username } = req.query;
     if (users[username]) {
@@ -111,9 +112,8 @@ app.get('/backend/user/history', (req, res) => {
     }
 });
 
-// مسارات ربط الواجهات البرمجية
 app.get('/panel', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('محرّك السيرفر الموحد يعمل بأعلى كفاءة...'));
+app.listen(PORT, () => console.log('محرّك السيرفر المحدث متصل حياً...'));
