@@ -31,7 +31,6 @@
 <body>
 
 <div class="container">
-    <!-- قائمة اختيار اللغات المترابطة -->
     <select id="langSelect" onchange="switchLanguage(this.value)" style="margin-bottom: 20px; background: #1e293b;">
         <option value="ar">🇸🇦 العربية</option>
         <option value="tr">🇹🇷 Türkçe</option>
@@ -74,9 +73,9 @@
     </div>
 
     <div class="info-box" style="border-color: #ef4444;">
-        <div style="text-align: center; font-size: 13px; color: #ef4444; margin-bottom: 8px;" id="txt-withdraw-title">🚨 لوحة عمليات السحب الفوري (شبكة TRC-20):</div>
+        <div style="text-align: center; font-size: 13px; color: #ef4444; margin-bottom: 8px;" id="txt-withdraw-title">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20):</div>
         <input type="number" id="withdrawAmount" placeholder="المبلغ بـ USDT">
-        <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك">
+        <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
         
         <button class="btn-red" onclick="sendWithdrawRequest('capital')" id="btn-w1">💥 سحب إجمالي رأس المال</button>
         <button class="btn-red" onclick="sendWithdrawRequest('daily')" id="btn-w2">📊 سحب الأرباح اليومية</button>
@@ -84,9 +83,9 @@
     </div>
 
     <div class="crypto-box">
-        <span id="txt-dep-title" style="font-size: 13px; color: #eab308;">📥 إرسال طلب إيداع (USDT TRC-20):</span>
+        <span id="txt-dep-title" style="font-size: 13px; color: #eab308;">📥 محفظة الإيداع الرسمية - شبكة USDT (TRC-20):</span>
         <strong class="crypto-address">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</strong>
-        <input type="number" id="depositAmount" placeholder="أدخل المبلغ بعد التحويل" style="margin-top: 10px;">
+        <input type="number" id="depositAmount" placeholder="أدخل مبلغ الشحن بـ USDT" style="margin-top: 10px;">
         <button class="btn-green" onclick="sendDepositRequest()" id="btn-dep-action">⚡ إرسال طلب الإيداع للمشرف</button>
     </div>
 
@@ -97,12 +96,12 @@
         </div>
     </div>
 
-    <!-- زر تليجرام المعاد ربطه بصفحتك الشخصية -->
-    <button class="btn-cyan" onclick="window.open('https://t.me', '_blank')", id="btn-support">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+    <button class="btn-cyan" onclick="window.open('https://t.me', '_blank')" id="btn-support">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    // تثبيت رابط السيرفر الحقيقي بشكل قطعي لضمان وصول الطلبات دائماً
+    const API_URL = "https://onrender.com"; 
     let currentUsername = "";
 
     async function loginUser() {
@@ -121,11 +120,10 @@
                 updateUI(data.user);
                 alert("تم التحقق وحفظ الحساب بنجاح!");
                 loadHistory();
-                // تفعيل التحديث التلقائي المستمر كل 4 ثوانٍ لقراءة قرارات المشرف فوراً
                 setInterval(refreshUserData, 4000); 
             }
         } catch (err) {
-            alert("خطأ في الاتصال بالسيرفر");
+            alert("خطأ في الاتصال بالخادم، تأكد من تحديث ونشر السيرفر");
         }
     }
 
@@ -184,4 +182,5 @@
     }
 
     async function sendWithdrawRequest(wType) {
+        if(!currentUsername) return alert("يرجى قفل الاسم أولاً!");
         
