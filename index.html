@@ -1,11 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" translate="no">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google" content="notranslate">
-    <link rel="manifest" href="/manifest.json">
-    <title>منصة سحابية - المنظومة العالمية</title>
+    <title>منصة سحابية - المنظومة المتكاملة</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
@@ -87,26 +85,23 @@
 </div>
 
 <script>
-    // ربط الواجهة العالمية بعنوان خادم ريندر الحقيقي والمفتوح الأمان لمنع تجمد الأزرار
-    const API_URL = "https://onrender.com";
+    const API_URL = window.location.origin;
     let currentUsername = "";
     let pollTimer = null;
-    let isRefreshing = false;
 
     const $ = (id) => document.getElementById(id);
 
+    // دالة الإرسال الفورية لمنع أي تجميد
     async function apiPost(path, payload) {
-        try {
-            const res = await fetch(API_URL + path, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            return await res.json();
-        } catch (e) { throw e; }
+        const res = await fetch(API_URL + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        return await res.json();
     }
 
-    // خطتك الفخمة: قفل حقل الاسم وزر الحفظ الخاص به وحدهما فوراً وبدون تجميد بقية الأزرار
+    // قفل الحقل والزر بشكل فوري ومحلي 
     function lockNameField() {
         $('usernameInput').disabled = true;
         $('btn-login-action').disabled = true;
@@ -114,35 +109,20 @@
         $('txt-user-sub').style.color = "#22c55e";
     }
 
-    function unlockNameField() {
-        $('usernameInput').disabled = false;
-        $('btn-login-action').disabled = false;
-    }
-
     async function loginUser() {
         const username = $('usernameInput').value.trim();
         if (!username) return alert("الرجاء كتابة الاسم أولاً");
 
         currentUsername = username;
-        lockNameField();
+        lockNameField(); // القفل الفوري محلياً لمنع تجميد الشاشة نهائياً
 
         try {
             const data = await apiPost("/backend/user/login", { username: currentUsername });
             if (data && data.user) updateUI(data.user);
-            try { localStorage.setItem('savedUsername', currentUsername); } catch (e) {}
-            startPolling();
+            if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
         } catch (e) {
             console.error(e);
-            currentUsername = "";
-            unlockNameField();
-            alert("تعذّر حفظ الاسم، تحقق من اتصال السيرفر وأعد المحاولة");
         }
-    }
-
-    function startPolling() {
-        if (pollTimer) return;
-        refreshData();
-        pollTimer = setInterval(refreshData, 3000);
     }
 
     function updateUI(user) {
@@ -153,15 +133,11 @@
     }
 
     async function refreshData() {
-        if (!currentUsername || isRefreshing) return;
-        isRefreshing = true;
+        if (!currentUsername) return;
         try {
-            const data = await apiPost("/backend/user/login", { username: currentUsername });
-            if (data && data.success && data.user) updateUI(data.user);
-
-            const hRes = await fetch(API_URL + "/backend/user/history?username=" + encodeURIComponent(currentUsername));
-            if (hRes.ok) {
-                const hData = await hRes.json();
+            const res = await fetch(API_URL + "/backend/user/history?username=" + encodeURIComponent(currentUsername));
+            if (res.ok) {
+                const hData = await res.json();
                 const box = $('logs-container');
                 if (hData.history && hData.history.length > 0) {
                     box.innerHTML = "";
@@ -173,7 +149,7 @@
                     });
                 }
             }
-        } catch (e) { console.warn('refresh failed', e); } finally { isRefreshing = false; }
+        } catch (e) {}
     }
 
     async function sendDepositRequest() {
@@ -190,4 +166,28 @@
             });
             alert("⚡ تم إرسال طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة!");
             $('depositAmount').value = "";
-            
+        } catch (e) { alert("خطأ في شبكة التوصيل"); }
+    }
+
+    async function sendWithdrawRequest(wType) {
+        if (!currentUsername) return alert("يرجى كتابة الاسم والضغط على زر حفظ وقفل الحساب أولاً!");
+        const amount = parseFloat($('withdrawAmount').value);
+        const wallet = $('walletInput').value.trim();
+        if (!amount || amount <= 0 || !wallet) return alert("الرجاء ملء خانات المبلغ والمحفظة!");
+
+        try {
+            await apiPost("/backend/user/request", {
+                username: currentUsername,
+                amount: amount,
+                type: wType,
+                walletAddress: wallet
+            });
+            alert("💸 تم إرسال طلب السحب بنجاح وهو قيد المراجعة الفورية!");
+            $('withdrawAmount').value = "";
+            $('walletInput').value = "";
+        } catch (e) { alert("خطأ في شبكة التوصيل"); }
+    }
+
+    async function sendInviteRequest() {
+        if (!currentUsername) return alert("يرجى كتابة الاسم والضغط على زر حفظ وقفل الحساب أولاً!");
+        
