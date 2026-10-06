@@ -3,29 +3,35 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// قاعدة بيانات محلية مؤقتة لحفظ أسماء المستخدمين وأرصدتهم الحقيقية المعتمدة
 let usersDB = {};
 let pendingRequests = [];
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// جلب بيانات رصيد المستخدم حياً لشاشته
+// دالة لتوليد تاريخ اليوم الفعلي بالكامل
+function getFormattedDate() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const time = today.toLocaleTimeString('ar-EG');
+    return `${yyyy}-${mm}-${dd} | الساعة: ${time}`;
+}
+
 app.get('/api/user-data', (req, res) => {
     const { username } = req.query;
     if (!usersDB[username]) {
-        usersDB[username] = { totalBalance: "0.00", dailyProfit: "0.00" };
+        usersDB[username] = { totalBalance: "0.00", dailyProfit: "0.00", logs: [] };
     }
     res.json({ success: true, user: usersDB[username] });
 });
 
-// استقبال طلبات الشحن من شاشة المستخدم
 app.post('/api/submit-request', (req, res) => {
     const { username, type, amount, wallet } = req.body;
     
-    // حفظ الاسم في الذاكرة تلقائياً عند تقديم الطلب إذا لم يكن موجوداً
     if (!usersDB[username]) {
-        usersDB[username] = { totalBalance: "0.00", dailyProfit: "0.00" };
+        usersDB[username] = { totalBalance: "0.00", dailyProfit: "0.00", logs: [] };
     }
 
     pendingRequests.push({
@@ -38,7 +44,6 @@ app.post('/api/submit-request', (req, res) => {
     res.json({ success: true });
 });
 
-// جلب الطلبات وجدول الحسابات لشاشة المشرف
 app.get('/api/admin/requests', (req, res) => res.json(pendingRequests));
 app.get('/api/admin/users', (req, res) => {
     const list = Object.keys(usersDB).map(name => ({
@@ -51,7 +56,7 @@ app.get('/api/admin/users', (req, res) => {
     res.json(list);
 });
 
-// موافقة المشرف وتطبيق الرصيد المطلوب بالظبط على شاشة العضو
+// موافقة المشرف وتوليد رسالة النجاح بتاريخ اليوم تلقائياً
 app.post('/api/admin/action', (req, res) => {
     const { requestId, action } = req.body;
     const target = pendingRequests.find(r => r.id === requestId);
@@ -60,17 +65,19 @@ app.post('/api/admin/action', (req, res) => {
         const user = usersDB[target.username];
         if (user) {
             const numAmount = parseFloat(target.amount) || 0;
-            // إضافة المبلغ الذي طلبه العضو ووافق عليه المشرف مباشرة
             const current = parseFloat(user.totalBalance) || 0;
             user.totalBalance = (current + numAmount).toFixed(2);
+            
+            // توليد رسالة النجاح حياً مع تاريخ اليوم الفعلي وتخزينها للمستخدم
+            const dateStr = getFormattedDate();
+            const logMessage = `✔️ تم الإيداع بنجاح بمبلغ ${numAmount} USDT بتاريخ: ${dateStr}`;
+            user.logs.unshift(logMessage); // إضافة الإشعار في بداية السجل
         }
     }
-    // مسح الطلب من جدول الانتظار بعد معالجته
     pendingRequests = pendingRequests.filter(r => r.id !== requestId);
     res.json({ success: true });
 });
 
-// زر توزيع أرباح 15% بناءً على الرصيد المشحون
 app.post('/api/admin/distribute-profits', (req, res) => {
     Object.keys(usersDB).forEach(name => {
         const user = usersDB[name];
