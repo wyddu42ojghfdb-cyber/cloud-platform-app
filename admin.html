@@ -2,40 +2,226 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة المشرف العربية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم وإدارة المنظومة السحابية 💻</title>
     <style>
-        body { background-color: #0B1425; color: #E2E8F0; font-family: sans-serif; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #111C32; }
-        th, td { padding: 12px; border: 1px solid #1E293B; text-align: center; }
-        th { background: #1E293B; color: #38BDF8; }
+        body {
+            background-color: #0B1425;
+            color: #E2E8F0;
+            font-family: sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+        .admin-container {
+            max-width: 950px;
+            margin: 0 auto;
+        }
+        .header-panel {
+            background-color: #111C32;
+            border: 1px solid #1E293B;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h2 { color: #38BDF8; margin: 0; font-size: 20px; }
+        .counter-box {
+            background-color: #070D19;
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid #1E293B;
+            font-weight: bold;
+        }
+        .section-title {
+            font-size: 15px;
+            color: #F8FAFC;
+            margin: 20px 0 10px 0;
+            display: block;
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #111C32;
+            border: 1px solid #1E293B;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        th {
+            background-color: #1E293B;
+            color: #38BDF8;
+            padding: 12px;
+            text-align: center;
+        }
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #1E293B;
+            color: #94A3B8;
+        }
+        tr:hover { background-color: #16253F; }
+        .btn-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            margin: 0 2px;
+            color: white;
+        }
+        .btn-approve { background-color: #16A34A; }
+        .btn-reject { background-color: #DC2626; }
+        .btn-distribute {
+            background-color: #2563EB;
+            color: white;
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+        .status-badge {
+            background-color: #B45309;
+            color: #FBBF24;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
 
-    <h2>💻 لوحة تحكم وإدارة المنظومة العربية الحية</h2>
-    <h3>📥 طلبات الأعضاء الواردة حياً (سحب / شحن)</h3>
+<div class="admin-container">
     
+    <!-- القسم العلوي وعداد الأعضاء المسجلين -->
+    <div class="header-panel">
+        <h2>💻 لوحة تحكم وإدارة المنظومة السحابية الحية</h2>
+        <div class="counter-box">
+            👥 عدد المستخدمين النشطين: <span id="total-users-count" style="color: #22C55E;">0</span>
+        </div>
+    </div>
+
+    <!-- زر توزيع الأرباح بنسبة 15% المفقود في صورتك -->
+    <button class="btn-distribute" onclick="distributeDailyProfit()">⚙️ الإجراءات الجماعية اليومية: توزيع الأرباح المباشرة للمجموعات (%15) 💰</button>
+
+    <!-- الجدول الأول: طلبات الأعضاء المرفق بها أزرار التحكم -->
+    <span class="section-title">📥 طلبات الأعضاء الواردة حياً (سحب / شحن)</span>
     <table>
         <thead>
-            <tr><th>اسم المستخدم</th><th>نوع الإجراء</th><th>المبلغ المطلوب</th><th>المحفظة المستهدفة</th></tr>
+            <tr>
+                <th>اسم المستخدم</th>
+                <th>نوع الإجراء</th>
+                <th>المبلغ المطلوب</th>
+                <th>المحفظة المستهدفة</th>
+                <th>أزرار التحكم والإجراء</th>
+            </tr>
         </thead>
-        <tbody id="req-table"></tbody>
+        <tbody id="requests-table-body">
+            <tr><td colspan="5" style="color:#64748B;">في انتظار بث أي طلبات جديدة...</td></tr>
+        </tbody>
     </table>
 
+    <!-- الجدول الثاني: مراقبة وتحديث الأرصدة الحية للأعضاء -->
+    <span class="section-title">📊 المراقبة الحية الكاملة وتحديث أرصدة حسابات الأعضاء</span>
+    <table>
+        <thead>
+            <tr>
+                <th>اسم المستخدم</th>
+                <th>إجمالي رأس المال</th>
+                <th>الأرباح اليومية المحدثة</th>
+                <th>مكافآت التذاكر والدعوات</th>
+                <th>أعضاء الفريق النشطين</th>
+            </tr>
+        </thead>
+        <tbody id="users-table-body">
+            <tr><td colspan="5" style="color:#64748B;">لم يقم أي مستخدم بتثبيت اسمه بعد...</td></tr>
+        </tbody>
+    </table>
+
+</div>
+
 <script>
-    function loadData() {
+    function fetchDashboardData() {
+        // 1. جلب طلبات السحب والشحن وبناء أزرار التحكم حياً
         fetch('/api/admin/requests')
         .then(res => res.json())
-        .then(data => {
-            const body = document.getElementById('req-table');
-            body.innerHTML = data.length === 0 ? '<tr><td colspan="4" style="color:#64748B;">لا توجد طلبات معلقة حالياً...</td></tr>' : '';
-            data.forEach(r => {
-                body.innerHTML += `<tr><td style="color:#FFF; font-weight:bold;">${r.username}</td><td>${r.type}</td><td style="color:#22C55E;">USDT ${r.amount}</td><td>${r.wallet}</td></tr>`;
+        .then(requests => {
+            const reqBody = document.getElementById('requests-table-body');
+            if (!requests || requests.length === 0) {
+                reqBody.innerHTML = `<tr><td colspan="5" style="color:#64748B;">لا توجد أي طلبات معلقة حالياً.</td></tr>`;
+                return;
+            }
+            reqBody.innerHTML = '';
+            requests.forEach(req => {
+                reqBody.innerHTML += `
+                    <tr>
+                        <td style="color: #FFF; font-weight: bold;">${req.username}</td>
+                        <td><span class="status-badge">${req.type}</span></td>
+                        <td style="color: #22C55E; font-weight: bold;">USDT ${req.amount}</td>
+                        <td>${req.wallet}</td>
+                        <td>
+                            <button class="btn-action btn-approve" onclick="processAction(${req.id}, 'onayla')">موافقة وتحديث رصيده</button>
+                            <button class="btn-action btn-reject" onclick="processAction(${req.id}, 'reddet')">رفض</button>
+                        </td>
+                    </tr>`;
+            });
+        });
+
+        // 2. جلب وتحديث الأرصدة وعداد الأعضاء
+        fetch('/api/admin/users')
+        .then(res => res.json())
+        .then(users => {
+            const userBody = document.getElementById('users-table-body');
+            document.getElementById('total-users-count').innerText = users.length;
+            if (!users || users.length === 0) {
+                userBody.innerHTML = `<tr><td colspan="5" style="color:#64748B;">لا يوجد أي أعضاء مسجلين نشطين.</td></tr>`;
+                return;
+            }
+            userBody.innerHTML = '';
+            users.forEach(user => {
+                userBody.innerHTML += `
+                    <tr>
+                        <td style="color: #38BDF8; font-weight: bold;">${user.username}</td>
+                        <td style="color: #FFF;">${user.totalBalance}</td>
+                        <td style="color: #A855F7; font-weight: bold;">${user.dailyProfit}</td>
+                        <td style="color: #FBBF24;">${user.bonus}</td>
+                        <td style="color: #22C55E; font-weight: bold;">${user.activeTeam}/40</td>
+                    </tr>`;
             });
         });
     }
-    setInterval(loadData, 2000);
-    loadData();
+
+    function processAction(requestId, actionType) {
+        fetch('/api/admin/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId: requestId, action: actionType })
+        })
+        .then(res => res.json())
+        .then(() => {
+            alert(actionType === 'onayla' ? "تمت الموافقة وتحديث الأرصدة بنجاح!" : "تم رفض وإلغاء الطلب.");
+            fetchDashboardData();
+        });
+    }
+
+    function distributeDailyProfit() {
+        fetch('/api/admin/distribute-profits', { method: 'POST' })
+        .then(res => res.json())
+        .then(() => {
+            alert("تم توزيع الأرباح بنسبة 15% لجميع الأعضاء حياً ومباشرة!");
+            fetchDashboardData();
+        });
+    }
+
+    setInterval(fetchDashboardData, 2000);
+    fetchDashboardData();
 </script>
 </body>
 </html>
