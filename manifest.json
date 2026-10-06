@@ -1,0 +1,17 @@
+{
+  "short_name": "CloudApp",
+  "name": "Cloud Platform App",
+  "icons": [
+    {
+      "src": "https://flaticon.com",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/panel",
+  "background_color": "#0d1527",
+  "theme_color": "#152238",
+  "display": "standalone",
+  "orientation": "portrait"
+}
