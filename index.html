@@ -13,13 +13,12 @@
         input { width: 100%; padding: 12px; box-sizing: border-box; border-radius: 6px; border: 1px solid #1E293B; background-color: #070D19; color: #FFFFFF; text-align: center; margin-bottom: 10px; }
         .btn-block { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 8px; display: block; }
         .btn-blue { background-color: #2563EB; color: white; }
-        .btn-purple { background-color: #7C3AED; color: white; }
-        .btn-red { background-color: #DC2626; color: white; }
         .btn-green { background-color: #16A34A; color: white; }
         .btn-cyan { background-color: #0088cc; color: white; }
         .balance-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1E293B; }
         .balance-val { color: #22C55E; font-weight: bold; }
-        .log-box { background-color: #070D19; border: 1px solid #1E293B; border-radius: 6px; height: 60px; padding: 10px; font-size: 12px; color: #A0AEC0; text-align: center; }
+        .log-box { background-color: #070D19; border: 1px solid #1E293B; border-radius: 6px; height: 100px; padding: 10px; font-size: 12px; color: #A0AEC0; text-align: right; overflow-y: auto; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px dashed #1E293B; padding-bottom: 3px; }
     </style>
 </head>
 <body>
@@ -52,7 +51,7 @@
         <div class="balance-row"><span>الأرباح اليومية (%15):</span> <span class="balance-val" style="color: #A855F7;" id="user-profit">USDT 0.00</span></div>
     </div>
 
-    <!-- 4. الشحن الأخضر (المبلع المراد إضافته) -->
+    <!-- 4. الشحن الأخضر -->
     <div class="card" style="border-color: #16A34A;">
         <label class="label-text" style="color: #22C55E; text-align: center; font-weight: bold;">💳 محفظة الإيداع الرسمية - شبكة (USDT TRC-20)</label>
         <span style="color: #FBBF24; display:block; text-align:center; font-size:12px; margin-bottom:5px;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</span>
@@ -60,7 +59,7 @@
         <button class="btn-block btn-green" id="btn-deposit" onclick="sendDeposit()">⚡ إرسال طلب الشحن للمشرف</button>
     </div>
 
-    <!-- 5. سجل الإشعارات الحية للمستخدم -->
+    <!-- 5. سجل الإشعارات الحية المطور بالتاريخ اليومي -->
     <div class="card">
         <label class="label-text">📋 سجل المعاملات والإشعارات الحية</label>
         <div class="log-box" id="status-logs">يرجى قفل الاسم أولاً لبدء العمل...</div>
@@ -82,30 +81,33 @@
         activeUsername = nameInput.value.trim();
         nameInput.disabled = true;
         document.getElementById('save-btn').disabled = true;
-        document.getElementById('status-logs').innerText = "تم تأكيد الاسم برمجياً ومراقبة الرصيد الحقيقي...";
+        document.getElementById('status-logs').innerText = "تم تأكيد الاسم برمجياً ومراقبة العمليات...";
         
-        // جلب رصيد الاسم إذا كان مسجلاً مسبقاً لمنع التصفير
         checkLiveBalance();
-        setInterval(checkLiveBalance, 2000); // التحقق من الرصيد كل ثانيتين
+        setInterval(checkLiveBalance, 2000); // تحديث الأرصدة والإشعارات كل ثانيتين حياً
     }
 
     function sendDeposit() {
         if(!activeUsername) return alert("الرجاء إدخال الاسم وقفله أولاً!");
         const amt = document.getElementById('deposit-amount').value;
         const logBox = document.getElementById('status-logs');
-        logBox.innerText = `جاري إرسال طلب شحن بمبلغ ${amt} USDT في انتظار موافقة المشرف...`;
         
         fetch('/api/submit-request', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 username: activeUsername,
-                type: "طلب شحن رصيد",
+                type: "إيداع",
                 amount: amt,
                 wallet: "شبكة الإيداع الرسمية"
             })
         }).then(() => {
-            logBox.innerText = `✔️ تم إرسال طلب الـ ${amt} USDT بنجاح! انتظر قبول المشرف لتحديث شاشتك.`;
+            const entry = document.createElement('div');
+            entry.className = "log-entry";
+            entry.style.color = "#FBBF24";
+            entry.innerText = `⏳ تم إرسال طلب إيداع بمبلغ ${amt} USDT للمشرف...`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
         });
     }
 
@@ -117,6 +119,19 @@
             if(data.success) {
                 document.getElementById('user-capital').innerText = `USDT ${data.user.totalBalance}`;
                 document.getElementById('user-profit').innerText = `USDT ${data.user.dailyProfit}`;
+                
+                // تحديث سجل الإشعارات الحية بالتواريخ القادمة من السيرفر
+                const logBox = document.getElementById('status-logs');
+                if (data.user.logs && data.user.logs.length > 0) {
+                    logBox.innerHTML = "";
+                    data.user.logs.forEach(logText => {
+                        const entry = document.createElement('div');
+                        entry.className = "log-entry";
+                        entry.style.color = "#22C55E";
+                        entry.innerText = logText;
+                        logBox.appendChild(entry);
+                    });
+                }
             }
         });
     }
