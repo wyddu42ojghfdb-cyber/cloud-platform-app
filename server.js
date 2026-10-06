@@ -3,91 +3,88 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-let users = {}; 
-let pendingRequests = []; 
+// قاعدة بيانات محلية مؤقتة لحفظ أسماء المستخدمين وأرصدتهم الحقيقية المعتمدة
+let usersDB = {};
+let pendingRequests = [];
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// 1. تسجيل مستخدم جديد أو جلب بيانات أرصاده
-app.post('/api/register-user', (req, res) => {
-    const { username } = req.body;
-    if (!username) return res.status(400).json({ error: "الاسم مطلوب" });
-    if (!users[username]) {
-        users[username] = {
-            username: username,
-            totalBalance: "USDT 0.00",
-            dailyProfit: "USDT 0.00",
-            bonus: "USDT 0.00",
-            activeTeam: 0
-        };
+// جلب بيانات رصيد المستخدم حياً لشاشته
+app.get('/api/user-data', (req, res) => {
+    const { username } = req.query;
+    if (!usersDB[username]) {
+        usersDB[username] = { totalBalance: "0.00", dailyProfit: "0.00" };
     }
-    res.json({ success: true });
+    res.json({ success: true, user: usersDB[username] });
 });
 
-// 2. استقبال المعاملات من المستخدم
+// استقبال طلبات الشحن من شاشة المستخدم
 app.post('/api/submit-request', (req, res) => {
     const { username, type, amount, wallet } = req.body;
-    const newRequest = {
+    
+    // حفظ الاسم في الذاكرة تلقائياً عند تقديم الطلب إذا لم يكن موجوداً
+    if (!usersDB[username]) {
+        usersDB[username] = { totalBalance: "0.00", dailyProfit: "0.00" };
+    }
+
+    pendingRequests.push({
         id: Date.now(),
-        username: username || "مستخدم زائر",
-        type: type,
-        amount: amount || "0",
-        wallet: wallet || "---"
-    };
-    pendingRequests.push(newRequest);
+        username,
+        type,
+        amount,
+        wallet
+    });
     res.json({ success: true });
 });
 
-// 3. جلب الطلبات للمشرف
-app.get('/api/admin/requests', (req, res) => {
-    res.json(pendingRequests);
-});
-
-// 4. جلب قائمة الحسابات للمشرف
+// جلب الطلبات وجدول الحسابات لشاشة المشرف
+app.get('/api/admin/requests', (req, res) => res.json(pendingRequests));
 app.get('/api/admin/users', (req, res) => {
-    res.json(Object.values(users));
+    const list = Object.keys(usersDB).map(name => ({
+        username: name,
+        totalBalance: `USDT ${usersDB[name].totalBalance}`,
+        dailyProfit: `USDT ${usersDB[name].dailyProfit}`,
+        bonus: "USDT 0.00",
+        activeTeam: "0"
+    }));
+    res.json(list);
 });
 
-// 5. اتخاذ إجراء المشرف (تحديث الأرصدة الفعلي بعد الموافقة)
+// موافقة المشرف وتطبيق الرصيد المطلوب بالظبط على شاشة العضو
 app.post('/api/admin/action', (req, res) => {
     const { requestId, action } = req.body;
-    const targetRequest = pendingRequests.find(r => r.id === requestId);
+    const target = pendingRequests.find(r => r.id === requestId);
     
-    if (targetRequest && action === 'onayla') {
-        const user = users[targetRequest.username];
+    if (target && action === 'onayla') {
+        const user = usersDB[target.username];
         if (user) {
-            const numAmount = parseFloat(targetRequest.amount) || 0;
-            if (targetRequest.type.includes("شحن") || targetRequest.type.includes("رصيد")) {
-                const currentCapital = parseFloat(user.totalBalance.replace("USDT ", "")) || 0;
-                user.totalBalance = `USDT ${(currentCapital + numAmount).toFixed(2)}`;
-            } else if (targetRequest.type.includes("إحالة")) {
-                user.bonus = `USDT 50.00`; 
-                user.activeTeam = Math.min(user.activeTeam + 1, 40);
-            }
+            const numAmount = parseFloat(target.amount) || 0;
+            // إضافة المبلغ الذي طلبه العضو ووافق عليه المشرف مباشرة
+            const current = parseFloat(user.totalBalance) || 0;
+            user.totalBalance = (current + numAmount).toFixed(2);
         }
     }
+    // مسح الطلب من جدول الانتظار بعد معالجته
     pendingRequests = pendingRequests.filter(r => r.id !== requestId);
     res.json({ success: true });
 });
 
-// 6. توزيع أرباح 15% لجميع الحسابات المشتركة بلمسة واحدة
+// زر توزيع أرباح 15% بناءً على الرصيد المشحون
 app.post('/api/admin/distribute-profits', (req, res) => {
-    Object.keys(users).forEach(username => {
-        const user = users[username];
-        const capital = parseFloat(user.totalBalance.replace("USDT ", "")) || 0;
+    Object.keys(usersDB).forEach(name => {
+        const user = usersDB[name];
+        const capital = parseFloat(user.totalBalance) || 0;
         if (capital > 0) {
-            const calculatedProfit = capital * 0.15;
-            const currentDaily = parseFloat(user.dailyProfit.replace("USDT ", "")) || 0;
-            user.dailyProfit = `USDT ${(currentDaily + calculatedProfit).toFixed(2)}`;
+            const currentProfit = parseFloat(user.dailyProfit) || 0;
+            user.dailyProfit = (currentProfit + (capital * 0.15)).toFixed(2);
         }
     });
     res.json({ success: true });
 });
 
-// توجيه المسارات
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/admin-panel', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server connected on port ${PORT}`));
