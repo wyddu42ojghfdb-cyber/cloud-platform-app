@@ -1,10 +1,15 @@
-app.use(cors({ origin: '*' }));
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
 const app = express();
 
-app.use(cors());
+// تفعيل فك حظر الأمان الشامل في مكانه الصحيح برمجياً بعد تعريف المكتبات
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+}));
+
 app.use(express.json());
 app.use(express.static(__dirname));
 
