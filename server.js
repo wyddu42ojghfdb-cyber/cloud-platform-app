@@ -3,20 +3,14 @@ const path = require('path');
 const cors = require('cors');
 const app = express();
 
-// تفعيل الأمان المفتوح لضمان استقبال البيانات الحية من أي متصفح وهاتف
-app.use(cors({
-    origin: '*',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
-}));
-
+app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
 let users = {};
 let pendingRequests = [];
 
-// مسار تسجيل الدخول وحفظ الهوية
+// مسار الدخول وبدء الجلسة
 app.post('/backend/user/login', (req, res) => {
     const { username } = req.body;
     if (!username) return res.status(400).json({ success: false, message: 'Kullanıcı adı gerekli' });
@@ -34,10 +28,10 @@ app.post('/backend/user/login', (req, res) => {
     res.json({ success: true, user: users[username] });
 });
 
-// مسار استقبال طلبات الإيداع والسحب والإحالات
+// نفق استقبال طلبات الإيداع والسحب والدعوات وإرسالها حياً لشاشة المشرف
 app.post('/backend/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
-    if (!username || !amount) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
+    if (!username || !amount || !type) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
     
     const newRequest = {
         id: Date.now(),
@@ -53,7 +47,7 @@ app.post('/backend/user/request', (req, res) => {
     res.json({ success: true, message: 'Talebiniz başarıyla gönderildi!' });
 });
 
-// مسار بث البيانات للوحة المشرف
+// مسار بث التحديثات داخل جدول شاشة المشرف
 app.get('/backend/admin/requests', (req, res) => {
     res.json({ 
         success: true, 
@@ -63,7 +57,7 @@ app.get('/backend/admin/requests', (req, res) => {
     });
 });
 
-// مسار الموافقات
+// معالجة الموافقات وتحديث أرصدة وخانات المستخدمين
 app.post('/backend/admin/action', (req, res) => {
     const { id, action, username, type, amount } = req.body;
     
@@ -72,15 +66,21 @@ app.post('/backend/admin/action', (req, res) => {
         if (type === 'deposit') {
             users[username].balance += amt;
             users[username].todayProfit += (amt * 0.15); 
-            users[username].history.push({ message: `✅ Para Yatırma Onaylandı: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].history.push({ message: `✅ Onaylanan Para Yatırma: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'withdraw_capital') {
             users[username].balance -= amt;
-            users[username].history.push({ message: `💸 Para Çekme Onaylandı: -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].history.push({ message: `💸 Onaylanan Para Çekme (Sermaye): -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+        } else if (type === 'withdraw_daily') {
+            users[username].todayProfit -= amt;
+            users[username].history.push({ message: `📊 Onaylanan Para Çekme (Kar): -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+        } else if (type === 'withdraw_bonus') {
+            users[username].bonus -= amt;
+            users[username].history.push({ message: `💸 Onaylanan Para Çekme (Bonus): -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'invite_bonus') {
             users[username].bonus += amt;
             users[username].balance += amt; 
             users[username].teamCount += 1; 
-            users[username].history.push({ message: `🍇 Davet Ödülü Onaylandı: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+            users[username].history.push({ message: `🍇 Onaylanan Davet Ödülü: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     }
     
@@ -88,7 +88,7 @@ app.post('/backend/admin/action', (req, res) => {
     res.json({ success: true });
 });
 
-// توزيع الأرباح
+// توزيع الأرباح الجماعي بنسبة 15% للمشتركين النشطين
 app.post('/backend/admin/distribute-profit', (req, res) => {
     Object.keys(users).forEach(username => {
         let u = users[username];
@@ -96,16 +96,20 @@ app.post('/backend/admin/distribute-profit', (req, res) => {
             let profitGenerated = u.balance * 0.15;
             u.todayProfit += profitGenerated;
             u.balance += profitGenerated;
-            u.history.push({ message: `📊 %15 Günlük Kar Dağıtıldı: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
+            u.history.push({ message: `📊 Günlük %15 kar dağıtımı: +${profitGenerated.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     });
     res.json({ success: true });
 });
 
+// سجل المعاملات الحية للمستخدم
 app.get('/backend/user/history', (req, res) => {
     const { username } = req.query;
-    if (users[username]) res.json({ success: true, history: users[username].history });
-    else res.json({ success: true, history: [] });
+    if (users[username]) {
+        res.json({ success: true, history: users[username].history });
+    } else {
+        res.json({ success: true, history: [] });
+    }
 });
 
 app.get('/panel', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
