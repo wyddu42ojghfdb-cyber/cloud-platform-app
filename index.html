@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <!-- ربط ملف التثبيت المعتمد لمنع رسالة الرفض في الهاتف -->
-    <link rel="manifest" href="/manifest.json">
-    <title>منصة سحابية - المنظومة المتكاملة</title>
+    <title>منصة سحابية - المنظومة العالمية المتكاملة</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
@@ -41,7 +39,6 @@
     <label class="label-text">👤 اسم المستخدم الحالي</label>
     <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     
-    <!-- حقل الاسم وزر الحفظ المخصص لقفل حقل الاسم وحده وتنشيط المنظومة -->
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
 
@@ -54,7 +51,6 @@
         </div>
     </div>
 
-    <!-- كامل أزرار وعناصر الشاشة بالأسفل حرة ونشطة دائماً ولا تتأثر بقفل الاسم -->
     <label class="label-text">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
     <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
     <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
@@ -87,12 +83,12 @@
         <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى قفل الاسم لعرض الإشعارات الحية...</div>
     </div>
 
-    <!-- كود البث المباشر الموجه لحسابك الشخصي بالتليجرام لفتح المحادثة فوراً -->
-    <button class="btn-cyan" style="background:#0891b2;" onclick="window.location.href='tg://resolve?domain=invest_support_bot'">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+    <button class="btn-cyan" style="background:#0891b2;" onclick="window.open('tg://resolve?domain=invest_support_bot', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    // ربط قطعي مباشر بعنوان السيرفر النشط على ريندر لضمان عمل الواجهة عالمياً من أي هاتف
+    const API_URL = "https://onrender.com";
     let currentUsername = "";
     let pollTimer = null;
     let isRefreshing = false;
@@ -188,4 +184,9 @@
             await apiPost("/backend/user/request", {
                 username: currentUsername,
                 amount: amount,
-                
+                type: 'deposit',
+                walletAddress: 'شحن TRC20'
+            });
+            alert("⚡ تم إرسال طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة!");
+            $('depositAmount').value = "";
+            
