@@ -1,182 +1,268 @@
 <!DOCTYPE html>
-<html lang="ar" translate="no">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google" content="notranslate">
-    <link rel="manifest" href="/manifest.json">
-    <title>منصة سحابية - لوحة المستخدم</title>
+    <title>منظومة محاكي التداول الذكي والتحليل السحابي</title>
     <style>
-        body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
-        .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
-        .title-app { text-align: center; color: #3b82f6; font-size: 20px; font-weight: bold; margin-bottom: 20px; }
-        .label-text { font-size: 13px; color: #3b82f6; margin-bottom: 5px; display: block; font-weight: bold; }
-        .sub-label { font-size: 11px; color: #4ade80; margin-bottom: 8px; display: block; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
-        button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
-        .btn-blue { background: #1d4ed8; color: white; }
-        .btn-green { background: #16a34a; color: white; }
-        .btn-red { background: #dc2626; color: white; }
-        .btn-purple { background: #7c3aed; color: white; }
-        .btn-gray { background: #475569; color: white; font-size: 14px; margin-top: 5px; margin-bottom: 15px; }
-        .btn-cyan { background: #0891b2; color: white; }
-        .info-box { background: #0d1527; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #1e293b; }
-        .info-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
-        .info-row:last-child { border-bottom: none; }
-        .val-green { color: #22c55e; font-weight: bold; }
-        .val-yellow { color: #eab308; font-weight: bold; }
-        .val-purple { color: #a855f7; font-weight: bold; }
+        :root {
+            --bg-color: #0b1426;
+            --card-bg: #111c33;
+            --input-bg: #090f1d;
+            --blue-btn: #1a56db;
+            --purple-btn: #7e3af2;
+            --orange-btn: #ea580c;
+            --red-btn: #dc2626;
+            --green-btn: #16a34a;
+            --cyan-btn: #06b6d4;
+            --text-color: #ffffff;
+            --text-muted: #9ca3af;
+            --border-color: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid var(--border-color);
+        }
+
+        .header {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #38bdf8;
+        }
+
+        .section {
+            background-color: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-bottom: 8px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-blue { background-color: var(--blue-btn); }
+        .btn-orange { background-color: var(--orange-btn); }
+        .btn-purple { background-color: var(--purple-btn); }
+        .btn-red { background-color: var(--red-btn); }
+        .btn-green { background-color: var(--green-btn); }
+        .btn-cyan { background-color: var(--cyan-btn); }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .stats-row:last-child { border-bottom: none; }
+        .value { color: #a855f7; font-weight: bold; }
+
+        .info-text {
+            font-size: 12px;
+            color: #fbbf24;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .wallet-box {
+            font-family: monospace;
+            background-color: var(--input-bg);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            color: #4ade80;
+            word-break: break-all;
+            border: 1px dashed #4ade80;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <select id="langSelect" style="margin-bottom: 20px; background: #1e293b;">
-        <option value="ar" selected>🇸🇦 العربية</option>
-    </select>
+    <div class="header">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
 
-    <div class="title-app">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
-    
-    <label class="label-text">👤 اسم المستخدم الحالي</label>
-    <span class="sub-label" id="txt-user-sub">يرجى كتابة الاسم والضغط على زر تفعيل الحساب أدناه</span>
-    
-    <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا لبدء البث حياً">
-    <button class="btn-blue" id="btn-login-action" onclick="saveAndSendName()">💾 إرسال طلب حفظ الاسم للمشرف</button>
-    <button class="btn-gray" id="btn-logout-action" onclick="logoutUser()">🚪 تسجيل الخروج وإعادة تعيين الحساب</button>
+    <!-- 1. شاشة قفل الاسم وحفظه -->
+    <div class="section">
+        <label id="user-label">👤 اسم المستخدم الحالي: (غير مسجل)</label>
+        <input type="text" id="username-input" placeholder="اكتب اسمك هنا لبدء البث حياً">
+        <button class="btn-blue" onclick="handleLogin()">💾 إرسال طلب حفظ الاسم للمشرف</button>
+        <button class="btn-orange" style="background-color: #7c2d12;" onclick="handleLogout()">🔄 تسجيل الخروج وإعادة تعيين الحساب</button>
+    </div>
 
-    <div class="info-box">
-        <div style="text-align: center; font-size: 12px; color: #eab308; margin-bottom: 8px;">🏆 جائزة الكبرى (40 عضو)</div>
-        <div style="text-align: center; font-size: 15px; font-weight: bold; color: #22c55e; margin-bottom: 8px;">2500 دولار أمريكي</div>
-        <div class="info-row">
+    <!-- 2. حالة الفريق النشط -->
+    <div class="section">
+        <div class="info-text">👑 جائزة الكبرى (40 عضو) <br> 2500 دولار أمريكي</div>
+        <div class="stats-row">
             <span>أعضاء الفريق النشطين:</span>
-            <span id="val-team" style="color: #4ade80; font-weight: bold;">0/40</span>
+            <span id="team-count" class="value" style="color:#eab308;">0/40</span>
         </div>
     </div>
 
-    <label class="label-text">🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):</label>
-    <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
-    <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
-
-    <div class="info-box">
-        <div class="info-row"><span>إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
-        <div class="info-row"><span>الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">0.00</span></span></div>
-        <div class="info-row"><span>أأرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
+    <!-- 3. نظام مكافأة الإحالة -->
+    <div class="section">
+        <label>🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):</label>
+        <input type="text" id="invite-name" placeholder="اسم الصديق المدعو">
+        <button class="btn-purple" onclick="sendInviteBonus()">🍇 إرسال المكافأة إلى المشرف</button>
     </div>
 
-    <div class="info-box" style="border-color: #ef4444;">
-        <div style="text-align: center; font-size: 13px; color: #ef4444; margin-bottom: 8px;">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20):</div>
-        <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
+    <!-- 4. جدول الأرصدة والأرباح -->
+    <div class="section">
+        <div class="stats-row">
+            <span>إجمالي رأس المال:</span>
+            <span id="balance-val" class="value">USDT 0.00</span>
+        </div>
+        <div class="stats-row">
+            <span>الأرباح اليومية:</span>
+            <span id="profit-val" class="value">USDT 0.00</span>
+        </div>
+        <div class="stats-row">
+            <span>الأرباح التذاكر ومكافآت الدعوة:</span>
+            <span id="bonus-val" class="value">USDT 0.00</span>
+        </div>
+    </div>
+
+    <!-- 5. بوابة السحب الفوري المباشر -->
+    <div class="section" style="border-color: var(--red-btn);">
+        <div class="info-text" style="color: var(--red-btn);">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20)</div>
+        <input type="text" id="withdraw-wallet" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
         
-        <div style="border-top: 1px dashed #ef4444; padding-top: 10px; margin-top: 10px;">
-            <input type="number" id="withdrawProfitAmount" placeholder="مبلغ سحب أرباح اليوم">
-            <button class="btn-red" onclick="sendWithdrawRequest('withdraw_daily', 'withdrawProfitAmount')">📊 سحب أرباح اليوم</button>
-        </div>
+        <input type="number" id="withdraw-profit-amount" placeholder="مبلغ سحب أرباح اليوم">
+        <button class="btn-red" onclick="sendWithdraw('withdraw_daily')">📊 سحب أرباح اليوم</button>
         
-        <div style="border-top: 1px dashed #ef4444; padding-top: 10px; margin-top: 10px;">
-            <input type="number" id="withdrawBonusAmount" placeholder="مبلغ سحب مكافآت الدعوة">
-            <button class="btn-red" onclick="sendWithdrawRequest('withdraw_bonus', 'withdrawBonusAmount')">💸 سحب مكافأة الدعوة</button>
-        </div>
+        <input type="number" id="withdraw-bonus-amount" placeholder="مبلغ سحب مكافآت الدعوة">
+        <button class="btn-red" style="background-color: #b91c1c;" onclick="sendWithdraw('invite_bonus')">💥 سحب مكافأة الدعوة</button>
         
-        <div style="border-top: 1px dashed #ef4444; padding-top: 10px; margin-top: 10px;">
-            <input type="number" id="withdrawCapitalAmount" placeholder="مبلغ سحب الرصيد الكلي">
-            <button class="btn-red" onclick="sendWithdrawRequest('withdraw_capital', 'withdrawCapitalAmount')">💥 سحب إجمالي الرصيد الكلي</button>
+        <input type="number" id="withdraw-total-amount" placeholder="مبلغ سحب الرصيد الكلي">
+        <button class="btn-red" style="background-color: #991b1b;" onclick="sendWithdraw('withdraw_capital')">💥 سحب إجمالي الرصيد الكلي</button>
+    </div>
+
+    <!-- 6. بوابة الإيداع الرسمية -->
+    <div class="section" style="border-color: var(--green-btn);">
+        <div class="info-text" style="color: var(--green-btn);"> محفظة الإيداع الرسمية - شبكة USDT (TRC-20)</div>
+        <div class="wallet-box" id="company-wallet">TA1vsgrJEfy3YM6rkQWbppnZemFE6c9pBN</div>
+        <input type="number" id="deposit-amount" placeholder="أدخل مبلغ الشحن بـ USDT">
+        <button class="btn-green" onclick="sendDeposit()">⚡ إرسال طلب الإيداع للمشرف</button>
+    </div>
+
+    <!-- 7. سجل المعاملات والإشعارات -->
+    <div class="section">
+        <div class="info-text" style="color: #67e8f9;">📋 سجل المعاملات والإشعارات الحية</div>
+        <div id="history-box" style="font-size: 12px; color: var(--text-muted); max-height: 100px; overflow-y: auto; text-align: center;">
+            يرجى حفظ الاسم لعرض التحديثات الحية..
         </div>
     </div>
 
-    <div class="crypto-box" style="border: 1px dashed #22c55e; padding: 10px; margin: 15px 0; border-radius: 6px; background: rgba(34, 197, 94, 0.05); text-align: center;">
-        <span style="font-size: 13px; color: #eab308;">📥 محفظة الإيداع الرسمية - شبكة USDT (TRC-20):</span>
-        <strong style="color: #4ade80; font-size: 13px; word-break: break-all; display: block; margin-top: 5px;">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</strong>
-        <input type="number" id="depositAmount" placeholder="أدخل مبلغ الشحن بـ USDT" style="margin-top: 10px;">
-        <button class="btn-green" onclick="sendDepositRequest()">⚡ إرسال طلب الإيداع للمشرف</button>
-    </div>
-
-    <div class="info-box">
-        <div style="text-align: center; font-size: 13px; color: #3b82f6;">📋 سجل المعاملات والإشعارات الحية</div>
-        <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى حفظ الاسم لعرض التحديثات الحية...</div>
-    </div>
-
-    <button class="btn-cyan" style="background:#0891b2;" onclick="window.open('tg://resolve?domain=invest_support_bot', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+    <!-- 8. الدعم الفني -->
+    <button class="btn-cyan" onclick="window.open('https://t.me', '_blank')">💬 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
 
 <script>
-    const API_URL = window.location.origin;
-    let currentUsername = "";
-    let pollTimer = null;
-    let isRefreshing = false;
+    let currentUsername = localStorage.getItem('trader_username') || '';
 
-    const $ = (id) => document.getElementById(id);
-
-    function fixToStandardNumbers(num) {
-        return Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
+    // عند فتح الصفحة، لو كان فيه مستخدم مسجل يتم جلب بياناته فوراً
+    if (currentUsername) {
+        document.getElementById('username-input').value = currentUsername;
+        fetchUserData();
+        setInterval(fetchUserData, 4000); // تحديث الأرصدة تلقائياً كل 4 ثوانٍ
     }
 
-    async function apiPost(path, payload) {
-        try {
-            const res = await fetch(API_URL + path, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            return await res.json();
-        } catch (e) { throw e; }
-    }
+    function handleLogin() {
+        const username = document.getElementById('username-input').value.trim();
+        if (!username) return alert('رجاءً أدخل اسم المستخدم');
 
-    function lockNameField() {
-        $('usernameInput').disabled = true;
-        $('btn-login-action').disabled = true;
-        $('txt-user-sub').innerText = "🟢 جاري مزامنة تفعيل الحساب مع المشرف...";
-        $('txt-user-sub').style.color = "#eab308";
-    }
-
-    async function saveAndSendName() {
-        const username = $('usernameInput').value.trim();
-        if (!username) return alert("الرجاء كتابة الاسم أولاً!");
-
-        currentUsername = username;
-        localStorage.setItem("savedUsername", currentUsername);
-        lockNameField();
-
-        try {
-            const data = await apiPost("/api/user/login", { username: currentUsername });
-            if (data && data.user) updateUI(data.user);
-            if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
-            alert("🎯 تم إرسال الاسم تلقائياً إلى لوحة التحكم! يرجى إبلاغ المشرف بموافقة الحساب الحية.");
-        } catch (e) {
-            if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
-        }
-    }
-
-    window.onload = function() {
-        try {
-            let saved = localStorage.getItem("savedUsername");
-            if (saved) {
-                $('usernameInput').value = saved;
-                currentUsername = saved;
-                lockNameField();
-                if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
+        fetch('/api/user/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                currentUsername = username;
+                localStorage.setItem('trader_username', username);
+                document.getElementById('user-label').innerText = `👤 اسم المستخدم الحالي: ${username}`;
+                alert('🟢 تم حفظ وتثبيت حسابك بنجاح في السيرفر السحابي');
+                fetchUserData();
+                window.location.reload(); // إعادة تنشيط البث التلقائي
             }
-        } catch (e) {}
-    };
-
-    async function logoutUser() {
-        if (currentUsername) {
-            try { await apiPost("/api/user/logout", { username: currentUsername }); } catch (e) {}
-        }
-        localStorage.clear();
-        sessionStorage.clear();
-        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-        currentUsername = "";
-        $('usernameInput').value = "";
-        $('usernameInput').disabled = false;
-        $('btn-login-action').disabled = false;
-        updateUI({ balance: 0, todayProfit: 0, bonus: 0, teamCount: 0 });
-        $('txt-user-sub').innerText = "يرجى كتابة الاسم والضغط على زر إرسال الحفظ أدناه";
-        $('txt-user-sub').style.color = "#eab308";
-        $('logs-container').innerHTML = "يرجى حفظ الاسم لعرض التحديثات الحية...";
-        alert("🚪 تم تسجيل الخروج وإلغاء العملية من السيرفر كلياً!");
+        });
     }
 
-    function updateUI(user) {
-        $('val-balance').innerText = fixToStandardNumbers(user.balance || 0);
-        $('val-profit').innerText  = fixToStandardNumbers(user.todayProfit || 0);
+    function fetchUserData() {
+        if (!currentUsername) return;
+        document.getElementById('user-label').innerText = `👤 اسم المستخدم الحالي: ${currentUsername}`;
         
+        // استخدام مسار الإيداعات والسحوبات المشترك للـ Admin للحصول على الأرصدة المحدثة
+        fetch('/api/user/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: currentUsername })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const u = data.user;
+                document.getElementById('balance-val').innerText = `USDT ${u.balance.toFixed(2)}`;
+                document.getElementById('profit-val').innerText = `USDT ${u.todayProfit.toFixed(2)}`;
+                document.getElementById('bonus-val').innerText = `USDT ${u.bonus.toFixed(2)}`;
+                document.getElementById('team-count').innerText = `${u.teamCount}/40`;
+            }
+        });
+
+        // جلب سجل المعاملات الحية للمستخدم
+    
