@@ -85,7 +85,7 @@
                         if (r.type === 'withdraw_daily') typeText = "📊 Kar Çekme";
                         if (r.type === 'withdraw_capital') typeText = "💸 Sermaye Çekme";
                         if (r.type === 'invite_bonus') typeText = "🍇 Davet Ödülü (15 USDT)";
-                        return `<tr><td><b>${r.username}</b></td><td>${typeText}</td><td><input type="number" id="amt-${r.id}" class="input-inline" value="${r.amount}"></td><td style="color:#67e8f9;">${r.walletAddress || '---'}</td><td><button class="btn-green" onclick="approveAction(${r.id}, '${r.username}', '${r.type}')"> Onayla</button></td></tr>`;
+                        return `<tr><td><b>${r.username}</b></td><td>${typeText}</td><td><input type="number" id="amt-${r.id}" class="input-inline" value="${r.amount}"></td><td style="color:#67e8f9;">${r.walletAddress || '---'}</td><td><button class="btn-green" onclick="approveAction(${r.id}, '${r.username}', '${r.type}')">✅ Onayla</button></td></tr>`;
                     }).join('');
                 }
                 const monitoringBody = document.getElementById('live-monitoring-body');
@@ -110,7 +110,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ adminPassword: ADMIN_PASS })
-        }).then(res => res.json()).then(data => { if(data.success) { alert(" %15 Dağıtıldı!"); updateAdminDashboard(); } });
+        }).then(res => res.json()).then(data => { if(data.success) { alert("📊 %15 Dağıtıldı!"); updateAdminDashboard(); } });
     }
     setInterval(updateAdminDashboard, 4000);
     window.onload = updateAdminDashboard;
