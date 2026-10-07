@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>منصة سحابية - المنظومة المتكاملة</title>
+    <link rel="manifest" href="/manifest.json">
+    <title>منصة سحابية - لوحة المستخدم</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
         .title-app { text-align: center; color: #3b82f6; font-size: 20px; font-weight: bold; margin-bottom: 20px; }
         .label-text { font-size: 13px; color: #3b82f6; margin-bottom: 5px; display: block; font-weight: bold; }
-        .sub-label { font-size: 11px; color: #eab308; margin-bottom: 8px; display: block; font-weight: bold; }
+        .sub-label { font-size: 11px; color: #4ade80; margin-bottom: 8px; display: block; font-weight: bold; }
         input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
-        input:disabled { background: #1e293b; color: #94a3b8; cursor: not-allowed; border-color: #334155; }
         button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
         .btn-blue { background: #1d4ed8; color: white; }
         .btn-green { background: #16a34a; color: white; }
@@ -38,7 +38,7 @@
     <div class="title-app">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
     
     <label class="label-text">👤 اسم المستخدم الحالي</label>
-    <span class="sub-label" id="txt-user-sub">يرجى كتابة الاسم والضغط على زر إرسال الحفظ أدناه</span>
+    <span class="sub-label" id="txt-user-sub">يرجى كتابة الاسم والضغط على زر تفعيل الحساب أدناه</span>
     
     <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا لبدء البث حياً">
     <button class="btn-blue" id="btn-login-action" onclick="saveAndSendName()">💾 إرسال طلب حفظ الاسم للمشرف</button>
@@ -65,11 +65,22 @@
 
     <div class="info-box" style="border-color: #ef4444;">
         <div style="text-align: center; font-size: 13px; color: #ef4444; margin-bottom: 8px;">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20):</div>
-        <input type="number" id="withdrawAmount" placeholder="المبلغ بـ USDT">
         <input type="text" id="walletInput" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك المستلمة">
         
-        <button class="btn-red" onclick="sendWithdrawRequest('withdraw_capital')">💥 سحب إجمالي رأس المال</button>
-        <button class="btn-red" onclick="sendWithdrawRequest('withdraw_daily')">📊 سحب الأرباح اليومية</button>
+        <div style="border-top: 1px dashed #ef4444; padding-top: 10px; margin-top: 10px;">
+            <input type="number" id="withdrawProfitAmount" placeholder="مبلغ سحب أرباح اليوم">
+            <button class="btn-red" onclick="sendWithdrawRequest('withdraw_daily', 'withdrawProfitAmount')">📊 سحب أرباح اليوم</button>
+        </div>
+        
+        <div style="border-top: 1px dashed #ef4444; padding-top: 10px; margin-top: 10px;">
+            <input type="number" id="withdrawBonusAmount" placeholder="مبلغ سحب مكافآت الدعوة">
+            <button class="btn-red" onclick="sendWithdrawRequest('withdraw_bonus', 'withdrawBonusAmount')">💸 سحب مكافأة الدعوة</button>
+        </div>
+        
+        <div style="border-top: 1px dashed #ef4444; padding-top: 10px; margin-top: 10px;">
+            <input type="number" id="withdrawCapitalAmount" placeholder="مبلغ سحب الرصيد الكلي">
+            <button class="btn-red" onclick="sendWithdrawRequest('withdraw_capital', 'withdrawCapitalAmount')">💥 سحب إجمالي الرصيد الكلي</button>
+        </div>
     </div>
 
     <div class="crypto-box" style="border: 1px dashed #22c55e; padding: 10px; margin: 15px 0; border-radius: 6px; background: rgba(34, 197, 94, 0.05); text-align: center;">
@@ -88,13 +99,16 @@
 </div>
 
 <script>
-    // ربط قطعي ومباشر بعنوان السيرفر النشط على ريندر لتخطي حجب الملفات
-    const API_URL = "https://onrender.com";
+    const API_URL = window.location.origin;
     let currentUsername = "";
     let pollTimer = null;
     let isRefreshing = false;
 
     const $ = (id) => document.getElementById(id);
+
+    function fixToStandardNumbers(num) {
+        return Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
+    }
 
     async function apiPost(path, payload) {
         try {
@@ -110,7 +124,7 @@
     function lockNameField() {
         $('usernameInput').disabled = true;
         $('btn-login-action').disabled = true;
-        $('txt-user-sub').innerText = "🟢 تم إرسال طلب الحفظ.. بانتظار موافقة المشرف حياً";
+        $('txt-user-sub').innerText = "🟢 جاري مزامنة تفعيل الحساب مع المشرف...";
         $('txt-user-sub').style.color = "#eab308";
     }
 
@@ -123,11 +137,10 @@
         lockNameField();
 
         try {
-            // توجيه الطلب مباشرة بالرابط السحابي للوصول لجدول المشرف فوراً
             const data = await apiPost("/api/user/login", { username: currentUsername });
             if (data && data.user) updateUI(data.user);
             if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
-            alert("🎯 تم إرسال الاسم تلقائياً إلى شاشة المشرف بنجاح وبدون أي تجميد!");
+            alert("🎯 تم إرسال الاسم تلقائياً إلى لوحة التحكم! يرجى إبلاغ المشرف بموافقة الحساب الحية.");
         } catch (e) {
             if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
         }
@@ -160,27 +173,10 @@
         $('txt-user-sub').innerText = "يرجى كتابة الاسم والضغط على زر إرسال الحفظ أدناه";
         $('txt-user-sub').style.color = "#eab308";
         $('logs-container').innerHTML = "يرجى حفظ الاسم لعرض التحديثات الحية...";
-        alert("🚪 تم تسجيل الخروج بنجاح وإلغاء الجلسة السحابية!");
+        alert("🚪 تم تسجيل الخروج وإلغاء العملية من السيرفر كلياً!");
     }
 
     function updateUI(user) {
-        $('val-balance').innerText = Number(user.balance || 0).toFixed(2);
-        $('val-profit').innerText  = Number(user.todayProfit || 0).toFixed(2);
-        $('val-bonus').innerText   = Number(user.bonus || 0).toFixed(2);
-        $('val-team').innerText    = (user.teamCount || 0) + "/40";
+        $('val-balance').innerText = fixToStandardNumbers(user.balance || 0);
+        $('val-profit').innerText  = fixToStandardNumbers(user.todayProfit || 0);
         
-        if (user.status === 'active') {
-            $('txt-user-sub').innerText = "🟢 الحساب نشط ومعتمد من المشرف (كامل الأزرار حرة وشغالة)";
-            $('txt-user-sub').style.color = "#22c55e";
-        }
-    }
-
-    async function refreshData() {
-        if (!currentUsername || isRefreshing) return;
-        isRefreshing = true;
-        try {
-            const data = await apiPost("/api/user/login", { username: currentUsername });
-            if (data && data.success && data.user) updateUI(data.user);
-
-            const res = await fetch(API_URL + "/api/user/history?username=" + encodeURIComponent(currentUsername));
-            
