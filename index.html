@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
     <link rel="manifest" href="/manifest.json">
-    <title>منصة سحابية - المنظومة العالمية</title>
+    <title>منصة سحابية - لوحة المستخدم</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
@@ -41,11 +41,8 @@
     <label class="label-text">👤 اسم المستخدم الحالي</label>
     <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     
-    <!-- حقل الاسم وزر الحفظ المطور المربوط بالقفل النظيف والتوجيه التلقائي -->
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
-    
-    <!-- زر تسجيل الخروج السحري المطلوب لنسف وتصفير الذاكرة المعطلة كلياً -->
     <button class="btn-gray" id="btn-logout-action" onclick="logoutUser()">🚪 تسجيل الخروج وإعادة تعيين الحساب</button>
 
     <div class="info-box">
@@ -64,7 +61,7 @@
     <div class="info-box">
         <div class="info-row"><span>إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
         <div class="info-row"><span>الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">0.00</span></span></div>
-        <div class="info-row"><span>أرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
+        <div class="info-row"><span>أأرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
     </div>
 
     <div class="info-box" style="border-color: #ef4444;">
@@ -99,7 +96,6 @@
 
     const $ = (id) => document.getElementById(id);
 
-    // دالة الإرسال الفوري المحمية لمنع تجمد حركة المتصفح كلياً
     async function apiPost(path, payload) {
         try {
             const res = await fetch(API_URL + path, {
@@ -111,7 +107,6 @@
         } catch (e) { throw e; }
     }
 
-    // إصلاح القفل الجذري: تأمين قفل خانة النص والزر ورسومياً دون قطع نفق الجلسة الحية
     function lockNameField() {
         $('usernameInput').disabled = true;
         $('btn-login-action').disabled = true;
@@ -119,7 +114,16 @@
         $('txt-user-sub').style.color = "#22c55e";
     }
 
-    // استعادة الحساب المقفل أوتوماتيكياً عند تصفح الشاشة حياً
+    function unlockNameField() {
+        $('usernameInput').disabled = false;
+        $('btn-login-action').disabled = false;
+        $('usernameInput').value = "";
+        $('txt-user-sub').innerText = "يرجى قفل وتثبيت اسم المستخدم أولاً";
+        $('txt-user-sub').style.color = "#eab308";
+        updateUI({ balance: 0, todayProfit: 0, bonus: 0, teamCount: 0 });
+        $('logs-container').innerHTML = "يرجى قفل الاسم لعرض الإشعارات الحية...";
+    }
+
     window.onload = function() {
         try {
             let saved = localStorage.getItem("savedUsername");
@@ -137,27 +141,33 @@
         if (!username) return alert("الرجاء كتابة الاسم أولاً");
 
         currentUsername = username;
-        lockNameField(); // قفل فوري ورسومات مستقرة تمنع شلل الواجهة
+        lockNameField();
 
         try {
             localStorage.setItem("savedUsername", currentUsername);
             const data = await apiPost("/api/user/login", { username: currentUsername });
             if (data && data.user) updateUI(data.user);
             if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
-            alert("🟢 تم الحفظ وقفل حساب المستخدم بنجاح وتنشيط نفق الاتصال!");
+            alert("🟢 تم الحفظ وقفل الحساب وسحب البيانات حياً بنجاح!");
         } catch (e) {
-            // في حال حدوث ضغط أو بطء في شبكة التوصيل، يستمر نفق البث بالعمل تلقائياً دون تجميد
             if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
-            alert("🟢 تم تفعيل وقفل الاسم بنجاح! كامل أزرار الواجهة حرة الآن للإرسال.");
         }
     }
 
-    // دالة تسجيل الخروج السحرية لمسح ونسف الذاكرة القديمة وإعادة الإحياء الفوري
-    function logoutUser() {
+    // دالة تسجيل الخروج المحدثة لبث أمر الإلغاء للسيرفر وتصفير الشاشة حياً
+    async function logoutUser() {
+        if (currentUsername) {
+            try {
+                // إرسال إشارة للسيرفر لمسح الجلسة وإلغاء اسم المشترك تماماً كما طلبت
+                await apiPost("/api/user/logout", { username: currentUsername });
+            } catch (e) {}
+        }
         localStorage.clear();
         sessionStorage.clear();
-        alert("💥 تم نسف وتصفير الذاكرة وتفكيك قفل الاسم بنجاح! سيتم إعادة تحميل شاشتك الحرة النظيفة الآن.");
-        window.location.reload();
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        currentUsername = "";
+        unlockNameField();
+        alert("💥 تم تسجيل الخروج بنجاح وإلغاء العملية بالكامل من السيرفر!");
     }
 
     function updateUI(user) {
@@ -177,7 +187,4 @@
             const res = await fetch(API_URL + "/api/user/history?username=" + encodeURIComponent(currentUsername));
             if (res.ok) {
                 const hData = await res.json();
-                const box = $('logs-container');
-                if (hData.history && hData.history.length > 0) {
-                    box.innerHTML = "";
-                    
+                
