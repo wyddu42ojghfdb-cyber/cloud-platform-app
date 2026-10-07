@@ -1,190 +1,269 @@
 <!DOCTYPE html>
-<html lang="tr" translate="no">
+<html lang="tr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google" content="notranslate">
     <title>Bulut Platformu - Yönetim Kontrol Paneli</title>
     <style>
-        body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
-        .container { max-width: 850px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: left; }
-        .title-app { text-align: center; color: #3b82f6; font-size: 22px; font-weight: bold; margin-bottom: 20px; }
-        button { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 13px; }
-        .btn-blue { background: #1d4ed8; color: white; width: 100%; padding: 12px; font-size: 15px; margin-bottom: 20px; }
-        .btn-green { background: #16a34a; color: white; margin-right: 5px; }
-        .btn-red { background: #dc2626; color: white; }
-        .info-box { background: #0d1527; padding: 12px; border-radius: 8px; margin: 15px 0; border: 1px solid #1e293b; display: flex; justify-content: space-between; align-items: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
-        th, td { border: 1px solid #1e293b; padding: 10px; text-align: center; }
-        th { background: #0d1527; color: #3b82f6; }
-        .section-title { font-size: 14px; font-weight: bold; color: #eab308; margin-top: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 5px; }
+        :root {
+            --bg-color: #0b1426;
+            --card-bg: #111c33;
+            --input-bg: #090f1d;
+            --blue-btn: #1a56db;
+            --green-btn: #16a34a;
+            --red-btn: #dc2626;
+            --text-color: #ffffff;
+            --text-muted: #9ca3af;
+            --border-color: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            direction: ltr; /* لوحة الإدارة مبنية بالكامل بنظام اليسار لليمين حسب صورتك */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #38bdf8;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #fbbf24;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover { opacity: 0.9; }
+        .btn-blue { background-color: var(--blue-btn); width: 100%; display: block; margin-bottom: 15px; }
+        .btn-green { background-color: var(--green-btn); }
+        .btn-red { background-color: var(--red-btn); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #1e293b;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        .empty-msg {
+            color: var(--text-muted);
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .input-inline {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 6px;
+            border-radius: 4px;
+            width: 80px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <div class="title-app">👑 Bulut Platformu - Yönetim Kontrol Paneli</div>
-    
-    <div class="info-box">
-        <span>Kayıtlı Aktif Üye Sayısı Toplamı 👥</span>
-        <strong id="total-users-count" style="color: #3b82f6; font-size: 16px;">0</strong>
+    <div class="header">👑 Bulut Platformu - Yönetim Kontrol Paneli</div>
+
+    <!-- إحصائية إجمالي الأعضاء وزر توزيع الأرباح الجماعي -->
+    <div class="section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <span>Kayıtlı Aktif Üye Sayısı Toplamı 👥</span>
+            <span id="total-users-badge" style="background: #1e293b; padding: 4px 12px; border-radius: 4px; font-weight: bold; color: #38bdf8;">0</span>
+        </div>
+        
+        <button class="btn-blue" onclick="distributeProfitMassive()">📊 Doğrudan Günlük Kar Dağıtımı (%15) ⚡</button>
     </div>
-    
-    <button class="btn-blue" onclick="distributeProfitGlobal()">📊 Doğrudan Günlük Kar Dağıtımı (%15) 💰</button>
-    
-    <!-- الجدول الجديد المطلوب بالملي: طلبات تفعيل الموافقة على أسماء المستخدمين الجدد -->
-    <div class="section-title">👤 Yeni Kullanıcı Adı Onay Talepleri (طلبات تفعيل الأسماء الجديدة)</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Kullanıcı Adı (الاسم المرسل)</th>
-                <th>Kayıt Durumu (حالة الحساب)</th>
-                <th>Tarih (التاريخ)</th>
-                <th>Yönetici Kararı (قرارك كـ مشرف)</th>
-            </tr>
-        </thead>
-        <tbody id="username-onay-table-body">
-            <tr><td colspan="4" style="color: #94a3b8;">Bekleyen kullanıcı adı onay talebi bulunmamaktadır...</td></tr>
-        </tbody>
-    </table>
-    
-    <div class="section-title">⚠️ Üyelerin Bekleyen Finansal Talepleri (Yükleme / Çekme)</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Kullanıcı Adı</th>
-                <th>Talep Türü</th>
-                <th>Miktar</th>
-                <th>Cüzdan / Detay</th>
-                <th>Denetleyicinin Kararı</th>
-            </tr>
-        </thead>
-        <tbody id="requests-table-body">
-            <tr><td colspan="5" style="color: #94a3b8;">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>
-        </tbody>
-    </table>
-    
-    <div class="section-title">📊 Üyelerin Bakiyelerinin ve Karlarının Canlı Takibi</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Kullanıcı Adı</th>
-                <th>Toplam Sermaye</th>
-                <th>Bugünün Karları</th>
-                <th>Davetiye Bonusları</th>
-                <th>Takım Sayısı</th>
-            </tr>
-        </thead>
-        <tbody id="users-table-body">
-            <tr><td colspan="5" style="color: #94a3b8;">Henüz onaylanmış veya kayıtlı aktif üye yok...</td></tr>
-        </tbody>
-    </table>
+
+    <!-- 1. جدول طلبات تفعيل الأسماء الجديدة -->
+    <div class="section">
+        <div class="section-title">👤 Yeni Kullanıcı Adı Onay Talepleri (طلبات تفعيل الأسماء الجديدة)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kullanıcı Adı (الاسم المرسل)</th>
+                    <th>Kayıt Durumu (حالة الحساب)</th>
+                    <th>Tarih (التاريخ)</th>
+                    <th>Yönetici Kararı (قرارك كـ مشرف)</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body">
+                <tr>
+                    <td colspan="4" class="empty-msg">Bekleyen kullanıcı adı onay talebi bulunmamaktadır...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 2. جدول طلبات السحب والإيداع المعلقة -->
+    <div class="section">
+        <div class="section-title">⚠️ Üyelerin Bekleyen Finansal Talepleri (Yükleme / Çekme)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kullanıcı Adı</th>
+                    <th>Talep Türü</th>
+                    <th>Miktar</th>
+                    <th>Cüzdan / Detay</th>
+                    <th>Denetleyicinin Kararı</th>
+                </tr>
+            </thead>
+            <tbody id="requests-table-body">
+                <tr>
+                    <td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 3. جدول المتابعة الحية لجميع أرصدة الحسابات -->
+    <div class="section">
+        <div class="section-title">📊 Üyelerin Bakiyelerinin ve Kararlarının Canlı Takibi</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Kullanıcı Adı</th>
+                    <th>Toplam Sermaye</th>
+                    <th>Bugünün Karları</th>
+                    <th>Davetiye Bonusları</th>
+                    <th>Takım Sayısı</th>
+                </tr>
+            </thead>
+            <tbody id="live-monitoring-body">
+                <tr>
+                    <td colspan="5" class="empty-msg">Henüz onaylanmış veya kayıtlı aktif üye yok...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    const API_URL = window.location.origin;
+    // 🔒 كلمة المرور المشفرة السرية المطابقة تماماً لملف السيرفر الحامي
+    const ADMIN_PASS = "ADMIN_SECRET_PASS_2026";
 
-    // دالة التحديث التلقائي الشاملة للجداول كل 3 ثوانٍ حياً ومباشراً
-    async function loadAdminData() {
-        try {
-            const res = await fetch(API_URL + "/api/admin/requests");
-            const data = await res.json();
-            if(data.success) {
-                document.getElementById('total-users-count').innerText = data.totalUsers || 0;
-                
-                // 1. تحديث جدول موافقات أسماء المستخدمين الجدد حياً
-                const nameTableBody = document.getElementById('username-onay-table-body');
-                const bekleyenKullanicilar = data.allUsers ? data.allUsers.filter(u => u.status === 'pending') : [];
-                
-                if(bekleyenKullanicilar.length === 0) {
-                    nameTableBody.innerHTML = `<tr><td colspan="4" style="color: #94a3b8;">Bekleyen kullanıcı adı onay talebi bulunmamaktadır...</td></tr>`;
+    // دالة بث وجلب التحديثات فورياً من السيرفر السحابي
+    function updateAdminDashboard() {
+        fetch('/api/admin/requests', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'admin-password': ADMIN_PASS
+            }
+        })
+        .then(res => {
+            if (res.status === 401) {
+                alert("شاشة المشرف مقفلة! كلمة المرور المحددة غير صحيحة في الكود.");
+                throw new Error("Unauthorized");
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // 1. تحديث عدد الأعضاء الإجمالي
+                document.getElementById('total-users-badge').innerText = data.totalUsers;
+
+                // 2. معالجة وتحديث جدول طلبات الأسماء الجديدة
+                const usersBody = document.getElementById('users-table-body');
+                if (data.allUsers.length === 0) {
+                    usersBody.innerHTML = `<tr><td colspan="4" class="empty-msg">Bekleyen kullanıcı adı onay talebi bulunmamaktadır...</td></tr>`;
                 } else {
-                    nameTableBody.innerHTML = "";
-                    bekleyenKullanicilar.forEach(u => {
-                        nameTableBody.innerHTML += `
-                            <tr>
-                                <td><b style="color:#3b82f6; font-size:14px;">${u.username}</b></td>
-                                <td style="color:#eab308; font-weight:bold;">⏳ Onay Bekliyor</td>
-                                <td><small>${u.createdDate || 'Şimdi'}</small></td>
-                                <td>
-                                    <button class="btn-green" onclick="processUserFieldAction('${u.username}', 'approve')">Onayla (موافقة على الحساب)</button>
-                                    <button class="btn-red" onclick="processUserFieldAction('${u.username}', 'reject')">Reddet (رفض الاسم)</button>
-                                </td>
-                            </tr>`;
-                    });
+                    usersBody.innerHTML = data.allUsers.map(u => `
+                        <tr>
+                            <td style="color:#38bdf8; font-weight:bold;">${u.username}</td>
+                            <td><span style="color:#16a34a;">● Aktif Sunucuda</span></td>
+                            <td>${new Date().toLocaleDateString('tr-TR')}</td>
+                            <td><span style="color:var(--text-muted);">Sistem Tarafından Sabitlendi</span></td>
+                        </tr>
+                    `).join('');
                 }
-                
-                // 2. تحديث جدول طلبات الشحن والسحب المالي
-                const reqBody = document.getElementById('requests-table-body');
-                if(!data.requests || data.requests.length === 0) {
-                    reqBody.innerHTML = `<tr><td colspan="5" style="color: #94a3b8;">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>`;
+
+                // 3. معالجة وتحديث جدول طلبات الإيداع والسحب الحية المعلقة
+                const requestsBody = document.getElementById('requests-table-body');
+                const pending = data.requests;
+                if (pending.length === 0) {
+                    requestsBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>`;
                 } else {
-                    reqBody.innerHTML = "";
-                    data.requests.forEach(r => {
+                    requestsBody.innerHTML = pending.map(r => {
                         let typeText = "";
-                        if(r.type === 'deposit') typeText = "📥 Para Yatırma";
-                        else if(r.type === 'withdraw_capital') typeText = "💥 Sermaye Çekme";
-                        else if(r.type === 'withdraw_daily') typeText = "📊 Kar Çekme";
-                        
-                        reqBody.innerHTML += `
+                        if (r.type === 'deposit') typeText = "📥 Para Yatırma (إيداع)";
+                        if (r.type === 'withdraw_daily') typeText = "📊 Kar Çekme (سحب أرباح)";
+                        if (r.type === 'invite_bonus') typeText = "🍇 Davet Ödülü (مكافأة دعوة)";
+                        if (r.type === 'withdraw_capital') typeText = "💸 Sermaye Çekme (سحب كلي)";
+
+                        return `
                             <tr>
                                 <td><b>${r.username}</b></td>
                                 <td>${typeText}</td>
-                                <td style="color:#22c55e; font-weight:bold;">${r.amount} USDT</td>
-                                <td><small>${r.walletAddress || ''}</small></td>
                                 <td>
-                                    <button class="btn-green" onclick="processFinancialAction('${r.id}', 'approve', '${r.username}', '${r.type}', ${r.amount})">Onayla</button>
-                                    <button class="btn-red" onclick="processFinancialAction('${r.id}', 'reject', '${r.username}', '${r.type}', ${r.amount})">Reddet</button>
+                                    <input type="number" id="amt-${r.id}" class="input-inline" value="${r.amount}"> <b>USDT</b>
                                 </td>
-                            </tr>`;
-                    });
+                                <td style="font-family:monospace; color:#67e8f9; font-size:11px;">${r.walletAddress || '---'}</td>
+                                <td>
+                                    <button class="btn-green" onclick="approveAction(${r.id}, '${r.username}', '${r.type}')">✅ Onayla</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
-                
-                // 3. تحديث جدول مراقبة الأرصدة للأعضاء الذين تمت الموافقة على أسمائهم فقط
-                const userBody = document.getElementById('users-table-body');
-                const aktifKullanicilar = data.allUsers ? data.allUsers.filter(u => u.status === 'active') : [];
-                
-                if(aktifKullanicilar.length === 0) {
-                    userBody.innerHTML = `<tr><td colspan="5" style="color: #94a3b8;">Henüz onaylanmış aktif üye yok...</td></tr>`;
-                } else {
-                    userBody.innerHTML = "";
-                    aktifKullanicilar.forEach(u => {
-                        userBody.innerHTML += `
-                            <tr>
-                                <td><b>${u.username}</b></td>
-                                <td style="color:#22c55e; font-weight:bold;">${Number(u.balance || 0).toFixed(2)} USDT</td>
-                                <td style="color:#eab308; font-weight:bold;">${Number(u.todayProfit || 0).toFixed(2)} USDT</td>
-                                <td style="color:#a855f7; font-weight:bold;">${Number(u.bonus || 0).toFixed(2)} USDT</td>
-                                <td>${u.teamCount || 0}/40</td>
-                            </tr>`;
-                    });
-                }
-            }
-        } catch(e) { console.error("Veri çekme hatası", e); }
-    }
 
-    // دالة الموافقة أو الرفض على اسم المستخدم الجديد فورا
-    async function processUserFieldAction(username, decision) {
-        try {
-            const res = await fetch(API_URL + "/api/admin/user-decision", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, decision })
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert(`🎯 Kullanıcı adı başarıyla ${decision === 'approve' ? 'ONAYLANDI' : 'REDDEDİLDİ'}!`);
-                loadAdminData();
-            }
-        } catch(e) { alert("Bağlantı hatası!"); }
-    }
-
-    // دالة معالجة طلبات الأموال (شحن / سحب)
-    async function processFinancialAction(id, action, username, type, amount) {
-        try {
-            const res = await fetch(API_URL + "/api/admin/action", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, action, username, type, amount })
-            });
-            if((await res.json()).success) {
-                
+                // 4. معالجة لوحة المتابعة الحية لجميع أرصدة وخانات المستخدمين
+                const monitoringBody = document.getElementById('live-monitoring-body');
+                if (data.allUsers.length === 0) {
+    
