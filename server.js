@@ -17,12 +17,11 @@ app.use(express.static(__dirname));
 let users = {};
 let pendingRequests = [];
 
-// 🔒 كلمة المرور السرية لحماية لوحة التحكم (يمكنك تغييرها من هنا)
+// 🔒 كلمة المرور السرية الموحدة لحماية لوحة التحكم
 const ADMIN_PASSWORD = "ADMIN_SECRET_PASS_2026"; 
 
 // ==================== مسارات واجهة المستخدم (User Endpoints) ====================
 
-// مسار حفظ وقفل اسم المستخدم داخل قاعدة بيانات السيرفر
 app.post('/api/user/login', (req, res) => {
     const { username } = req.body;
     if (!username) return res.status(400).json({ success: false, message: 'Kullanıcı adı gerekli' });
@@ -40,7 +39,6 @@ app.post('/api/user/login', (req, res) => {
     res.json({ success: true, user: users[username] });
 });
 
-// مسار تسجيل الخروج - إلغاء ومسح العملية تماماً من السيرفر
 app.post('/api/user/logout', (req, res) => {
     const { username } = req.body;
     if (username && users[username]) {
@@ -51,7 +49,6 @@ app.post('/api/user/logout', (req, res) => {
     res.json({ success: false, message: 'Kullanıcı bulunamadı' });
 });
 
-// نفق استقبال طلبات الإيداع والسحب وإرسالها حياً لشاشة المشرف
 app.post('/api/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
     if (!username || !amount || !type) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
@@ -70,7 +67,6 @@ app.post('/api/user/request', (req, res) => {
     res.json({ success: true, message: 'Talebiniz başarıyla gönderildi!' });
 });
 
-// جلب سجل المعاملات لشاشة المستخدم
 app.get('/api/user/history', (req, res) => {
     const { username } = req.query;
     if (users[username]) {
@@ -80,20 +76,17 @@ app.get('/api/user/history', (req, res) => {
     }
 });
 
-
 // ==================== مسارات لوحة التحكم المحمية (Admin Endpoints) ====================
 
-// برمجية وسيطة للتحقق من كلمة مرور المشرف قبل تنفيذ أي عملية حساسة
 const verifyAdmin = (req, res, next) => {
-    const password = req.headers['admin-password'] || req.body.adminPassword;
+    const password = req.body.adminPassword;
     if (password === ADMIN_PASSWORD) {
         next();
     } else {
-        res.status(401).json({ success: false, message: 'خطأ في صلاحيات المشرف! كلمة المرور غير صحيحة.' });
+        res.status(401).json({ success: false, message: 'خطأ في صلاحيات المشرف!' });
     }
 };
 
-// مسار بث التحديثات والمشتركين داخل جدول شاشة المشرف حياً (محمي)
 app.post('/api/admin/requests', verifyAdmin, (req, res) => {
     res.json({ 
         success: true, 
@@ -103,7 +96,6 @@ app.post('/api/admin/requests', verifyAdmin, (req, res) => {
     });
 });
 
-// معالجة الموافقات وتحديث أرصدة وخانات المستخدمين (محمي)
 app.post('/api/admin/action', verifyAdmin, (req, res) => {
     const { id, action, username, type, amount } = req.body;
     
@@ -131,7 +123,6 @@ app.post('/api/admin/action', verifyAdmin, (req, res) => {
     res.json({ success: true });
 });
 
-// توزيع الأرباح الجماعي بنسبة 15% بلمسة واحدة (محمي)
 app.post('/api/admin/distribute-profit', verifyAdmin, (req, res) => {
     Object.keys(users).forEach(username => {
         let u = users[username];
@@ -145,14 +136,12 @@ app.post('/api/admin/distribute-profit', verifyAdmin, (req, res) => {
     res.json({ success: true });
 });
 
-
 // ==================== توجيه الصفحات وتشغيل السيرفر العالمي ====================
 
 app.get('/panel', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
-// 🚀 تشغيل السيرفر والتوافق الديناميكي مع منفذ استضافة Render العالمية
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🟢 Cloud server is running successfully on port ${PORT}`);
