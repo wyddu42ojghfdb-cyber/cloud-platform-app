@@ -7,7 +7,7 @@
     <title>Bulut Platformu - Yönetim Kontrol Paneli</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; padding: 15px; margin: 0; }
-        .container { max-width: 780px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: left; }
+        .container { max-width: 850px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: left; }
         .title-app { text-align: center; color: #3b82f6; font-size: 22px; font-weight: bold; margin-bottom: 20px; }
         button { padding: 8px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 13px; }
         .btn-blue { background: #1d4ed8; color: white; width: 100%; padding: 12px; font-size: 15px; margin-bottom: 20px; }
@@ -29,10 +29,25 @@
         <strong id="total-users-count" style="color: #3b82f6; font-size: 16px;">0</strong>
     </div>
     
-    <!-- زر بث عوائد الأرباح بنسبة 15% للمستثمرين النشطين -->
     <button class="btn-blue" onclick="distributeProfitGlobal()">📊 Doğrudan Günlük Kar Dağıtımı (%15) 💰</button>
     
-    <div class="section-title">⚠️ Üyelerin Bekleyen Talepleri (Yükleme / Çekme)</div>
+    <!-- الجدول الجديد المطلوب بالملي: طلبات تفعيل الموافقة على أسماء المستخدمين الجدد -->
+    <div class="section-title">👤 Yeni Kullanıcı Adı Onay Talepleri (طلبات تفعيل الأسماء الجديدة)</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Kullanıcı Adı (الاسم المرسل)</th>
+                <th>Kayıt Durumu (حالة الحساب)</th>
+                <th>Tarih (التاريخ)</th>
+                <th>Yönetici Kararı (قرارك كـ مشرف)</th>
+            </tr>
+        </thead>
+        <tbody id="username-onay-table-body">
+            <tr><td colspan="4" style="color: #94a3b8;">Bekleyen kullanıcı adı onay talebi bulunmamaktadır...</td></tr>
+        </tbody>
+    </table>
+    
+    <div class="section-title">⚠️ Üyelerin Bekleyen Finansal Talepleri (Yükleme / Çekme)</div>
     <table>
         <thead>
             <tr>
@@ -44,7 +59,7 @@
             </tr>
         </thead>
         <tbody id="requests-table-body">
-            <tr><td colspan="5" style="color: #94a3b8;">Bekleyen talep bulunmamaktadır...</td></tr>
+            <tr><td colspan="5" style="color: #94a3b8;">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>
         </tbody>
     </table>
     
@@ -60,7 +75,7 @@
             </tr>
         </thead>
         <tbody id="users-table-body">
-            <tr><td colspan="5" style="color: #94a3b8;">Henüz kayıtlı üye yok...</td></tr>
+            <tr><td colspan="5" style="color: #94a3b8;">Henüz onaylanmış veya kayıtlı aktif üye yok...</td></tr>
         </tbody>
     </table>
 </div>
@@ -68,7 +83,7 @@
 <script>
     const API_URL = window.location.origin;
 
-    // دالة جلب البيانات وتحديث الجداول حياً كل 3 ثوانٍ
+    // دالة التحديث التلقائي الشاملة للجداول كل 3 ثوانٍ حياً ومباشراً
     async function loadAdminData() {
         try {
             const res = await fetch(API_URL + "/api/admin/requests");
@@ -76,18 +91,39 @@
             if(data.success) {
                 document.getElementById('total-users-count').innerText = data.totalUsers || 0;
                 
-                // 1. تحديث جدول الطلبات المعلقة (شحن / سحب)
+                // 1. تحديث جدول موافقات أسماء المستخدمين الجدد حياً
+                const nameTableBody = document.getElementById('username-onay-table-body');
+                const bekleyenKullanicilar = data.allUsers ? data.allUsers.filter(u => u.status === 'pending') : [];
+                
+                if(bekleyenKullanicilar.length === 0) {
+                    nameTableBody.innerHTML = `<tr><td colspan="4" style="color: #94a3b8;">Bekleyen kullanıcı adı onay talebi bulunmamaktadır...</td></tr>`;
+                } else {
+                    nameTableBody.innerHTML = "";
+                    bekleyenKullanicilar.forEach(u => {
+                        nameTableBody.innerHTML += `
+                            <tr>
+                                <td><b style="color:#3b82f6; font-size:14px;">${u.username}</b></td>
+                                <td style="color:#eab308; font-weight:bold;">⏳ Onay Bekliyor</td>
+                                <td><small>${u.createdDate || 'Şimdi'}</small></td>
+                                <td>
+                                    <button class="btn-green" onclick="processUserFieldAction('${u.username}', 'approve')">Onayla (موافقة على الحساب)</button>
+                                    <button class="btn-red" onclick="processUserFieldAction('${u.username}', 'reject')">Reddet (رفض الاسم)</button>
+                                </td>
+                            </tr>`;
+                    });
+                }
+                
+                // 2. تحديث جدول طلبات الشحن والسحب المالي
                 const reqBody = document.getElementById('requests-table-body');
                 if(!data.requests || data.requests.length === 0) {
-                    reqBody.innerHTML = `<tr><td colspan="5" style="color: #94a3b8;">Bekleyen talep bulunmamaktadır...</td></tr>`;
+                    reqBody.innerHTML = `<tr><td colspan="5" style="color: #94a3b8;">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>`;
                 } else {
                     reqBody.innerHTML = "";
                     data.requests.forEach(r => {
                         let typeText = "";
-                        if(r.type === 'deposit') typeText = "📥 Para Yatırma (الإيداع)";
-                        else if(r.type === 'withdraw_capital') typeText = "💥 Sermaye Çekme (رأس المال)";
-                        else if(r.type === 'withdraw_daily') typeText = "📊 Kar Çekme (الأرباح)";
-                        else if(r.type === 'invite_bonus') typeText = "🍇 Davet Ödülü (مكافأة الدعوة)";
+                        if(r.type === 'deposit') typeText = "📥 Para Yatırma";
+                        else if(r.type === 'withdraw_capital') typeText = "💥 Sermaye Çekme";
+                        else if(r.type === 'withdraw_daily') typeText = "📊 Kar Çekme";
                         
                         reqBody.innerHTML += `
                             <tr>
@@ -96,20 +132,22 @@
                                 <td style="color:#22c55e; font-weight:bold;">${r.amount} USDT</td>
                                 <td><small>${r.walletAddress || ''}</small></td>
                                 <td>
-                                    <button class="btn-green" onclick="processAction('${r.id}', 'approve', '${r.username}', '${r.type}', ${r.amount})">Onayla (موافقة)</button>
-                                    <button class="btn-red" onclick="processAction('${r.id}', 'reject', '${r.username}', '${r.type}', ${r.amount})">Reddet (رفض)</button>
+                                    <button class="btn-green" onclick="processFinancialAction('${r.id}', 'approve', '${r.username}', '${r.type}', ${r.amount})">Onayla</button>
+                                    <button class="btn-red" onclick="processFinancialAction('${r.id}', 'reject', '${r.username}', '${r.type}', ${r.amount})">Reddet</button>
                                 </td>
                             </tr>`;
                     });
                 }
                 
-                // 2. تحديث جدول مراقبة حسابات وأرصدة الأعضاء حياً
+                // 3. تحديث جدول مراقبة الأرصدة للأعضاء الذين تمت الموافقة على أسمائهم فقط
                 const userBody = document.getElementById('users-table-body');
-                if(!data.allUsers || data.allUsers.length === 0) {
-                    userBody.innerHTML = `<tr><td colspan="5" style="color: #94a3b8;">Henüz kayıtlı üye yok...</td></tr>`;
+                const aktifKullanicilar = data.allUsers ? data.allUsers.filter(u => u.status === 'active') : [];
+                
+                if(aktifKullanicilar.length === 0) {
+                    userBody.innerHTML = `<tr><td colspan="5" style="color: #94a3b8;">Henüz onaylanmış aktif üye yok...</td></tr>`;
                 } else {
                     userBody.innerHTML = "";
-                    data.allUsers.forEach(u => {
+                    aktifKullanicilar.forEach(u => {
                         userBody.innerHTML += `
                             <tr>
                                 <td><b>${u.username}</b></td>
@@ -121,40 +159,32 @@
                     });
                 }
             }
-        } catch(e) { console.error("Veri yükleme hatası", e); }
+        } catch(e) { console.error("Veri çekme hatası", e); }
     }
 
-    // دالة معالجة قرار المشرف (موافقة أو رفض) لتبديل الأرصدة فوراً
-    async function processAction(id, action, username, type, amount) {
+    // دالة الموافقة أو الرفض على اسم المستخدم الجديد فورا
+    async function processUserFieldAction(username, decision) {
+        try {
+            const res = await fetch(API_URL + "/api/admin/user-decision", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, decision })
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert(`🎯 Kullanıcı adı başarıyla ${decision === 'approve' ? 'ONAYLANDI' : 'REDDEDİLDİ'}!`);
+                loadAdminData();
+            }
+        } catch(e) { alert("Bağlantı hatası!"); }
+    }
+
+    // دالة معالجة طلبات الأموال (شحن / سحب)
+    async function processFinancialAction(id, action, username, type, amount) {
         try {
             const res = await fetch(API_URL + "/api/admin/action", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, action, username, type, amount })
             });
-            const data = await res.json();
-            if(data.success) {
-                alert("🎯 İşlem başarıyla uygulandı ve üyenin bakiyesi güncellendi!");
-                loadAdminData();
-            }
-        } catch(e) { alert("Bağlantı hatası!"); }
-    }
-
-    // دالة توزيع الأرباح بنسبة 15% لجميع الحسابات بلمسة واحدة
-    async function distributeProfitGlobal() {
-        try {
-            const res = await fetch(API_URL + "/api/admin/distribute-profit", { method: 'POST' });
-            const data = await res.json();
-            if(data.success) {
-                alert("🚀 Tebrikler! %15 günlük kar tüm aktif üyelere başarıyla dağıtıldı!");
-                loadAdminData();
-            }
-        } catch(e) { alert("Hata oluştu!"); }
-    }
-
-    // التشغيل الفوري والربط بالتحديث الحي
-    loadAdminData();
-    setInterval(loadAdminData, 3000);
-</script>
-</body>
-</html>
+            if((await res.json()).success) {
+                
