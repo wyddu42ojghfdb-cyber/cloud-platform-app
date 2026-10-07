@@ -1,119 +1,166 @@
 <!DOCTYPE html>
-<html lang="tr" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulut Platformu - Yönetim Kontrol Paneli</title>
+    <title>منظومة محاكي التداول الذكي والتحليل السحابي</title>
     <style>
         :root {
             --bg-color: #0b1426; --card-bg: #111c33; --input-bg: #090f1d;
-            --blue-btn: #1a56db; --green-btn: #16a34a; --text-color: #ffffff;
-            --text-muted: #9ca3af; --border-color: #1e293b;
+            --blue-btn: #1a56db; --purple-btn: #7e3af2; --orange-btn: #ea580c;
+            --red-btn: #dc2626; --green-btn: #16a34a; --cyan-btn: #06b6d4;
+            --text-color: #ffffff; --text-muted: #9ca3af; --border-color: #1e293b;
         }
-        body { font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
-        .container { width: 100%; max-width: 900px; margin: 0 auto; }
-        .header { text-align: center; font-size: 20px; font-weight: bold; color: #38bdf8; margin-bottom: 20px; }
-        .section { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        .section-title { font-size: 14px; font-weight: bold; color: #fbbf24; margin-bottom: 15px; }
-        button { padding: 10px 16px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
-        .btn-blue { background-color: var(--blue-btn); width: 100%; display: block; margin-bottom: 15px; }
-        .btn-green { background-color: var(--green-btn); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-        th, td { border: 1px solid var(--border-color); padding: 12px; text-align: center; }
-        th { background-color: #1e293b; color: var(--text-muted); }
-        .empty-msg { color: var(--text-muted); font-style: italic; padding: 20px; }
-        .input-inline { background-color: var(--input-bg); border: 1px solid var(--border-color); color: white; padding: 6px; border-radius: 4px; width: 80px; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 480px; background-color: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+        .lang-bar { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 4px; }
+        .lang-btn { flex: 1; padding: 6px 2px; font-size: 11px; background-color: #1e293b; border: 1px solid var(--border-color); color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .lang-btn.active { background-color: var(--blue-btn); }
+        .header { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 20px; color: #38bdf8; }
+        .section { background-color: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+        label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+        input { width: 100%; background-color: var(--input-bg); border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; text-align: center; font-size: 14px; margin-bottom: 10px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; font-size: 14px; cursor: pointer; margin-bottom: 8px; }
+        .btn-blue { background-color: var(--blue-btn); } .btn-orange { background-color: var(--orange-btn); }
+        .btn-purple { background-color: var(--purple-btn); } .btn-red { background-color: var(--red-btn); }
+        .btn-green { background-color: var(--green-btn); } .btn-cyan { background-color: var(--cyan-btn); }
+        .stats-row { display: flex; justify-content: space-between; font-size: 14px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .value { color: #a855f7; font-weight: bold; }
+        .info-text { font-size: 12px; color: #fbbf24; text-align: center; margin-bottom: 8px; }
+        .wallet-box { font-family: monospace; background-color: var(--input-bg); padding: 10px; border-radius: 6px; text-align: center; font-size: 13px; color: #4ade80; word-break: break-all; border: 1px dashed #4ade80; margin-bottom: 10px; }
     </style>
 </head>
 <body>
+
 <div class="container">
-    <div class="header">👑 Bulut Platformu - Yönetim Kontrol Paneli</div>
+    <!-- 🌐 شريط اللغات الخمس في الأعلى للتحويل الفوري -->
+    <div class="lang-bar">
+        <button class="lang-btn active" onclick="changeLang('ar')">العربية</button>
+        <button class="lang-btn" onclick="changeLang('en')">English</button>
+        <button class="lang-btn" onclick="changeLang('tr')">Türkçe</button>
+        <button class="lang-btn" onclick="changeLang('de')">Deutsch</button>
+        <button class="lang-btn" onclick="changeLang('fr')">Français</button>
+    </div>
+
+    <div class="header" id="txt-header">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
+
     <div class="section">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <span>Kayıtlı Aktif Üye Sayısı Toplamı 👥</span>
-            <span id="total-users-badge" style="background: #1e293b; padding: 4px 12px; border-radius: 4px; font-weight: bold; color: #38bdf8;">0</span>
+        <label id="user-label">👤 اسم المستخدم الحالي: (غير مسجل)</label>
+        <input type="text" id="username-input" placeholder="اكتب اسمك هنا لبدء البث حياً">
+        <button class="btn-blue" id="btn-save-name" onclick="handleLogin()">💾 إرسال طلب حفظ الاسم للمشرف</button>
+        <button class="btn-orange" id="btn-logout" style="background-color: #7c2d12;" onclick="handleLogout()">🔄 تسجيل الخروج وإعادة تعيين الحساب</button>
+    </div>
+
+    <div class="section">
+        <div class="info-text" id="txt-grand-prize">👑 جائزة الكبرى (40 عضو) <br> 2500 دولار أمريكي</div>
+        <div class="stats-row">
+            <span id="txt-team-label">أعضاء الفريق النشطين:</span>
+            <span id="team-count" class="value" style="color:#eab308;">0/40</span>
         </div>
-        <button class="btn-blue" onclick="distributeProfitMassive()">📊 Doğrudan Günlük Kar Dağıtımı (%15) ⚡</button>
     </div>
+
     <div class="section">
-        <div class="section-title">👤 Yeni Kullanıcı Adı Onay Talepleri</div>
-        <table>
-            <thead><tr><th>Kullanıcı Adı</th><th>Kayıt Durumu</th><th>Tarih</th><th>Yönetici Kararı</th></tr></thead>
-            <tbody id="users-table-body"><tr><td colspan="4" class="empty-msg">Bekleyen talep bulunmamaktadır...</td></tr></tbody>
-        </table>
+        <label id="txt-invite-label">🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):</label>
+        <input type="text" id="invite-name" placeholder="اسم الصديق المدعو">
+        <button class="btn-purple" id="btn-invite" onclick="sendInviteBonus()">🍇 إرسال المكافأة إلى المشرف</button>
     </div>
+
     <div class="section">
-        <div class="section-title">⚠️ Üyelerin Bekleyen Finansal Talepleri (Yükleme / Çekme / Davet)</div>
-        <table>
-            <thead><tr><th>Kullanıcı Adı</th><th>Talep Türü</th><th>Miktar</th><th>Cüzdan / Detay</th><th>Denetleyicinin Kararı</th></tr></thead>
-            <tbody id="requests-table-body"><tr><td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr></tbody>
-        </table>
+        <div class="stats-row">
+            <span id="txt-capital">إجمالي رأس المال:</span>
+            <span id="balance-val" class="value">USDT 0.00</span>
+        </div>
+        <div class="stats-row">
+            <span id="txt-profit">الأرباح اليومية:</span>
+            <span id="profit-val" class="value">USDT 0.00</span>
+        </div>
+        <div class="stats-row">
+            <span id="txt-bonus">الأرباح التذاكر ومكافآت الدعوة:</span>
+            <span id="bonus-val" class="value">USDT 0.00</span>
+        </div>
     </div>
+
+    <div class="section" style="border-color: var(--red-btn);">
+        <div class="info-text" id="txt-withdraw-header" style="color: var(--red-btn);">🚨 بوابة السحب الفوري المباشر (شبكة TRC-20)</div>
+        <input type="text" id="withdraw-wallet" placeholder="أدخل عنوان محفظة TRC-20 الخاصة بك">
+        
+        <input type="number" id="withdraw-profit-amount" placeholder="مبلغ سحب أرباح اليوم">
+        <button class="btn-red" id="btn-w-profit" onclick="sendWithdraw('withdraw_daily')">📊 سحب أرباح اليوم</button>
+        
+        <input type="number" id="withdraw-bonus-amount" placeholder="مبلغ سحب مكافآت الدعوة">
+        <button class="btn-red" id="btn-w-bonus" style="background-color: #b91c1c;" onclick="sendWithdraw('invite_bonus')">💥 سحب مكافأة الدعوة</button>
+        
+        <input type="number" id="withdraw-total-amount" placeholder="مبلغ سحب الرصيد الكلي">
+        <button class="btn-red" id="btn-w-capital" style="background-color: #991b1b;" onclick="sendWithdraw('withdraw_capital')">💥 سحب إجمالي الرصيد الكلي</button>
+    </div>
+
+    <div class="section" style="border-color: var(--green-btn);">
+        <div class="info-text" id="txt-deposit-header" style="color: var(--green-btn);"> محفظة الإيداع الرسمية - شبكة USDT (TRC-20)</div>
+        <div class="wallet-box" id="company-wallet">TA1vsgrJEfy3YM6rkQWbppnZemFE6c9pBN</div>
+        <input type="number" id="deposit-amount" placeholder="أدخل مبلغ الشحن بـ USDT">
+        <button class="btn-green" id="btn-deposit" onclick="sendDeposit()">⚡ إرسال طلب الإيداع للمشرف</button>
+    </div>
+
     <div class="section">
-        <div class="section-title">📊 Üyelerin Bakiyelerinin ve Kararlarının Canlı Takibi</div>
-        <table>
-            <thead><tr><th>Kullanıcı Adı</th><th>Toplam Sermaye</th><th>Bugünün Karları</th><th>Davetiye Bonusları</th><th>Takım Sayısı</th></tr></thead>
-            <tbody id="live-monitoring-body"><tr><td colspan="5" class="empty-msg">Henüz kayıtlı aktif üye yok...</td></tr></tbody>
-        </table>
+        <div class="info-text" id="txt-history-header" style="color: #67e8f9;">📋 سجل المعاملات والإشعارات الحية</div>
+        <div id="history-box" style="font-size: 12px; color: var(--text-muted); max-height: 100px; overflow-y: auto; text-align: center;">
+            يرجى حفظ الاسم لعرض التحديثات الحية..
+        </div>
     </div>
+
+    <!-- 💬 زر الدعم الفني يفتح حساب التليجرام الخاص بك مباشرة -->
+    <button class="btn-cyan" id="btn-support" onclick="openTelegramSupport()">💬 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
 </div>
+
 <script>
-    const ADMIN_PASS = "ADMIN_SECRET_PASS_2026";
-    function updateAdminDashboard() {
-        fetch('/api/admin/requests', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminPassword: ADMIN_PASS })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('total-users-badge').innerText = data.totalUsers;
-                const usersBody = document.getElementById('users-table-body');
-                if (data.allUsers.length === 0) {
-                    usersBody.innerHTML = `<tr><td colspan="4" class="empty-msg">Bekleyen talep bulunmamaktadır...</td></tr>`;
-                } else {
-                    usersBody.innerHTML = data.allUsers.map(u => `<tr><td style="color:#38bdf8; font-weight:bold;">${u.username}</td><td><span style="color:#16a34a;">● Aktif</span></td><td>${new Date().toLocaleDateString('tr-TR')}</td><td>Sabitlendi</td></tr>`).join('');
-                }
-                const requestsBody = document.getElementById('requests-table-body');
-                if (data.requests.length === 0) {
-                    requestsBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>`;
-                } else {
-                    requestsBody.innerHTML = data.requests.map(r => {
-                        let typeText = "";
-                        if (r.type === 'deposit') typeText = "📥 Para Yatırma";
-                        if (r.type === 'withdraw_daily') typeText = "📊 Kar Çekme";
-                        if (r.type === 'withdraw_capital') typeText = "💸 Sermaye Çekme";
-                        if (r.type === 'invite_bonus') typeText = "🍇 Davet Ödülü (15 USDT)";
-                        return `<tr><td><b>${r.username}</b></td><td>${typeText}</td><td><input type="number" id="amt-${r.id}" class="input-inline" value="${r.amount}"></td><td style="color:#67e8f9;">${r.walletAddress || '---'}</td><td><button class="btn-green" onclick="approveAction(${r.id}, '${r.username}', '${r.type}')">✅ Onayla</button></td></tr>`;
-                    }).join('');
-                }
-                const monitoringBody = document.getElementById('live-monitoring-body');
-                if (data.allUsers.length === 0) {
-                    monitoringBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Henüz üye yok...</td></tr>`;
-                } else {
-                    monitoringBody.innerHTML = data.allUsers.map(u => `<tr><td><b>${u.username}</b></td><td style="color:#a855f7; font-weight:bold;">USDT ${u.balance.toFixed(2)}</td><td style="color:#eab308; font-weight:bold;">USDT ${u.todayProfit.toFixed(2)}</td><td style="color:#06b6d4; font-weight:bold;">USDT ${u.bonus.toFixed(2)}</td><td>${u.teamCount} Üye</td></tr>`).join('');
-                }
-            }
-        }).catch(err => console.error(err));
-    }
-    function approveAction(id, username, type) {
-        const inputAmt = document.getElementById(`amt-${id}`).value;
-        fetch('/api/admin/action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminPassword: ADMIN_PASS, id, action: 'approve', username, type, amount: inputAmt })
-        }).then(res => res.json()).then(data => { if(data.success) updateAdminDashboard(); });
-    }
-    function distributeProfitMassive() {
-        fetch('/api/admin/distribute-profit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminPassword: ADMIN_PASS })
-        }).then(res => res.json()).then(data => { if(data.success) { alert("📊 %15 Dağıtıldı!"); updateAdminDashboard(); } });
-    }
-    setInterval(updateAdminDashboard, 4000);
-    window.onload = updateAdminDashboard;
-</script>
-</body>
-</html>
+    let currentUsername = localStorage.getItem('trader_username') || '';
+    let currentLang = 'ar';
+
+    // قاموس الترجمة الفورية لخمس لغات
+    const langData = {
+        ar: {
+            header: "☁️ منظومة محاكي التداول الذكي والتحليل السحابي",
+            loginLabel: "👤 اسم المستخدم الحالي: ",
+            unregistered: "(غير مسجل)",
+            saveBtn: "💾 إرسال طلب حفظ الاسم للمشرف",
+            logoutBtn: "🔄 تسجيل الخروج وإعادة تعيين الحساب",
+            prize: "👑 جائزة الكبرى (40 عضو) <br> 2500 دولار أمريكي",
+            team: "أعضاء الفريق النشطين:",
+            inviteLabel: "🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):",
+            inviteBtn: "🍇 إرسال المكافأة إلى المشرف",
+            capital: "إجمالي رأس المال:",
+            profit: "الأرباح اليومية:",
+            bonus: "الأرباح التذاكر ومكافآت الدعوة:",
+            wHeader: "🚨 بوابة السحب الفوري المباشر (شبكة TRC-20)",
+            wProfit: "📊 سحب أرباح اليوم",
+            wBonus: "💥 سحب مكافأة الدعوة",
+            wCapital: "💥 سحب إجمالي الرصيد الكلي",
+            dHeader: " محفظة الإيداع الرسمية - شبكة USDT (TRC-20)",
+            dBtn: "⚡ إرسال طلب الإيداع للمشرف",
+            hHeader: "📋 سجل المعاملات والإشعارات الحية",
+            support: "💬 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام"
+        },
+        en: {
+            header: "☁️ Smart Trading Simulator & Cloud Analysis System",
+            loginLabel: "👤 Current Username: ",
+            unregistered: "(Unregistered)",
+            saveBtn: "💾 Send Username Save Request to Admin",
+            logoutBtn: "🔄 Logout and Reset Account",
+            prize: "👑 Grand Prize (40 Members) <br> 2500 USD",
+            team: "Active Team Members:",
+            inviteLabel: "🔗 Send Referral Reward Request (Direct Invitation):",
+            inviteBtn: "🍇 Send Reward to Admin",
+            capital: "Total Capital:",
+            profit: "Daily Profits:",
+            bonus: "Ticket & Invitation Profits:",
+            wHeader: "🚨 Instant Direct Withdrawal Portal (TRC-20 Network)",
+            wProfit: "📊 Withdraw Daily Profits",
+            wBonus: "💥 Withdraw Invitation Bonus",
+            wCapital: "💥 Withdraw Total Capital Balance",
+            dHeader: " Official Deposit Wallet - USDT (TRC-20) Network",
+            dBtn: "⚡ Send Deposit Request to Admin",
+            hHeader: "📋 Live Transaction Log & Notifications",
+            support: "💬 Contact Technical Support via Telegram Directly"
+        },
+        tr: {
+            
