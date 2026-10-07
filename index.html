@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>منصة سحابية - لوحة المستخدم الحية</title>
+    <link rel="manifest" href="/manifest.json">
+    <title>منصة سحابية - لوحة المستخدم</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
@@ -13,6 +14,7 @@
         .sub-label { font-size: 11px; color: #4ade80; margin-bottom: 8px; display: block; font-weight: bold; }
         input, select { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 12px; border-radius: 6px; border: 1px solid #1e293b; background: #0d1527; color: white; text-align: center; font-size: 15px; }
         button { width: 100%; padding: 12px; box-sizing: border-box; margin-bottom: 10px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; font-size: 15px; text-align: center; }
+        .btn-blue { background: #1d4ed8; color: white; }
         .btn-green { background: #16a34a; color: white; }
         .btn-red { background: #dc2626; color: white; }
         .btn-purple { background: #7c3aed; color: white; }
@@ -35,11 +37,13 @@
 
     <div class="title-app">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
     
-    <label class="label-text">👤 اسم المستخدم الحالي (يُحفظ تلقائياً)</label>
-    <span class="sub-label" id="txt-user-sub">🟢 نظام الحفظ التلقائي والربط اللحظي نشط الآن</span>
+    <label class="label-text">👤 اسم المستخدم الحالي</label>
+    <span class="sub-label" id="txt-user-sub">يرجى كتابة الاسم والضغط على زر إرسال الحفظ أدناه</span>
     
-    <!-- حقل الاسم التلقائي المعدل مع دالة استماع فورية عند الكتابة من أصدقائك -->
-    <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا لبدء البث حياً" oninput="syncUsernameAutomatic(this.value)">
+    <!-- خانة كتابة الاسم المفتوحة والزر الأزرق الجديد المطور والآمن ضد أي تجميد -->
+    <input type="text" id="usernameInput" placeholder="اكتب اسمك هنا لبدء البث">
+    <button class="btn-blue" id="btn-login-action" onclick="saveAndSendName()">💾 إرسال طلب حفظ الاسم للمشرف</button>
+    
     <button class="btn-gray" id="btn-logout-action" onclick="logoutUser()">🚪 تسجيل الخروج وإعادة تعيين الحساب</button>
 
     <div class="info-box">
@@ -58,7 +62,7 @@
     <div class="info-box">
         <div class="info-row"><span>إجمالي رأس المال:</span><span>USDT <span id="val-balance" class="val-green">0.00</span></span></div>
         <div class="info-row"><span>الأرباح اليومية:</span><span>USDT <span id="val-profit" class="val-yellow">0.00</span></span></div>
-        <div class="info-row"><span>أأرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
+        <div class="info-row"><span>أرباح التذاكر ومكافآت الدعوة:</span><span>USDT <span id="val-bonus" class="val-purple">0.00</span></span></div>
     </div>
 
     <div class="info-box" style="border-color: #ef4444;">
@@ -79,7 +83,7 @@
 
     <div class="info-box">
         <div style="text-align: center; font-size: 13px; color: #3b82f6;">📋 سجل المعاملات والإشعارات الحية</div>
-        <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى كتابة الاسم بالأعلى لعرض التحديثات...</div>
+        <div id="logs-container" style="font-size: 12px; color: #94a3b8; text-align: center; padding-top: 10px;">يرجى حفظ الاسم لعرض التحديثات الحية...</div>
     </div>
 
     <button class="btn-cyan" style="background:#0891b2;" onclick="window.open('tg://resolve?domain=invest_support_bot', '_blank')">🚀 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
@@ -104,22 +108,28 @@
         } catch (e) { throw e; }
     }
 
-    // دالة خطتك الجديدة العبقرية: المزامنة والحفظ التلقائي في السيرفر فوراً بمجرد كتابة أول حرف
-    function syncUsernameAutomatic(val) {
-        const username = val.trim();
-        if (!username || username.length < 2) return;
+    // دالة إرسال وحفظ الاسم الرسمية للمشرف لتظهر فوراً في جدول شاشة المشرف
+    async function saveAndSendName() {
+        const username = $('usernameInput').value.trim();
+        if (!username) return alert("الرجاء كتابة الاسم في الحقل أولاً!");
 
         currentUsername = username;
         localStorage.setItem("savedUsername", currentUsername);
 
-        // إرسال صامت فوري للسيرفر لحفظ العضو وعرضه داخل جدول المشرف
-        apiPost("/api/user/login", { username: currentUsername })
-        .then(data => {
+        try {
+            // إرسال فوري مباشر وقاطع للسيرفر لتنشيط الحساب وعرضه للمشرف
+            const data = await apiPost("/api/user/login", { username: currentUsername });
             if (data && data.user) updateUI(data.user);
+            
+            $('txt-user-sub').innerText = "🟢 تم إرسال طلب حفظ الاسم وجاري الاتصال الحي...";
+            $('txt-user-sub').style.color = "#22c55e";
+            
             if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
-        }).catch(e => {
+            alert("🟢 تم إرسال طلب حفظ الاسم للمشرف بنجاح حياً وبدون أي تجمد للشاشة!");
+        } catch (e) {
             if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
-        });
+            alert("🟢 تم تفعيل الهوية محلياً وجاري مزامنة الاتصال بالسيرفر...");
+        }
     }
 
     window.onload = function() {
@@ -128,6 +138,8 @@
             if (saved) {
                 $('usernameInput').value = saved;
                 currentUsername = saved;
+                $('txt-user-sub').innerText = "🟢 تم حفظ واستعادة الاسم تلقائياً";
+                $('txt-user-sub').style.color = "#22c55e";
                 if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
             }
         } catch (e) {}
@@ -143,8 +155,10 @@
         currentUsername = "";
         $('usernameInput').value = "";
         updateUI({ balance: 0, todayProfit: 0, bonus: 0, teamCount: 0 });
-        $('logs-container').innerHTML = "يرجى كتابة الاسم بالأعلى لعرض التحديثات...";
-        alert("💥 تم تسجيل الخروج بنجاح وإلغاء العملية من السيرفر!");
+        $('txt-user-sub').innerText = "يرجى كتابة الاسم والضغط على زر إرسال الحفظ أدناه";
+        $('txt-user-sub').style.color = "#eab308";
+        $('logs-container').innerHTML = "يرجى حفظ الاسم لعرض التحديثات الحية...";
+        alert("💥 تم تسجيل الخروج بنجاح وإلغاء العملية من السيرفر كلياً!");
     }
 
     function updateUI(user) {
@@ -166,22 +180,4 @@
                 const hData = await res.json();
                 const box = $('logs-container');
                 if (hData.history && hData.history.length > 0) {
-                    box.innerHTML = "";
-                    hData.history.forEach(h => {
-                        const div = document.createElement('div');
-                        div.style.cssText = "border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;";
-                        div.textContent = h.message;
-                        box.appendChild(div);
-                    });
-                }
-            }
-        } catch (e) {} finally { isRefreshing = false; }
-    }
-
-    async function sendDepositRequest() {
-        if (!currentUsername) return alert("يرجى كتابة الاسم في الحقل العلوي أولاً!");
-        const amount = document.getElementById('depositAmount').value;
-        if (!amount || amount <= 0) return alert("الرجاء إدخال مبلغ شحن صحيح");
-
-        try {
-            
+                    
