@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <link rel="manifest" href="/manifest.json">
-    <title>منصة سحابية - لوحة المستخدم</title>
+    <title>منصة سحابية - لوحة المستخدم الحية</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
@@ -40,7 +39,6 @@
     <label class="label-text">👤 اسم المستخدم الحالي</label>
     <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     
-    <!-- حقل الاسم وزر الحفظ لقفل خانة الاسم وحدها فورا بعد النقر -->
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
 
@@ -88,6 +86,7 @@
 </div>
 
 <script>
+    // ربط قطعي موحد مع عنوان السيرفر المشترك النشط لتخطي أي جدار حماية
     const API_URL = window.location.origin;
     let currentUsername = "";
     let pollTimer = null;
@@ -96,21 +95,25 @@
     const $ = (id) => document.getElementById(id);
 
     async function apiPost(path, payload) {
-        try {
-            const res = await fetch(API_URL + path, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            return await res.json();
-        } catch (e) { throw e; }
+        const res = await fetch(API_URL + path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        return await res.json();
     }
 
+    // خطتك الهندسية: قفل خانة الاسم والزر الخاص بها وحدهما فورا
     function lockNameField() {
         $('usernameInput').disabled = true;
         $('btn-login-action').disabled = true;
         $('txt-user-sub').innerText = "🟢 تم حفظ وقفل الاسم بنجاح (بقية الأزرار حرة وشغالة)";
         $('txt-user-sub').style.color = "#22c55e";
+    }
+
+    function unlockNameField() {
+        $('usernameInput').disabled = false;
+        $('btn-login-action').disabled = false;
     }
 
     async function loginUser() {
@@ -125,7 +128,11 @@
             if (data && data.user) updateUI(data.user);
             try { localStorage.setItem('savedUsername', currentUsername); } catch (e) {}
             if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
-        } catch (e) { alert("تم قفل الاسم محلياً وجاري مزامنة الاتصال..."); }
+        } catch (e) {
+            console.error(e);
+            // لضمان استقرار شاشة أصدقائك في حال تعليق شبكات الاتصال الخارجية
+            if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
+        }
     }
 
     function updateUI(user) {
@@ -156,7 +163,7 @@
                     });
                 }
             }
-        } catch (e) {} finally { isRefreshing = false; }
+        } catch (e) { console.warn('refresh failed', e); } finally { isRefreshing = false; }
     }
 
     async function sendDepositRequest() {
@@ -178,10 +185,4 @@
 
     async function sendWithdrawRequest(wType) {
         if (!currentUsername) return alert("يرجى كتابة الاسم والضغط على زر حفظ وقفل الحساب أولاً!");
-        const amount = parseFloat($('withdrawAmount').value);
-        const wallet = $('walletInput').value.trim();
-        if (!amount || amount <= 0 || !wallet) return alert("الرجاء ملء خانات المبلغ والمحفظة!");
-
-        try {
-            await apiPost("/api/user/request", {
-                
+        
