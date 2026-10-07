@@ -6,29 +6,16 @@
     <title>Bulut Platformu - Yönetim Kontrol Paneli</title>
     <style>
         :root {
-            --bg-color: #0b1426;
-            --card-bg: #111c33;
-            --input-bg: #090f1d;
-            --blue-btn: #1a56db;
-            --green-btn: #16a34a;
-            --red-btn: #dc2626;
-            --text-color: #ffffff;
-            --text-muted: #9ca3af;
-            --border-color: #1e293b;
+            --bg-color: #0b1426; --card-bg: #111c33; --input-bg: #090f1d;
+            --blue-btn: #1a56db; --green-btn: #16a34a; --text-color: #ffffff;
+            --text-muted: #9ca3af; --border-color: #1e293b;
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-        }
+        body { font-family: sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
         .container { width: 100%; max-width: 900px; margin: 0 auto; }
         .header { text-align: center; font-size: 20px; font-weight: bold; color: #38bdf8; margin-bottom: 20px; }
-        .section { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+        .section { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
         .section-title { font-size: 14px; font-weight: bold; color: #fbbf24; margin-bottom: 15px; }
-        button { padding: 10px 16px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
-        button:hover { opacity: 0.9; }
+        button { padding: 10px 16px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
         .btn-blue { background-color: var(--blue-btn); width: 100%; display: block; margin-bottom: 15px; }
         .btn-green { background-color: var(--green-btn); }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
@@ -39,11 +26,8 @@
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="header">👑 Bulut Platformu - Yönetim Kontrol Paneli</div>
-
-    <!-- إجمالي الأعضاء النشطين وزر توزيع الأرباح بنسبة 15% بلمسة واحدة -->
     <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <span>Kayıtlı Aktif Üye Sayısı Toplamı 👥</span>
@@ -51,156 +35,85 @@
         </div>
         <button class="btn-blue" onclick="distributeProfitMassive()">📊 Doğrudan Günlük Kar Dağıtımı (%15) ⚡</button>
     </div>
-
-    <!-- 1. جدول طلبات تفعيل الأسماء الجديدة -->
     <div class="section">
         <div class="section-title">👤 Yeni Kullanıcı Adı Onay Talepleri</div>
         <table>
-            <thead>
-                <tr>
-                    <th>Kullanıcı Adı</th>
-                    <th>Kayıt Durumu</th>
-                    <th>Tarih</th>
-                    <th>Yönetici Kararı</th>
-                </tr>
-            </thead>
-            <tbody id="users-table-body">
-                <tr><td colspan="4" class="empty-msg">Bekleyen kullanıcı adı onay talebi bulunmamaktadır...</td></tr>
-            </tbody>
+            <thead><tr><th>Kullanıcı Adı</th><th>Kayıt Durumu</th><th>Tarih</th><th>Yönetici Kararı</th></tr></thead>
+            <tbody id="users-table-body"><tr><td colspan="4" class="empty-msg">Bekleyen talep bulunmamaktadır...</td></tr></tbody>
         </table>
     </div>
-
-    <!-- 2. جدول طلبات السحب والإيداع الحية والمعلقة -->
     <div class="section">
-        <div class="section-title">⚠️ Üyelerin Bekleyen Finansal Talepleri (Yükleme / Çekme)</div>
+        <div class="section-title">⚠️ Üyelerin Bekleyen Finansal Talepleri (Yükleme / Çekme / Davet)</div>
         <table>
-            <thead>
-                <tr>
-                    <th>Kullanıcı Adı</th>
-                    <th>Talep Türü</th>
-                    <th>Miktar</th>
-                    <th>Cüzdan / Detay</th>
-                    <th>Denetleyicinin Kararı</th>
-                </tr>
-            </thead>
-            <tbody id="requests-table-body">
-                <tr><td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>
-            </tbody>
+            <thead><tr><th>Kullanıcı Adı</th><th>Talep Türü</th><th>Miktar</th><th>Cüzdan / Detay</th><th>Denetleyicinin Kararı</th></tr></thead>
+            <tbody id="requests-table-body"><tr><td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr></tbody>
         </table>
     </div>
-
-    <!-- 3. جدول المتابعة الحية لجميع أرصدة الحسابات -->
     <div class="section">
         <div class="section-title">📊 Üyelerin Bakiyelerinin ve Kararlarının Canlı Takibi</div>
         <table>
-            <thead>
-                <tr>
-                    <th>Kullanıcı Adı</th>
-                    <th>Toplam Sermaye</th>
-                    <th>Bugünün Karları</th>
-                    <th>Davetiye Bonusları</th>
-                    <th>Takım Sayısı</th>
-                </tr>
-            </thead>
-            <tbody id="live-monitoring-body">
-                <tr><td colspan="5" class="empty-msg">Henüz onaylanmış veya kayıtlı aktif üye yok...</td></tr>
-            </tbody>
+            <thead><tr><th>Kullanıcı Adı</th><th>Toplam Sermaye</th><th>Bugünün Karları</th><th>Davetiye Bonusları</th><th>Takım Sayısı</th></tr></thead>
+            <tbody id="live-monitoring-body"><tr><td colspan="5" class="empty-msg">Henüz kayıtlı aktif üye yok...</td></tr></tbody>
         </table>
     </div>
 </div>
-
 <script>
-    // 🔒 كلمة المرور الموحدة والمطابقة تماماً لملف السيرفر
     const ADMIN_PASS = "ADMIN_SECRET_PASS_2026";
-
-    // دالة بث وجلب التحديثات فورياً من السيرفر السحابي
     function updateAdminDashboard() {
         fetch('/api/admin/requests', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminPassword: ADMIN_PASS }) // تمرير كلمة المرور في الجسم لفك قفل الحماية
+            body: JSON.stringify({ adminPassword: ADMIN_PASS })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // تحديث العداد العلوي
                 document.getElementById('total-users-badge').innerText = data.totalUsers;
-
-                // تحديث جدول الأسماء النشطة
                 const usersBody = document.getElementById('users-table-body');
                 if (data.allUsers.length === 0) {
-                    usersBody.innerHTML = `<tr><td colspan="4" class="empty-msg">Bekleyen kullanıcı adı onay talebi bulunmamaktadır...</td></tr>`;
+                    usersBody.innerHTML = `<tr><td colspan="4" class="empty-msg">Bekleyen talep bulunmamaktadır...</td></tr>`;
                 } else {
-                    usersBody.innerHTML = data.allUsers.map(u => `
-                        <tr>
-                            <td style="color:#38bdf8; font-weight:bold;">${u.username}</td>
-                            <td><span style="color:#16a34a;">● Aktif Sunucuda</span></td>
-                            <td>${new Date().toLocaleDateString('tr-TR')}</td>
-                            <td><span style="color:var(--text-muted);">Sistem Tarafından Sabitlendi</span></td>
-                        </tr>
-                    `).join('');
+                    usersBody.innerHTML = data.allUsers.map(u => `<tr><td style="color:#38bdf8; font-weight:bold;">${u.username}</td><td><span style="color:#16a34a;">● Aktif</span></td><td>${new Date().toLocaleDateString('tr-TR')}</td><td>Sabitlendi</td></tr>`).join('');
                 }
-
-                // تحديث جدول العمليات المالية (إيداع وسحب) المعلقة
                 const requestsBody = document.getElementById('requests-table-body');
                 if (data.requests.length === 0) {
                     requestsBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>`;
                 } else {
                     requestsBody.innerHTML = data.requests.map(r => {
                         let typeText = "";
-                        if (r.type === 'deposit') typeText = "📥 Para Yatırma (إيداع)";
-                        if (r.type === 'withdraw_daily') typeText = "📊 Kar Çekme (سحب أرباح)";
-                        if (r.type === 'invite_bonus') typeText = "🍇 Davet Ödülü (مكافأة دعوة)";
-                        if (r.type === 'withdraw_capital') typeText = "💸 Sermaye Çekme (سحب كلي)";
-
-                        return `
-                            <tr>
-                                <td><b>${r.username}</b></td>
-                                <td>${typeText}</td>
-                                <td>
-                                    <input type="number" id="amt-${r.id}" class="input-inline" value="${r.amount}"> <b>USDT</b>
-                                </td>
-                                <td style="font-family:monospace; color:#67e8f9; font-size:11px;">${r.walletAddress || '---'}</td>
-                                <td>
-                                    <button class="btn-green" onclick="approveAction(${r.id}, '${r.username}', '${r.type}')">✅ Onayla</button>
-                                </td>
-                            </tr>
-                        `;
+                        if (r.type === 'deposit') typeText = "📥 Para Yatırma";
+                        if (r.type === 'withdraw_daily') typeText = "📊 Kar Çekme";
+                        if (r.type === 'withdraw_capital') typeText = "💸 Sermaye Çekme";
+                        if (r.type === 'invite_bonus') typeText = "🍇 Davet Ödülü (15 USDT)";
+                        return `<tr><td><b>${r.username}</b></td><td>${typeText}</td><td><input type="number" id="amt-${r.id}" class="input-inline" value="${r.amount}"></td><td style="color:#67e8f9;">${r.walletAddress || '---'}</td><td><button class="btn-green" onclick="approveAction(${r.id}, '${r.username}', '${r.type}')"> Onayla</button></td></tr>`;
                     }).join('');
                 }
-
-                // تحديث شاشة المتابعة الحية للأرصدة
                 const monitoringBody = document.getElementById('live-monitoring-body');
                 if (data.allUsers.length === 0) {
-                    monitoringBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Henüz onaylanmış veya kayıtlı aktif üye yok...</td></tr>`;
+                    monitoringBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Henüz üye yok...</td></tr>`;
                 } else {
-                    monitoringBody.innerHTML = data.allUsers.map(u => `
-                        <tr>
-                            <td style="font-weight:bold;">${u.username}</td>
-                            <td style="color:#a855f7; font-weight:bold;">USDT ${u.balance.toFixed(2)}</td>
-                            <td style="color:#eab308; font-weight:bold;">USDT ${u.todayProfit.toFixed(2)}</td>
-                            <td style="color:#06b6d4; font-weight:bold;">USDT ${u.bonus.toFixed(2)}</td>
-                            <td><span style="background:rgba(255,255,255,0.05); padding:2px 8px; border-radius:4px;">${u.teamCount} Üye</span></td>
-                        </tr>
-                    `).join('');
+                    monitoringBody.innerHTML = data.allUsers.map(u => `<tr><td><b>${u.username}</b></td><td style="color:#a855f7; font-weight:bold;">USDT ${u.balance.toFixed(2)}</td><td style="color:#eab308; font-weight:bold;">USDT ${u.todayProfit.toFixed(2)}</td><td style="color:#06b6d4; font-weight:bold;">USDT ${u.bonus.toFixed(2)}</td><td>${u.teamCount} Üye</td></tr>`).join('');
                 }
             }
-        }).catch(err => console.error("Veri jetti hatası:", err));
+        }).catch(err => console.error(err));
     }
-
-    // دالة تنفيذ القرارات وتحديث خانات أرصدة الأعضاء فوراً
     function approveAction(id, username, type) {
         const inputAmt = document.getElementById(`amt-${id}`).value;
-        if(!inputAmt || inputAmt <= 0) return alert("Lütfen geçerli bir miktar girin!");
-
         fetch('/api/admin/action', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                adminPassword: ADMIN_PASS,
-                id: id,
-                action: 'approve',
-                username: username,
-                type: type,
-                amount: inputAmt
-                
+            body: JSON.stringify({ adminPassword: ADMIN_PASS, id, action: 'approve', username, type, amount: inputAmt })
+        }).then(res => res.json()).then(data => { if(data.success) updateAdminDashboard(); });
+    }
+    function distributeProfitMassive() {
+        fetch('/api/admin/distribute-profit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminPassword: ADMIN_PASS })
+        }).then(res => res.json()).then(data => { if(data.success) { alert(" %15 Dağıtıldı!"); updateAdminDashboard(); } });
+    }
+    setInterval(updateAdminDashboard, 4000);
+    window.onload = updateAdminDashboard;
+</script>
+</body>
+</html>
