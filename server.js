@@ -3,7 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const app = express();
 
-// تفعيل فك حظر الأمان العالمي الشامل CORS لضمان استقبال وإلغاء الجلسات من أي هاتف
+// 1. تفعيل فك حظر الأمان العالمي الشامل CORS لضمان استقبال وإلغاء الجلسات من أي هاتف
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST'],
@@ -13,15 +13,20 @@ app.use(cors({
 app.use(express.json());
 app.use(express.static(__dirname));
 
+// ذاكرة السيرفر المؤقتة لحفظ البيانات
 let users = {};
 let pendingRequests = [];
 
-// 1. مسار حفظ وقفل اسم المستخدم داخل قاعدة بيانات السيرفر
+// 🔒 كلمة المرور السرية لحماية لوحة التحكم (يمكنك تغييرها من هنا)
+const ADMIN_PASSWORD = "ADMIN_SECRET_PASS_2026"; 
+
+// ==================== مسارات واجهة المستخدم (User Endpoints) ====================
+
+// مسار حفظ وقفل اسم المستخدم داخل قاعدة بيانات السيرفر
 app.post('/api/user/login', (req, res) => {
     const { username } = req.body;
     if (!username) return res.status(400).json({ success: false, message: 'Kullanıcı adı gerekli' });
     
-    // إذا كان المستخدم جديداً، يتم إنشاؤه وتثبيته في السيرفر فوراً
     if (!users[username]) {
         users[username] = {
             username: username,
@@ -35,11 +40,10 @@ app.post('/api/user/login', (req, res) => {
     res.json({ success: true, user: users[username] });
 });
 
-// 2. مسار تسجيل الخروج - إلغاء ومسح العملية تماماً من السيرفر بناءً على طلبك
+// مسار تسجيل الخروج - إلغاء ومسح العملية تماماً من السيرفر
 app.post('/api/user/logout', (req, res) => {
     const { username } = req.body;
     if (username && users[username]) {
-        // حذف المستخدم وتصفير أرصدته وإلغاء طلباته المعلقة نهائياً من قاعدة البيانات
         delete users[username];
         pendingRequests = pendingRequests.filter(r => r.username !== username);
         return res.json({ success: true, message: '🟢 Kullanıcı sunucudan başarıyla silindi' });
@@ -47,7 +51,7 @@ app.post('/api/user/logout', (req, res) => {
     res.json({ success: false, message: 'Kullanıcı bulunamadı' });
 });
 
-// 3. نفق استقبال طلبات الإيداع والسحب وإرسالها حياً لشاشة المشرف
+// نفق استقبال طلبات الإيداع والسحب وإرسالها حياً لشاشة المشرف
 app.post('/api/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
     if (!username || !amount || !type) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
@@ -66,8 +70,31 @@ app.post('/api/user/request', (req, res) => {
     res.json({ success: true, message: 'Talebiniz başarıyla gönderildi!' });
 });
 
-// 4. مسار بث التحديثات والمشتركين داخل جدول شاشة المشرف حياً
-app.get('/api/admin/requests', (req, res) => {
+// جلب سجل المعاملات لشاشة المستخدم
+app.get('/api/user/history', (req, res) => {
+    const { username } = req.query;
+    if (users[username]) {
+        res.json({ success: true, history: users[username].history });
+    } else {
+        res.json({ success: true, history: [] });
+    }
+});
+
+
+// ==================== مسارات لوحة التحكم المحمية (Admin Endpoints) ====================
+
+// برمجية وسيطة للتحقق من كلمة مرور المشرف قبل تنفيذ أي عملية حساسة
+const verifyAdmin = (req, res, next) => {
+    const password = req.headers['admin-password'] || req.body.adminPassword;
+    if (password === ADMIN_PASSWORD) {
+        next();
+    } else {
+        res.status(401).json({ success: false, message: 'خطأ في صلاحيات المشرف! كلمة المرور غير صحيحة.' });
+    }
+};
+
+// مسار بث التحديثات والمشتركين داخل جدول شاشة المشرف حياً (محمي)
+app.post('/api/admin/requests', verifyAdmin, (req, res) => {
     res.json({ 
         success: true, 
         requests: pendingRequests, 
@@ -76,8 +103,8 @@ app.get('/api/admin/requests', (req, res) => {
     });
 });
 
-// 5. معالجة الموافقات وتحديث أرصدة وخانات المستخدمين
-app.post('/api/admin/action', (req, res) => {
+// معالجة الموافقات وتحديث أرصدة وخانات المستخدمين (محمي)
+app.post('/api/admin/action', verifyAdmin, (req, res) => {
     const { id, action, username, type, amount } = req.body;
     
     if (action === 'approve' && users[username]) {
@@ -104,8 +131,8 @@ app.post('/api/admin/action', (req, res) => {
     res.json({ success: true });
 });
 
-// 6. توزيع الأرباح الجماعي بنسبة 15% بلمسة واحدة من لوحة التحكم
-app.post('/api/admin/distribute-profit', (req, res) => {
+// توزيع الأرباح الجماعي بنسبة 15% بلمسة واحدة (محمي)
+app.post('/api/admin/distribute-profit', verifyAdmin, (req, res) => {
     Object.keys(users).forEach(username => {
         let u = users[username];
         if (u.balance > 0) {
@@ -118,19 +145,15 @@ app.post('/api/admin/distribute-profit', (req, res) => {
     res.json({ success: true });
 });
 
-// جلب سجل المعاملات لشاشة المستخدم
-app.get('/api/user/history', (req, res) => {
-    const { username } = req.query;
-    if (users[username]) {
-        res.json({ success: true, history: users[username].history });
-    } else {
-        res.json({ success: true, history: [] });
-    }
-});
+
+// ==================== توجيه الصفحات وتشغيل السيرفر العالمي ====================
 
 app.get('/panel', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
+// 🚀 تشغيل السيرفر والتوافق الديناميكي مع منفذ استضافة Render العالمية
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log('Sunucu aktif ve calisiyor...'));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🟢 Cloud server is running successfully on port ${PORT}`);
+});
