@@ -3,7 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const app = express();
 
-// تفعيل فك حظر الأمان العالمي الشامل CORS لضمان استجابة الأزرار من أي هاتف
+// تفعيل فك حظر الأمان العالمي الشامل CORS لضمان استقبال وإلغاء الجلسات من أي هاتف
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST'],
@@ -16,11 +16,12 @@ app.use(express.static(__dirname));
 let users = {};
 let pendingRequests = [];
 
-// مسار قفل وتنشيط حساب المستخدم
+// 1. مسار حفظ وقفل اسم المستخدم داخل قاعدة بيانات السيرفر
 app.post('/api/user/login', (req, res) => {
     const { username } = req.body;
     if (!username) return res.status(400).json({ success: false, message: 'Kullanıcı adı gerekli' });
     
+    // إذا كان المستخدم جديداً، يتم إنشاؤه وتثبيته في السيرفر فوراً
     if (!users[username]) {
         users[username] = {
             username: username,
@@ -34,7 +35,19 @@ app.post('/api/user/login', (req, res) => {
     res.json({ success: true, user: users[username] });
 });
 
-// مسار استقبال طلبات الإيداع والسحب والدعوات
+// 2. مسار تسجيل الخروج - إلغاء ومسح العملية تماماً من السيرفر بناءً على طلبك
+app.post('/api/user/logout', (req, res) => {
+    const { username } = req.body;
+    if (username && users[username]) {
+        // حذف المستخدم وتصفير أرصدته وإلغاء طلباته المعلقة نهائياً من قاعدة البيانات
+        delete users[username];
+        pendingRequests = pendingRequests.filter(r => r.username !== username);
+        return res.json({ success: true, message: '🟢 Kullanıcı sunucudan başarıyla silindi' });
+    }
+    res.json({ success: false, message: 'Kullanıcı bulunamadı' });
+});
+
+// 3. نفق استقبال طلبات الإيداع والسحب وإرسالها حياً لشاشة المشرف
 app.post('/api/user/request', (req, res) => {
     const { username, amount, type, walletAddress } = req.body;
     if (!username || !amount || !type) return res.status(400).json({ success: false, message: 'Eksik bilgi' });
@@ -53,7 +66,7 @@ app.post('/api/user/request', (req, res) => {
     res.json({ success: true, message: 'Talebiniz başarıyla gönderildi!' });
 });
 
-// مسار بث التحديثات لجدول شاشة المشرف
+// 4. مسار بث التحديثات والمشتركين داخل جدول شاشة المشرف حياً
 app.get('/api/admin/requests', (req, res) => {
     res.json({ 
         success: true, 
@@ -63,7 +76,7 @@ app.get('/api/admin/requests', (req, res) => {
     });
 });
 
-// معالجة قرار المشرف (موافقة أو رفض) لتحديث أرصدة وخانات المستخدمين فورا
+// 5. معالجة الموافقات وتحديث أرصدة وخانات المستخدمين
 app.post('/api/admin/action', (req, res) => {
     const { id, action, username, type, amount } = req.body;
     
@@ -72,15 +85,18 @@ app.post('/api/admin/action', (req, res) => {
         if (type === 'deposit') {
             users[username].balance += amt;
             users[username].todayProfit += (amt * 0.15); 
-            users[username].history.push({ message: `✅ Onaylanan Para Yatırma: +${amt} USDT` });
+            users[username].history.push({ message: `✅ Onaylanan Para Yatırma: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'withdraw_capital') {
             users[username].balance -= amt;
-            users[username].history.push({ message: `💸 Onaylanan Para Çekme: -${amt} USDT` });
+            users[username].history.push({ message: `💸 Onaylanan Para Çekme (Sermaye): -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
+        } else if (type === 'withdraw_daily') {
+            users[username].todayProfit -= amt;
+            users[username].history.push({ message: `📊 Onaylanan Para Çekme (Kar): -${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         } else if (type === 'invite_bonus') {
             users[username].bonus += amt;
             users[username].balance += amt; 
             users[username].teamCount += 1; 
-            users[username].history.push({ message: `🍇 Onaylanan Davet Ödülü: +${amt} USDT` });
+            users[username].history.push({ message: `🍇 Onaylanan Davet Ödülü: +${amt} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     }
     
@@ -88,7 +104,7 @@ app.post('/api/admin/action', (req, res) => {
     res.json({ success: true });
 });
 
-// توزيع الأرباح بنسبة 15% بلمسة واحدة من لوحة التحكم
+// 6. توزيع الأرباح الجماعي بنسبة 15% بلمسة واحدة من لوحة التحكم
 app.post('/api/admin/distribute-profit', (req, res) => {
     Object.keys(users).forEach(username => {
         let u = users[username];
@@ -96,13 +112,13 @@ app.post('/api/admin/distribute-profit', (req, res) => {
             let p = u.balance * 0.15;
             u.todayProfit += p;
             u.balance += p;
-            u.history.push({ message: `📊 Günlük %15 kar dağıtımı: +${p.toFixed(2)} USDT` });
+            u.history.push({ message: `📊 Günlük %15 kar dağıtımı: +${p.toFixed(2)} USDT`, date: new Date().toLocaleString('tr-TR') });
         }
     });
     res.json({ success: true });
 });
 
-// مسار سجل الإشعارات للمستخدم
+// جلب سجل المعاملات لشاشة المستخدم
 app.get('/api/user/history', (req, res) => {
     const { username } = req.query;
     if (users[username]) {
