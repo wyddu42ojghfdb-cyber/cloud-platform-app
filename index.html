@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
-    <title>منصة سحابية - المنظومة المتكاملة الشغالة</title>
+    <link rel="manifest" href="/manifest.json">
+    <title>منصة سحابية - لوحة المستخدم</title>
     <style>
         body { background-color: #0d1527; color: white; font-family: sans-serif; text-align: center; direction: rtl; padding: 15px; margin: 0; }
         .container { max-width: 480px; margin: auto; background: #152238; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: right; }
@@ -39,7 +40,7 @@
     <label class="label-text">👤 اسم المستخدم الحالي</label>
     <span class="sub-label" id="txt-user-sub">يرجى قفل وتثبيت اسم المستخدم أولاً</span>
     
-    <!-- حقل الاسم وزر التثبيت المفتوحان والمجهزان بأمر التنشيط القطعي -->
+    <!-- حقل الاسم وزر الحفظ لقفل خانة الاسم وحدها فورا بعد النقر -->
     <input type="text" id="usernameInput" placeholder="اكتب اسم المستخدم هنا">
     <button class="btn-blue" id="btn-login-action" onclick="loginUser()">💾 حفظ وقفل الحساب</button>
 
@@ -52,8 +53,7 @@
         </div>
     </div>
 
-    <!-- بقية عناصر الشاشة بالأسفل حرة وشغالة دائما ولا تتأثر بالتجميد القديم -->
-    <label class="label-text">🔗 إرسال طلب مكافأة الإحالة (الدعوة):</label>
+    <label class="label-text">🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):</label>
     <input type="text" id="inviteInput" placeholder="اسم الصديق المدعو">
     <button class="btn-purple" onclick="sendInviteRequest()">🍇 إرسال المكافأة إلى المشرف</button>
 
@@ -88,80 +88,100 @@
 </div>
 
 <script>
-    // نظام المحرك السحابي الفوري لإجبار الهواتف على الحفظ وفك التجميد كلياً
+    const API_URL = window.location.origin;
     let currentUsername = "";
-    let appState = { balance: 0.00, profit: 0.00, bonus: 0.00, teamCount: 0 };
+    let pollTimer = null;
+    let isRefreshing = false;
 
-    // خطتك الذكية الناجحة: إغلاق حقل الاسم والزر الخاص به وحدهما رسومياً
-    function executeVisualLock() {
-        document.getElementById('usernameInput').disabled = true;
-        document.getElementById('btn-login-action').disabled = true;
-        document.getElementById('txt-user-sub').innerText = "🟢 تم حفظ وقفل الاسم بنجاح (بقية الأزرار حرة وشغالة)";
-        document.getElementById('txt-user-sub').style.color = "#22c55e";
+    const $ = (id) => document.getElementById(id);
+
+    async function apiPost(path, payload) {
+        try {
+            const res = await fetch(API_URL + path, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            return await res.json();
+        } catch (e) { throw e; }
     }
 
-    function loginUser() {
-        const username = document.getElementById('usernameInput').value.trim();
+    function lockNameField() {
+        $('usernameInput').disabled = true;
+        $('btn-login-action').disabled = true;
+        $('txt-user-sub').innerText = "🟢 تم حفظ وقفل الاسم بنجاح (بقية الأزرار حرة وشغالة)";
+        $('txt-user-sub').style.color = "#22c55e";
+    }
+
+    async function loginUser() {
+        const username = $('usernameInput').value.trim();
         if (!username) return alert("الرجاء كتابة الاسم أولاً");
 
-        // إخراج نافذة التأكيد الرسمية للنظام فوراً لإلغاء تجمد المتصفح وإظهار كلمة "تم الحفظ"
-        alert("🟢 تم الحفظ وقفل حساب المستخدم [" + username + "] بنجاح حياً!");
-
         currentUsername = username;
-        appState.balance = 345.00; // إضاءة الأرقام الترحيبية الحية فوراً لبث الحماس الفوري
-        appState.profit = 45.00;
-        appState.teamCount = 12;
+        lockNameField();
 
-        executeVisualLock(); // قفل حقل الاسم وحده برمجياً
-        updateUI();
-
-        const now = new Date();
-        const dateStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('logs-container').innerHTML = `
-            <div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>✅ تم تفعيل حساب التداول بنجاح <br><small style='color:#64748b;'>${dateStr}</small></div>
-            <div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#eab308;'>📊 تم ربط عوائد التداول اليومية بنسبة 15% <br><small style='color:#64748b;'>${dateStr}</small></div>
-        `;
+        try {
+            const data = await apiPost("/api/user/login", { username: currentUsername });
+            if (data && data.user) updateUI(data.user);
+            try { localStorage.setItem('savedUsername', currentUsername); } catch (e) {}
+            if (!pollTimer) pollTimer = setInterval(refreshData, 3000);
+        } catch (e) { alert("تم قفل الاسم محلياً وجاري مزامنة الاتصال..."); }
     }
 
-    function updateUI() {
-        document.getElementById('val-balance').innerText = appState.balance.toFixed(2);
-        document.getElementById('val-profit').innerText  = appState.profit.toFixed(2);
-        document.getElementById('val-bonus').innerText   = appState.bonus.toFixed(2);
-        document.getElementById('val-team').innerText    = appState.teamCount + "/40";
+    function updateUI(user) {
+        $('val-balance').innerText = Number(user.balance || 0).toFixed(2);
+        $('val-profit').innerText  = Number(user.todayProfit || 0).toFixed(2);
+        $('val-bonus').innerText   = Number(user.bonus || 0).toFixed(2);
+        $('val-team').innerText    = (user.teamCount || 0) + "/40";
     }
 
-    function sendDepositRequest() {
+    async function refreshData() {
+        if (!currentUsername || isRefreshing) return;
+        isRefreshing = true;
+        try {
+            const data = await apiPost("/api/user/login", { username: currentUsername });
+            if (data && data.success && data.user) updateUI(data.user);
+
+            const hRes = await fetch(API_URL + "/api/user/history?username=" + encodeURIComponent(currentUsername));
+            if (hRes.ok) {
+                const hData = await hRes.json();
+                const box = $('logs-container');
+                if (hData.history && hData.history.length > 0) {
+                    box.innerHTML = "";
+                    hData.history.forEach(h => {
+                        const div = document.createElement('div');
+                        div.style.cssText = "border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;";
+                        div.textContent = h.message;
+                        box.appendChild(div);
+                    });
+                }
+            }
+        } catch (e) {} finally { isRefreshing = false; }
+    }
+
+    async function sendDepositRequest() {
         if (!currentUsername) return alert("يرجى كتابة الاسم والضغط على زر حفظ وقفل الحساب أولاً!");
-        const amount = parseFloat(document.getElementById('depositAmount').value);
-        if (!amount || amount <= 0) return alert("الالرجاء إدخال مبلغ شحن صحيح");
+        const amount = parseFloat($('depositAmount').value);
+        if (!amount || amount <= 0) return alert("الرجاء إدخال مبلغ شحن صحيح");
 
-        alert("⚡ تم استلام طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة!");
-        
-        appState.balance += amount;
-        appState.profit += (amount * 0.15);
-        updateUI();
-        
-        const now = new Date();
-        const dateStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('logs-container').innerHTML += `
-            <div style='border-bottom:1px solid #1e293b; padding:4px 0; color:#22c55e;'>✅ شحن رصيد معتمد ومؤكد: +${amount} USDT <br><small style='color:#64748b;'>${dateStr}</small></div>
-        `;
-        document.getElementById('depositAmount').value = "";
+        try {
+            await apiPost("/api/user/request", {
+                username: currentUsername,
+                amount: amount,
+                type: 'deposit',
+                walletAddress: 'شحن TRC20'
+            });
+            alert("⚡ تم إرسال طلب الإيداع بنجاح وهو قيد المراجعة الفورية من الإدارة! الرصيد سيزداد فور موافقة المشرف.");
+            $('depositAmount').value = "";
+        } catch (e) { alert("خطأ في شبكة التوصيل"); }
     }
 
-    function sendWithdrawRequest(wType) {
+    async function sendWithdrawRequest(wType) {
         if (!currentUsername) return alert("يرجى كتابة الاسم والضغط على زر حفظ وقفل الحساب أولاً!");
-        const amount = parseFloat(document.getElementById('withdrawAmount').value);
-        const wallet = document.getElementById('walletInput').value.trim();
+        const amount = parseFloat($('withdrawAmount').value);
+        const wallet = $('walletInput').value.trim();
         if (!amount || amount <= 0 || !wallet) return alert("الرجاء ملء خانات المبلغ والمحفظة!");
 
-        alert("💸 تم إرسال طلب السحب بنجاح وهو قيد المراجعة الفورية من الإدارة!");
-        
-        if (wType === 'withdraw_capital') appState.balance -= amount;
-        else if (wType === 'withdraw_daily') appState.profit -= amount;
-        updateUI();
-        
-        const now = new Date();
-        const dateStr = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-        ameInput').disabled = true;
-        
+        try {
+            await apiPost("/api/user/request", {
+                
