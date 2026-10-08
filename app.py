@@ -1,6 +1,4 @@
 import streamlit as st
-import json
-import os
 
 # 1. إعدادات المنصة العالمية والذاكرة السحابية الذكية لمنع التجمد
 st.set_page_config(page_title="Cloud Platform App", page_icon="☁️", layout="centered")
@@ -36,7 +34,7 @@ if "page" in query_params and query_params["page"] == "admin":
     else:
         for idx, r in enumerate(st.session_state.db_requests):
             type_text = "📥 Para Yatırma" if r["type"] == "deposit" else "💸 Para Çekme"
-            col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
+            col1, col2, col3, col4 = st.columns(4)
             col1.write(f"👤 {r['username']}")
             col2.write(f"{type_text}")
             col3.write(f"USDT {r['amount']}")
@@ -63,7 +61,7 @@ if "page" in query_params and query_params["page"] == "admin":
 else:
     st.markdown("<h3 style='text-align: center; color: #38bdf8;'>☁️ منظومة محاكي التداول الذكي والتحليل السحابي</h3>", unsafe_allowed_html=True)
     
-    # حظ وقفل الاسم
+    # حفظ وقفل الاسم
     user_input = st.text_input("👤 اكتب اسمك هنا لبدء البث حياً:", key="user_in")
     if st.button("💾 إرسال طلب حفظ الاسم للمشرف", key="save_btn"):
         if user_input.strip():
