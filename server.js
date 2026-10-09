@@ -10,7 +10,8 @@ app.use(express.json());
 app.use(express.static(__dirname));
 
 // الربط الديناميكي الآمن بقاعدة البيانات (يقرأ من Render أو يستخدم الرابط الافتراضي)
-const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://admin:admin12345@free-tier-demo.aogqf83.mongodb.net/cryptoDB?retryWrites=true&w=majority&appName=free-tier-demo";
+const MONGO_URI = "mongodb+srv://admin:9jA1uBMo53FPpm1Y@free-tier-demo.aogqf83.mongodb.net/cryptoDB?retryWrites=true&w=majority&appName=free-tier-demo";
+
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log("🟢 Permanent MongoDB Connected Successfully"))
