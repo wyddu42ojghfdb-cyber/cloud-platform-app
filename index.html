@@ -14,7 +14,7 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 480px; background-color: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
         .lang-bar { display: flex; justify-content: space-between; margin-bottom: 15px; gap: 4px; }
-        .lang-btn { flex: 1; padding: 6px 2px; font-size: 11px; background-color: #1e293b; border: 1px solid var(--border-color); color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .lang-btn { flex: 1; padding: 10px 2px; font-size: 13px; background-color: #1e293b; border: 1px solid var(--border-color); color: white; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .lang-btn.active { background-color: var(--blue-btn); }
         .header { text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 20px; color: #38bdf8; }
         .section { background-color: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px; }
@@ -33,159 +33,132 @@
 <body>
 
 <div class="container">
+    <!-- 🌐 شريط اللغات للتحويل الفوري المباشر -->
     <div class="lang-bar">
-        <button class="lang-btn active">العربية</button>
-        <button class="lang-btn">English</button>
-        <button class="lang-btn">Türkçe</button>
-        <button class="lang-btn">Deutsch</button>
-        <button class="lang-btn">Français</button>
+        <button class="lang-btn active" id="btn-lang-ar" onclick="changeLang('ar')">العربية</button>
+        <button class="lang-btn" id="btn-lang-en" onclick="changeLang('en')">English</button>
     </div>
 
-    <div class="header">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
+    <div class="header" id="txt-header">☁️ منظومة محاكي التداول الذكي والتحليل السحابي</div>
 
     <div class="section">
         <label id="user-label">👤 اسم المستخدم الحالي: (غير مسجل)</label>
         <input type="text" id="username-input" placeholder="اكتب اسمك هنا لبدء البث حياً">
-        <button class="btn-blue" onclick="handleLogin()">💾 إرسال طلب حفظ الاسم للمشرف</button>
-        <button class="btn-orange" style="background-color: #7c2d12;" onclick="handleLogout()">🔄 تسجيل الخروج وإعادة تعيين الحساب</button>
+        <button class="btn-blue" id="btn-save-name" onclick="handleLogin()">💾 حفظ وقفل الحساب</button>
     </div>
 
     <div class="section">
-        <div class="info-text">👑 جائزة الكبرى (40 عضو) <br> 2500 دولار أمريكي</div>
+        <div class="info-text" id="txt-grand-prize">👑 جائزة الكبرى (40 عضو) <br> 2500 دولار أمريكي</div>
         <div class="stats-row">
-            <span>أعضاء الفريق النشطين:</span>
+            <span id="txt-team-label">أعضاء الفريق النشطين:</span>
             <span id="team-count" class="value" style="color:#eab308;">0/40</span>
         </div>
     </div>
 
     <div class="section">
-        <label>🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):</label>
+        <label id="txt-invite-label">🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):</label>
         <input type="text" id="invite-name" placeholder="اسم الصديق المدعو">
-        <button class="btn-purple" onclick="sendInviteBonus()">🍇 إرسال المكافأة إلى المشرف</button>
+        <button class="btn-purple" id="btn-invite" onclick="sendInviteBonus()">🍇 إرسال المكافأة إلى المشرف</button>
     </div>
 
     <div class="section">
         <div class="stats-row">
-            <span>إجمالي رأس المال:</span>
+            <span id="txt-capital">إجمالي رأس المال:</span>
             <span id="balance-val" class="value">USDT 0.00</span>
         </div>
         <div class="stats-row">
-            <span>الأرباح اليومية:</span>
+            <span id="txt-profit">الأرباح اليومية:</span>
             <span id="profit-val" class="value" style="color:#16a34a;">USDT 0.00</span>
         </div>
         <div class="stats-row">
-            <span>الأرباح التذاكر ومكافآت الدعوة:</span>
+            <span id="txt-bonus">أرباح التذاكر ومكافآت الدعوة:</span>
             <span id="bonus-val" class="value" style="color:#22d3ee;">USDT 0.00</span>
         </div>
     </div>
 
     <div class="section" style="border-color: #dc2626;">
-        <label style="color:#f87171;">🔺 بوابة السحب الفوري المباشر (شبكة TRC-20):</label>
+        <label id="txt-withdraw-title" style="color:#f87171;">🔺 بوابة السحب الفوري المباشر (شبكة TRC-20):</label>
         <input type="text" id="withdraw-wallet" placeholder="أدخل عنوان محفظة TRC-20 الخدمية بك">
         
         <input type="number" id="withdraw-profit-amount" placeholder="مبلغ سحب أرباح اليوم">
-        <button class="btn-red" onclick="handleWithdraw('withdraw_daily')">📊 سحب أرباح اليوم</button>
+        <button class="btn-red" id="btn-draw-profit" onclick="handleWithdraw('withdraw_daily')">📊 سحب الأرباح اليومية</button>
         
-        <input type="number" id="withdraw-bonus-amount" placeholder="مبلغ سحب مكافآت الدعوة">
-        <button class="btn-red" style="background-color: #b91c1c;" onclick="handleWithdraw('invite_bonus')">🍇 سحب مكافأة الدعوة</button>
-        
-        <input type="number" id="withdraw-capital-amount" placeholder="مبلغ سحب الرصيد الكلي">
-        <button class="btn-red" style="background-color: #991b1b;" onclick="handleWithdraw('withdraw_capital')">💥 سحب إجمالي الرصيد الكلي</button>
+        <button class="btn-red" id="btn-draw-capital" style="background-color: #991b1b;" onclick="handleWithdraw('withdraw_capital')">💥 سحب إجمالي رأس المال</button>
+        <button class="btn-red" id="btn-draw-bonus" style="background-color: #b91c1c;" onclick="handleWithdraw('invite_bonus')">💸 سحب مكافأة الدعوة</button>
     </div>
 
     <div class="section" style="border-color: #16a34a;">
-        <label style="color:#4ade80;">محفظة الإيداع الرسمية - شبكة (USDT TRC-20):</label>
+        <label id="txt-deposit-title" style="color:#4ade80;">📥 محفظة الإيداع الرسمية - شبكة (USDT TRC-20):</label>
         <div class="wallet-box">TA1vsgrJEfy3VM6rkQWLipnpnZemFE6c9pBN</div>
         <input type="number" id="deposit-amount" placeholder="أدخل مبلغ الشحن بـ USDT">
-        <button class="btn-green" onclick="handleDeposit()">⚡ إرسال طلب الإيداع للمشرف</button>
+        <button class="btn-green" id="btn-deposit" onclick="handleDeposit()">⚡ إرسال طلب الإيداع للمشرف</button>
     </div>
 
     <div class="section">
-        <div style="font-size:13px; font-weight:bold; margin-bottom:8px;">📊 سجل المعاملات والإشعارات الحية</div>
+        <div id="txt-history-title" style="font-size:13px; font-weight:bold; margin-bottom:8px;">📊 سجل المعاملات والإشعارات الحية</div>
         <div id="live-history-box" style="font-size:12px; max-height:100px; overflow-y:auto; color:var(--text-muted);">
             يرجى حفظ الاسم لعرض التحديثات الحية...
         </div>
     </div>
+
+    <!-- 🌐 زر الدعم المباشر المتصل ببوت التليجرام الخاص بك -->
+    <a href="https://t.me" target="_blank" style="text-decoration: none;">
+        <button class="btn-cyan" id="btn-support" style="width: 100%; margin-top: 10px;">💎 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام</button>
+    </a>
 </div>
 
 <script>
-    // تم إدخال السطر البرمجي هنا بشكل صحيح ومحمي داخل وسم السكريبت
-    const BACKEND_URL = window.location.origin;
-    let currentUsername = localStorage.getItem('activeUser') || "";
-
-    async function handleLogin() {
-        const usernameInput = document.getElementById('username-input').value.trim();
-        if (!usernameInput) return alert("Lütfen kullanıcı adını girin!");
-
-        try {
-            const res = await fetch(`${BACKEND_URL}/api/user/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: usernameInput })
-            });
-            const data = await res.json();
-            if (data.success) {
-                currentUsername = usernameInput;
-                localStorage.setItem('activeUser', currentUsername);
-                document.getElementById('user-label').innerText = `👤 اسم المستخدم الحالي: ${currentUsername}`;
-                document.getElementById('username-input').value = "";
-                updateUI(data.user);
-                fetchUserHistory();
-                alert("Giriş Başarılı!");
-            }
-        } catch (err) {
-            console.error(err);
-        }
-    }
-
-    function updateUI(user) {
-        if (!user) return;
-        document.getElementById('balance-val').innerText = `USDT ${user.balance.toFixed(2)}`;
-        document.getElementById('profit-val').innerText = `USDT ${user.todayProfit.toFixed(2)}`;
-        document.getElementById('bonus-val').innerText = `USDT ${user.bonus.toFixed(2)}`;
-        document.getElementById('team-count').innerText = `${user.teamCount}/40`;
-    }
-
-    async function refreshUserData() {
-        if (!currentUsername) return;
-        try {
-            const res = await fetch(`${BACKEND_URL}/api/user/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername })
-            });
-            const data = await res.json();
-            if (data.success) updateUI(data.user);
-        } catch (err) { }
-    }
-
-    async function handleDeposit() {
-        const amount = document.getElementById('deposit-amount').value;
-        if (!currentUsername) return alert("Önce giriş yapmalısınız!");
-        if (!amount || amount <= 0) return alert("Geçersiz miktar!");
-
-        try {
-            const res = await fetch(`${BACKEND_URL}/api/user/request`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: currentUsername,
-                    amount: amount,
-                    type: 'deposit',
-                    details: 'USDT TRC-20 Yükleme Talebi'
-                })
-            });
-            if ((await res.json()).success) {
-                alert("Talep gönderildi!");
-                document.getElementById('deposit-amount').value = "";
-            }
-        } catch (err) { }
-    }
-
-    async function sendInviteBonus() {
-        const friendName = document.getElementById('invite-name').value.trim();
-        if (!currentUsername) return alert("Önce giriş yapmalısınız!");
-        if (!friendName) return alert("Lütfen arkadaşınızın adını yazın!");
-
-        i/user/request', {
-    
+    // قام نظام الذكاء الاصطناعي بحقن اللغات والترجمة الفورية هنا تلقائياً
+    const translations = {
+        ar: {
+            header: "☁️ منظومة محاكي التداول الذكي والتحليل السحابي",
+            userLabel: "👤 اسم المستخدم الحالي: (غير مسجل)",
+            userInput: "اكتب اسمك هنا لبدء البث حياً",
+            saveName: "💾 حفظ وقفل الحساب",
+            grandPrize: "👑 جائزة الكبرى (40 عضو) <br> 2500 دولار أمريكي",
+            teamLabel: "أعضاء الفريق النشطين:",
+            inviteLabel: "🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):",
+            inviteInput: "اسم الصديق المدعو",
+            btnInvite: "🍇 إرسال المكافأة إلى المشرف",
+            capital: "إجمالي رأس المال:",
+            profit: "الأرباح اليومية:",
+            bonus: "أرباح التذاكر ومكافآت الدعوة:",
+            withdrawTitle: "🔺 بوابة السحب الفوري المباشر (شبكة TRC-20):",
+            walletInput: "أدخل عنوان محفظة TRC-20 الخدمية بك",
+            profitInput: "مبلغ سحب أرباح اليوم",
+            btnDrawProfit: "📊 سحب الأرباح اليومية",
+            btnDrawCapital: "💥 سحب إجمالي رأس المال",
+            btnDrawBonus: "💸 سحب مكافأة الدعوة",
+            depositTitle: "📥 محفظة الإيداع الرسمية - شبكة (USDT TRC-20):",
+            depositInput: "أدخل مبلغ الشحن بـ USDT",
+            btnDeposit: "⚡ إرسال طلب الإيداع للمشرف",
+            historyTitle: "📊 سجل المعاملات والإشعارات الحية",
+            historyBox: "يرجى حفظ الاسم لعرض التحديثات الحية...",
+            btnSupport: "💎 تواصل مباشرة مع فريق الدعم الفني عبر التليجرام"
+        },
+        en: {
+            header: "☁️ Smart Trading Simulator & Cloud Analysis System",
+            userLabel: "👤 Current User: (Unregistered)",
+            userInput: "Type your name here to start live broadcast",
+            saveName: "💾 Save and Lock Account",
+            grandPrize: "👑 Grand Prize (40 Members) <br> $2500 USD",
+            teamLabel: "Active Team Members:",
+            inviteLabel: "🔗 Send Referral Reward Request (Direct Invitation):",
+            inviteInput: "Invited friend's name",
+            btnInvite: "🍇 Send Reward to Admin",
+            capital: "Total Capital:",
+            profit: "Daily Profit:",
+            bonus: "Ticket Profits & Invite Bonuses:",
+            withdrawTitle: "🔺 Instant Withdrawal Gateway (TRC-20 Network):",
+            walletInput: "Enter your TRC-20 wallet address",
+            profitInput: "Amount to withdraw from today's profit",
+            btnDrawProfit: "📊 Withdraw Daily Profit",
+            btnDrawCapital: "💥 Withdraw Total Capital",
+            btnDrawBonus: "💸 Withdraw Invite Bonus",
+            depositTitle: "📥 Official Deposit Wallet - Network (USDT TRC-20):",
+            depositInput: "Enter deposit amount in USDT",
+            btnDeposit: "⚡ Send Deposit Request to Admin",
+            historyTitle: "📊 Transaction History & Live Notifications",
+            historyBox: "Please save name to view live updates...",
+            btnSupport: "💎 Connect directly with Technical Support Team via Telegram"
+            
