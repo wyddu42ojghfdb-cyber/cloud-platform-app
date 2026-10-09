@@ -8,14 +8,12 @@ app.use(cors({ origin: '*', methods: ['GET', 'POST'], allowedHeaders: ['Content-
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// رابط قاعدة بيانات MongoDB Atlas الخاصة بك
 const MONGO_URI = "mongodb+srv://admin:admin12345@free-tier-demo.aogqf83.mongodb.net/cryptoDB?retryWrites=true&w=majority&appName=free-tier-demo";
 
 mongoose.connect(MONGO_URI)
     .then(() => console.log("🟢 Permanent MongoDB Connected Successfully"))
     .catch(err => console.error("⚠️ DB Connection Error:", err));
 
-// 📊 تصميم جداول قاعدة البيانات (Schemas) لضمان حفظ البيانات بشكل دائم
 const UserSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
     balance: { type: Number, default: 0.00 },
@@ -31,10 +29,10 @@ const User = mongoose.model('User', UserSchema);
 const RequestSchema = new mongoose.Schema({
     username: { type: String, required: true },
     amount: { type: Number, default: 0 },
-    type: { type: String, required: true }, // deposit, withdraw_capital, withdraw_daily, invite_bonus
+    type: { type: String, required: true }, 
     walletAddress: { type: String, default: "" },
     details: { type: String, default: "" },
-    status: { type: String, default: 'pending' }, // pending, approved, rejected
+    status: { type: String, default: 'pending' }, 
     date: { type: String, default: () => new Date().toLocaleString('tr-TR') },
     createdAt: { type: Date, default: Date.now }
 });
@@ -42,10 +40,10 @@ const Request = mongoose.model('Request', RequestSchema);
 
 const ADMIN_PASSWORD = "ADMIN_SECRET_PASS_2026"; 
 
-// 👤 مسارات المستخدم (User Endpoints)
+// مسار دخول وتنشيط المستخدم
 app.post('/api/user/login', async (req, res) => {
     const { username } = req.body;
-    if (!username) return res.status(400).json({ success: false, message: "Username required" });
+    if (!username) return res.status(400).json({ success: false });
     try {
         let user = await User.findOne({ username });
         if (!user) {
@@ -58,6 +56,7 @@ app.post('/api/user/login', async (req, res) => {
     }
 });
 
+// مسار استقبال الطلبات من المستخدم (إيداع / سحب / دعوات)
 app.post('/api/user/request', async (req, res) => {
     const { username, amount, type, walletAddress, details } = req.body;
     try {
@@ -86,14 +85,12 @@ app.get('/api/user/history', async (req, res) => {
     }
 });
 
-// 👑 مسارات المشرف (Admin Endpoints)
+// مسار جلب البيانات للوحة المشرف (مطابق تماماً الآن)
 app.post('/api/admin/requests', async (req, res) => {
     if (req.body.adminPassword !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
     try {
         const requests = await Request.find({ status: 'pending' }).sort({ createdAt: -1 });
         const allUsers = await User.find({});
-        
-        // تصفية آمنة بدون علامات برمجية حساسة تسبب توقف التشغيل
         const pendingUsers = allUsers.filter(u => u.balance === 0 && (!u.history || u.history.length === 0));
         
         res.json({ 
@@ -108,14 +105,13 @@ app.post('/api/admin/requests', async (req, res) => {
     }
 });
 
-// دالة اتخاذ الإجراء (قبول أو رفض الطلبات المالية)
+// مسار اتخاذ الإجراء من المشرف (مطابق تماماً الآن)
 app.post('/api/admin/action-request', async (req, res) => {
     if (req.body.adminPassword !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
     const { requestId, action } = req.body;
-    
     try {
         const request = await Request.findById(requestId);
-        if (!request) return res.status(404).json({ success: false, message: "Request not found" });
+        if (!request) return res.status(404).json({ success: false });
 
         if (action === 'approve') {
             request.status = 'approved';
@@ -132,7 +128,7 @@ app.post('/api/admin/action-request', async (req, res) => {
                 } else if (request.type === 'withdraw_daily') {
                     user.todayProfit -= amt;
                     user.history.push({ message: `📊 -${amt} USDT Kar Çekme`, date: new Date().toLocaleTimeString() });
-                } else if (request.type === 'invite_bonus' || request.type === 'reward') {
+                } else if (request.type === 'invite_bonus') {
                     user.bonus += 15.00;
                     user.teamCount += 1;
                     user.history.push({ message: `🍇 +15 USDT Davet Ödülü`, date: new Date().toLocaleTimeString() });
@@ -142,7 +138,6 @@ app.post('/api/admin/action-request', async (req, res) => {
         } else {
             request.status = 'rejected';
         }
-        
         await request.save();
         res.json({ success: true });
     } catch (err) {
@@ -150,7 +145,6 @@ app.post('/api/admin/action-request', async (req, res) => {
     }
 });
 
-// دالة تحديث قيم المستخدم يدوياً من جدول المراقبة الحية للمشرف
 app.post('/api/admin/update-user', async (req, res) => {
     if (req.body.adminPassword !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
     const { userId, capital, dailyProfit, bonus, teamCount } = req.body;
@@ -163,17 +157,15 @@ app.post('/api/admin/update-user', async (req, res) => {
         });
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ success: false });
     }
 });
 
-// توزيع الأرباح الجماعية بنسبة 15% لجميع الأعضاء
 app.post('/api/admin/distribute-profit', async (req, res) => {
     if (req.body.adminPassword !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
     try {
         const allUsers = await User.find({});
         const activeUsers = allUsers.filter(u => u.balance > 0);
-        
         for (let user of activeUsers) {
             let profit = user.balance * 0.15;
             user.todayProfit += profit;
@@ -183,14 +175,13 @@ app.post('/api/admin/distribute-profit', async (req, res) => {
         }
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ success: false, error: err.message });
+        res.status(500).json({ success: false });
     }
 });
 
-// مسارات توجيه الصفحات المستقرة والمصلحة بالكامل
 app.get('/panel', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log(`🟢 Live permanent server on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🟢 Running on port ${PORT}`));
