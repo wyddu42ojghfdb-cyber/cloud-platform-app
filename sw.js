@@ -1,11 +1,11 @@
-const CACHE_NAME = 'cloud-app-v2'; // قمنا بتغيير الإصدار هنا لإجبار المتصفح على مسح القديم
+const CACHE_NAME = 'cloud-platform-v3'; // إصدار جديد ومحدث لإجبار المتصفح على مسح الكاش الميت القديم
 const ASSETS = [
   '/panel',
   '/index.html',
   '/admin.html'
 ];
 
-// 1️⃣ تثبيت وتخزين الصفحات الأساسية فقط
+// 1️⃣ تثبيت السيرفيس وركر وتخزين الصفحات الرسومية الأساسية
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -14,14 +14,14 @@ self.addEventListener('install', (e) => {
   );
 });
 
-// 2️⃣ تفعيل السيرفيس وركر وحذف أي كاش قديم مجمّد فوراً
+// 2️⃣ تفعيل الخدمة وحذف كاش النسخة القديمة التي كانت تسبب تجميد الأزرار
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('🗑️ Removing old cache:', key);
+            console.log('🗑️ Removing expired cache:', key);
             return caches.delete(key);
           }
         })
@@ -30,22 +30,21 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// 3️⃣ التحكم الذكي بالطلبات (السماح للأزرار والـ API بالمرور حياً لقاعدة البيانات)
+// 3️⃣ التحكم الذكي بالاتصال السحابي وتمرير طلبات الإيداع والسحب حياً لقاعدة البيانات
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
-  // ⚠️ استثناء حاسم: إذا كان الطلب يتجه إلى السيرفر أو الـ API (مثل أزرار السحب والإيداع وحفظ الاسم)
-  // لا تقم بأخذه من الكاش أبداً! دعه يمر حياً مباشرة لقاعدة البيانات لكي يتصل المشرف بالمستخدم
+  // ⚠️ استثناء حاسم: إذا كان الطلب يتجه إلى خادم الـ API والعمليات (مثل حفظ الاسم أو السحب والإيداع)
+  // يتم تمريره حياً ومباشرة للخادم السحابي دون حجز أو تجميد في ذاكرة الكاش
   if (url.pathname.startsWith('/api/')) {
     e.respondWith(fetch(e.request));
     return;
   }
 
-  // بالنسبة للصفحات العادية (HTML/CSS)، يتم جلبها من الإنترنت أولاً، وإذا انقطع الاتصال يتم تشغيل الكاش
+  // بالنسبة لملفات التصميم، يتم جلبها من الإنترنت وتحديث الكاش، وفي حال انقطاع الشبكة يتم تشغيل الكاش
   e.respondWith(
     fetch(e.request)
       .then((response) => {
-        // تحديث الكاش بالنسخة الجديدة المستلمة من Render حياً
         if (e.request.method === 'GET' && response.status === 200) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
@@ -55,7 +54,6 @@ self.addEventListener('fetch', (e) => {
         return response;
       })
       .catch(() => {
-        // في حال انقطاع الإنترنت التام، قم بتشغيل النسخة المخزنة
         return caches.match(e.request);
       })
   );
