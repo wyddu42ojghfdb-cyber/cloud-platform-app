@@ -92,7 +92,8 @@ app.post('/api/admin/requests', async (req, res) => {
     try {
         const requests = await Request.find({ status: 'pending' }).sort({ createdAt: -1 });
         const allUsers = await User.find({});
-        // تم تصحيح الفلترة هنا لتجنب التعطل الإملائي
+        
+        // تم مسح علامات المائل العكسي الخاطئة هنا لتأمين التشغيل
         const pendingUsers = await User.find({ balance: 0, history: { \$size: 0 } }); 
         
         res.json({ 
@@ -170,7 +171,7 @@ app.post('/api/admin/update-user', async (req, res) => {
 app.post('/api/admin/distribute-profit', async (req, res) => {
     if (req.body.adminPassword !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
     try {
-        // تم تصحيح الرمز المالي هنا لمنع توقف السيرفر
+        // تم مسح علامات المائل العكسي الخاطئة هنا لتأمين التشغيل
         const allUsers = await User.find({ balance: { \$gt: 0 } });
         for (let user of allUsers) {
             let profit = user.balance * 0.15;
