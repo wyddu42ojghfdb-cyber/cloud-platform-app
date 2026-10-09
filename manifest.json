@@ -1,17 +1,17 @@
 {
+  "id": "/panel",
   "short_name": "CloudApp",
-  "name": "Smart Trading & Cloud Platform App",
-  "icons": [
-    {
-      "src": "https://flaticon.com",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
-    }
-  ],
+  "name": "منظومة التداول والتحليل السحابي",
+  "lang": "ar",
+  "dir": "rtl",
   "start_url": "/panel",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0b1426",
   "theme_color": "#111c33",
-  "display": "standalone",
-  "orientation": "portrait"
+  "icons": [
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ]
 }
