@@ -10,6 +10,7 @@
             --blue-btn: #1a56db; --purple-btn: #7e3af2; --orange-btn: #ea580c;
             --red-btn: #dc2626; --green-btn: #16a34a; --cyan-btn: #06b6d4;
             --text-color: #ffffff; --text-muted: #9ca3af; --border-color: #1e293b;
+            --support-btn: #0284c7;
         }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; display: flex; justify-content: center; }
         .container { width: 100%; max-width: 480px; background-color: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
@@ -24,6 +25,7 @@
         .btn-blue { background-color: var(--blue-btn); } .btn-orange { background-color: var(--orange-btn); }
         .btn-purple { background-color: var(--purple-btn); } .btn-red { background-color: var(--red-btn); }
         .btn-green { background-color: var(--green-btn); } .btn-cyan { background-color: var(--cyan-btn); }
+        .btn-support { background-color: var(--support-btn); }
         .stats-row { display: flex; justify-content: space-between; font-size: 14px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .value { color: #a855f7; font-weight: bold; }
         .info-text { font-size: 12px; color: #fbbf24; text-align: center; margin-bottom: 8px; }
@@ -54,20 +56,13 @@
     </div>
 
     <div class="section">
-        <label id="txt-invite-label">🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):</label>
-        <input type="text" id="invite-name" placeholder="اسم الصديق المدعو">
-        <button class="btn-purple" id="btn-invite" onclick="sendInviteBonus()">🍇 إرسال المكافأة إلى المشرف</button>
-    </div>
-
-    <div class="section">
         <div class="stats-row">
             <span id="txt-capital">إجمالي رأس المال:</span>
             <span id="balance-val" class="value">USDT 0.00</span>
         </div>
         <div class="stats-row">
             <span id="txt-profit">الأرباح اليومية:</span>
-            const API_BASE_URL = window.location.origin;
-            
+            <span id="profit-val" class="value" style="color:#16a34a;">USDT 0.00</span>
         </div>
         <div class="stats-row">
             <span id="txt-bonus">أرباح التذاكر ومكافآت الدعوة:</span>
@@ -76,18 +71,36 @@
     </div>
 
     <div class="section">
+        <label id="txt-invite-label">🔗 إرسال طلب مكافأة الإحالة (الدعوة المباشرة):</label>
+        <input type="text" id="invite-name" placeholder="اسم الصديق المدعو">
+        <button class="btn-purple" id="btn-invite" onclick="sendInviteBonus()">🍇 إرسال المكافأة إلى المشرف</button>
+    </div>
+
+    <div class="section">
         <label id="txt-financial-title">💰 العمليات والطلبات المالية الحية:</label>
         <input type="number" id="amount-input" placeholder="أدخل الكمية USDT">
         <input type="text" id="wallet-input" placeholder="عنوان محفظة TRC-20 الخاص بك">
         <button class="btn-green" id="btn-deposit" onclick="sendFinancialRequest('deposit')">📥 إيداع رأس المال</button>
         <button class="btn-orange" id="btn-withdraw-daily" onclick="sendFinancialRequest('withdraw_daily')">📤 سحب الأرباح اليومية</button>
+        <button class="btn-cyan" id="btn-withdraw-bonus" onclick="sendFinancialRequest('invite_bonus')">💎 سحب أرباح الدعوة والتذاكر</button>
         <button class="btn-red" id="btn-withdraw-capital" onclick="sendFinancialRequest('withdraw_capital')">🚨 سحب رأس المال الإجمالي</button>
+    </div>
+
+    <!-- 🛠️ قسم الدعم الفني الجديد المرتبط ببوت التليجرام مباشرة -->
+    <div class="section">
+        <label id="txt-support-title">🛠️ مركز المساعدة والتوجيه الرقمي:</label>
+        <button class="btn-support" id="btn-open-support" onclick="openTelegramSupport()">💬 التواصل مع الدعم الفني (Telegram)</button>
     </div>
 </div>
 
 <script>
-    const API_BASE_URL = "https://onrender.com";
+    const API_BASE_URL = window.location.origin;
     let currentUsername = "";
+
+    // دالة توجيه المستخدم مباشرة لبوت الدعم الفني
+    function openTelegramSupport() {
+        window.open("https://t.me", "_blank");
+    }
 
     async function handleLogin() {
         const usernameInput = document.getElementById('username-input').value.trim();
@@ -104,7 +117,7 @@
                 currentUsername = data.user.username;
                 document.getElementById('user-label').innerText = `👤 اسم المستخدم الحالي: ${currentUsername}`;
                 updateDashboardData(data.user);
-                alert("تم حفظ الحساب والربط بنجاح");
+                alert("تم حفظ وقفل الحساب وبدء البث بنجاح");
                 setInterval(fetchUserData, 4000);
             }
         } catch(err) {
@@ -122,7 +135,7 @@
             });
             const data = await res.json();
             if(data.success) updateDashboardData(data.user);
-        } catch(e) { console.error("فشل المزامنة"); }
+        } catch(e) { console.error("فشل التحديث الصامت للأرصدة"); }
     }
 
     function updateDashboardData(user) {
@@ -133,7 +146,7 @@
     }
 
     async function sendFinancialRequest(type) {
-        if(!currentUsername) return alert("الرجاء تسجيل الاسم أولاً");
+        if(!currentUsername) return alert("الرجاء تسجيل الاسم أولاً وقفل الحساب");
         const amount = document.getElementById('amount-input').value;
         const wallet = document.getElementById('wallet-input').value.trim();
 
@@ -147,11 +160,11 @@
             });
             const data = await res.json();
             if(data.success) {
-                alert("تم إرسال الطلب المالي بنجاح وبانتظار المشرف");
+                alert("تم إرسال الطلب المالي بنجاح وبانتظار تدقيق المشرف");
                 document.getElementById('amount-input').value = "";
             }
         } catch(err) {
-            alert("فشل إرسال المعاملة المالية");
+            alert("فشل إرسال المعاملة المالية للخادم الخلفي");
         }
     }
 
@@ -171,20 +184,4 @@
                 alert("تم إرسال طلب المكافأة بنجاح للمشرف");
                 document.getElementById('invite-name').value = "";
             }
-        } catch(err) { alert("خطأ في معالجة الدعوة"); }
-    }
-
-    function changeLang(lang) {
-        const arBtn = document.getElementById('btn-lang-ar');
-        const enBtn = document.getElementById('btn-lang-en');
-        if(lang === 'ar') {
-            arBtn.classList.add('active'); enBtn.classList.remove('active');
-            document.getElementById('txt-header').innerText = "☁️ منظومة محاكي التداول الذكي والتحليل السحابي";
-        } else {
-            enBtn.classList.add('active'); arBtn.classList.remove('active');
-            document.getElementById('txt-header').innerText = "☁️ Smart Trading Simulator & Cloud Analytics";
-        }
-    }
-</script>
-</body>
-</html>
+            
