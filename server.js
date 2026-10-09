@@ -93,8 +93,8 @@ app.post('/api/admin/requests', async (req, res) => {
         const requests = await Request.find({ status: 'pending' }).sort({ createdAt: -1 });
         const allUsers = await User.find({});
         
-        // تم مسح علامات المائل العكسي الخاطئة هنا لتأمين التشغيل
-        const pendingUsers = await User.find({ balance: 0, history: { \$size: 0 } }); 
+        // طريقة بديلة آمنة 100% للتصفية دون استخدام علامات برمجية معقدة تسبب توقف التشغيل
+        const pendingUsers = allUsers.filter(u => u.balance === 0 && (!u.history || u.history.length === 0));
         
         res.json({ 
             success: true, 
@@ -171,9 +171,11 @@ app.post('/api/admin/update-user', async (req, res) => {
 app.post('/api/admin/distribute-profit', async (req, res) => {
     if (req.body.adminPassword !== ADMIN_PASSWORD) return res.status(401).json({ success: false });
     try {
-        // تم مسح علامات المائل العكسي الخاطئة هنا لتأمين التشغيل
-        const allUsers = await User.find({ balance: { \$gt: 0 } });
-        for (let user of allUsers) {
+        const allUsers = await User.find({});
+        // طريقة بديلة آمنة لتوزيع الأرباح الجماعية ومنع التعطل الإملائي تماماً
+        const activeUsers = allUsers.filter(u => u.balance > 0);
+        
+        for (let user of activeUsers) {
             let profit = user.balance * 0.15;
             user.todayProfit += profit;
             user.balance += profit;
@@ -189,7 +191,8 @@ app.post('/api/admin/distribute-profit', async (req, res) => {
 // مسارات توجيه الصفحات
 app.get('/panel', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/', (req, res) => res.sendFile(path.join(# تفعيل الإعداد المباشر
+__dirname, 'index.html')));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`🟢 Live permanent server on port ${PORT}`));
