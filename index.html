@@ -145,14 +145,16 @@
     }
 
     function updateDashboardData(user) {
+        
         document.getElementById('balance-val').innerText = `USDT ${user.balance.toFixed(2)}`;
         document.getElementById('profit-val').innerText = `USDT ${user.todayProfit.toFixed(2)}`;
         document.getElementById('bonus-val').innerText = `USDT ${user.bonus.toFixed(2)}`;
         document.getElementById('team-count').innerText = `${user.teamCount}/40`;
-    }
+    async function sendFinancialRequest(type) {
+        
 
     async function sendFinancialRequest(type) {
-        if(!currentUsername) return alert("الرجاء تسجيل الاسم أولاً وقفل الحساب");
+        if(!currentUsername) return alert("الرجاء تسجيل الاسم أولاً وقفل الحساب")
         const amount = document.getElementById('amount-input').value;
         const wallet = document.getElementById('wallet-input').value.trim();
 
