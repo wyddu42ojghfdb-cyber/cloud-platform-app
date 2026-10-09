@@ -32,7 +32,7 @@
     <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <span>Kayıtlı Aktif Üye Sayısı Toplamı 👥</span>
-            <span id="total-users-badge" style="background: #1e293b; padding: 4px 12px; border-radius: 4px; font-weight: bold; color: #38bdf8;">0</span>
+            <span id="total-users-badge" style="background: #1e293b; padding: 4px 12px; border-radius: 4px; font-weight: bold; color: #38b#38bdf8;">0</span>
         </div>
         <button class="btn-blue" onclick="distributeProfitMassive()">📊 Doğrudan Günlük Kar Dağıtımı (%15) ⚡</button>
     </div>
@@ -64,10 +64,11 @@
 
 <script>
     const ADMIN_PASS = "ADMIN_SECRET_PASS_2026";
+    // جلب الرابط تلقائياً ليعمل على المتصفح مباشرة دون أخطاء
     const BACKEND_URL = window.location.origin; 
 
     function updateAdminDashboard() {
-        fetch(`${BACKEND_URL}/api/admin/requests`, {
+        fetch(BACKEND_URL + '/api/admin/requests', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ adminPassword: ADMIN_PASS })
@@ -141,7 +142,7 @@
 
     async function handleRequestDecision(requestId, action) {
         try {
-            const response = await fetch(`${BACKEND_URL}/api/admin/action-request`, {
+            const response = await fetch(BACKEND_URL + '/api/admin/action-request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminPassword: ADMIN_PASS, requestId, action })
@@ -161,7 +162,7 @@
         const teamCount = document.getElementById(`team-${userId}`).value;
 
         try {
-            const response = await fetch(`${BACKEND_URL}/api/admin/update-user`, {
+            const response = await fetch(BACKEND_URL + '/api/admin/update-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ adminPassword: ADMIN_PASS, userId, capital, dailyProfit, bonus, teamCount })
@@ -177,5 +178,4 @@
     async function distributeProfitMassive() {
         if(!confirm("Emin misiniz?")) return;
         try {
-            const response = await fetch(`${BACKEND_URL}/api/admin/distribute-profit`, {
-    
+            
