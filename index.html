@@ -29,6 +29,7 @@
         .stats-row { display: flex; justify-content: space-between; font-size: 14px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .value { color: #a855f7; font-weight: bold; }
         .info-text { font-size: 12px; color: #fbbf24; text-align: center; margin-bottom: 8px; }
+        .wallet-box { font-family: monospace; background-color: var(--input-bg); padding: 10px; border-radius: 6px; text-align: center; font-size: 12px; color: #4ade80; word-break: break-all; border: 1px dashed #4ade80; margin-bottom: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -76,17 +77,23 @@
         <button class="btn-purple" id="btn-invite" onclick="sendInviteBonus()">🍇 إرسال المكافأة إلى المشرف</button>
     </div>
 
+    <!-- 💰 قسم العمليات المالية المطور بعد إضافة عنوان محفظة الإيداع الرسمي والامتيازات -->
     <div class="section">
         <label id="txt-financial-title">💰 العمليات والطلبات المالية الحية:</label>
+        
+        <!-- 📥 صندوق عرض عنوان محفظة الإيداع الرسمي لكي يراه العميل وينسخه -->
+        <label style="color: #fbbf24; font-weight: bold;">📥 محفظة إيداع المنصة الرسمية (TRC-20):</label>
+        <div class="wallet-box">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</div>
+        
         <input type="number" id="amount-input" placeholder="أدخل الكمية USDT">
-        <input type="text" id="wallet-input" placeholder="عنوان محفظة TRC-20 الخاص بك">
+        <input type="text" id="wallet-input" placeholder="عنوان محفظة TRC-20 الخاصة بك لاستقبال السحب">
+        
         <button class="btn-green" id="btn-deposit" onclick="sendFinancialRequest('deposit')">📥 إيداع رأس المال</button>
         <button class="btn-orange" id="btn-withdraw-daily" onclick="sendFinancialRequest('withdraw_daily')">📤 سحب الأرباح اليومية</button>
         <button class="btn-cyan" id="btn-withdraw-bonus" onclick="sendFinancialRequest('invite_bonus')">💎 سحب أرباح الدعوة والتذاكر</button>
         <button class="btn-red" id="btn-withdraw-capital" onclick="sendFinancialRequest('withdraw_capital')">🚨 سحب رأس المال الإجمالي</button>
     </div>
 
-    <!-- 🛠️ قسم الدعم الفني الجديد المرتبط ببوت التليجرام مباشرة -->
     <div class="section">
         <label id="txt-support-title">🛠️ مركز المساعدة والتوجيه الرقمي:</label>
         <button class="btn-support" id="btn-open-support" onclick="openTelegramSupport()">💬 التواصل مع الدعم الفني (Telegram)</button>
@@ -97,7 +104,6 @@
     const API_BASE_URL = window.location.origin;
     let currentUsername = "";
 
-    // دالة توجيه المستخدم مباشرة لبوت الدعم الفني
     function openTelegramSupport() {
         window.open("https://t.me", "_blank");
     }
@@ -135,7 +141,7 @@
             });
             const data = await res.json();
             if(data.success) updateDashboardData(data.user);
-        } catch(e) { console.error("فشل التحديث الصامت للأرصدة"); }
+        } catch(e) { console.error("فشل المزامنة"); }
     }
 
     function updateDashboardData(user) {
@@ -164,7 +170,7 @@
                 document.getElementById('amount-input').value = "";
             }
         } catch(err) {
-            alert("فشل إرسال المعاملة المالية للخادم الخلفي");
+            alert("فشل إرسال المعاملة المالية");
         }
     }
 
@@ -174,14 +180,4 @@
         if(!friendName) return alert("الرجاء إدخال اسم الصديق");
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/user/request`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount: 0, type: 'invite_bonus', details: `دعوة: ${friendName}` })
-            });
-            const data = await res.json();
-            if(data.success) {
-                alert("تم إرسال طلب المكافأة بنجاح للمشرف");
-                document.getElementById('invite-name').value = "";
-            }
-            
+    
