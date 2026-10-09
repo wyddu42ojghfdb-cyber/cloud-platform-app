@@ -1,6 +1,6 @@
 {
   "short_name": "CloudApp",
-  "name": "Cloud Platform App",
+  "name": "Smart Trading & Cloud Platform App",
   "icons": [
     {
       "src": "https://flaticon.com",
@@ -10,8 +10,8 @@
     }
   ],
   "start_url": "/panel",
-  "background_color": "#0d1527",
-  "theme_color": "#152238",
+  "background_color": "#0b1426",
+  "theme_color": "#111c33",
   "display": "standalone",
   "orientation": "portrait"
 }
