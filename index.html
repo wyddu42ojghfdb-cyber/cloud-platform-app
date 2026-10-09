@@ -27,7 +27,6 @@
         .stats-row { display: flex; justify-content: space-between; font-size: 14px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .value { color: #a855f7; font-weight: bold; }
         .info-text { font-size: 12px; color: #fbbf24; text-align: center; margin-bottom: 8px; }
-        .wallet-box { font-family: monospace; background-color: var(--input-bg); padding: 10px; border-radius: 6px; text-align: center; font-size: 13px; color: #4ade80; word-break: break-all; border: 1px dashed #4ade80; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -75,7 +74,6 @@
         </div>
     </div>
 
-    <!-- ⚠️ المجلد المالي الجديد المكتمل والمصلح للسحب والإيداع -->
     <div class="section">
         <label id="txt-financial-title">💰 العمليات والطلبات المالية الحية:</label>
         <input type="number" id="amount-input" placeholder="أدخل الكمية USDT">
@@ -87,11 +85,9 @@
 </div>
 
 <script>
-    // رابط السيرفر الخلفي المربوط بمنصة Render الحالية الخاصة بك بشكل مستقر
     const API_BASE_URL = "https://onrender.com";
     let currentUsername = "";
 
-    // دالة تسجيل الدخول وإنشاء العضو
     async function handleLogin() {
         const usernameInput = document.getElementById('username-input').value.trim();
         if(!usernameInput) return alert("الرجاء كتابة اسم مستخدم صالح");
@@ -107,15 +103,14 @@
                 currentUsername = data.user.username;
                 document.getElementById('user-label').innerText = `👤 اسم المستخدم الحالي: ${currentUsername}`;
                 updateDashboardData(data.user);
-                alert("تم حفظ وقفل الحساب وبدء البث بنجاح");
-                setInterval(fetchUserData, 4000); // تحديث دوري حي كل 4 ثوانٍ
+                alert("تم حفظ الحساب والربط بنجاح");
+                setInterval(fetchUserData, 4000);
             }
         } catch(err) {
             alert("خطأ في الاتصال بالخادم السحابي");
         }
     }
 
-    // دالة جلب البيانات المحدثة تلقائياً
     async function fetchUserData() {
         if(!currentUsername) return;
         try {
@@ -126,7 +121,7 @@
             });
             const data = await res.json();
             if(data.success) updateDashboardData(data.user);
-        } catch(e) { console.error("تحديث صامت فشل"); }
+        } catch(e) { console.error("فشل المزامنة"); }
     }
 
     function updateDashboardData(user) {
@@ -136,9 +131,8 @@
         document.getElementById('team-count').innerText = `${user.teamCount}/40`;
     }
 
-    // دالة إرسال طلبات السحب والإيداع المصلحة للوحة المشرف التركية
     async function sendFinancialRequest(type) {
-        if(!currentUsername) return alert("الرجاء تسجيل الاسم أولاً وقفل الحساب");
+        if(!currentUsername) return alert("الرجاء تسجيل الاسم أولاً");
         const amount = document.getElementById('amount-input').value;
         const wallet = document.getElementById('wallet-input').value.trim();
 
@@ -152,7 +146,7 @@
             });
             const data = await res.json();
             if(data.success) {
-                alert("تم إرسال الطلب المالي بنجاح وبانتظار تدقيق المشرف");
+                alert("تم إرسال الطلب المالي بنجاح وبانتظار المشرف");
                 document.getElementById('amount-input').value = "";
             }
         } catch(err) {
@@ -160,7 +154,6 @@
         }
     }
 
-    // دالة إرسال مكافأة الإحالة
     async function sendInviteBonus() {
         if(!currentUsername) return alert("الرجاء تسجيل الاسم أولاً");
         const friendName = document.getElementById('invite-name').value.trim();
@@ -170,7 +163,7 @@
             const res = await fetch(`${API_BASE_URL}/api/user/request`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: currentUsername, amount: 0, type: 'invite_bonus', details: `دعوة: ${friendName}` });
+                body: JSON.stringify({ username: currentUsername, amount: 0, type: 'invite_bonus', details: `دعوة: ${friendName}` })
             });
             const data = await res.json();
             if(data.success) {
@@ -181,4 +174,16 @@
     }
 
     function changeLang(lang) {
-        
+        const arBtn = document.getElementById('btn-lang-ar');
+        const enBtn = document.getElementById('btn-lang-en');
+        if(lang === 'ar') {
+            arBtn.classList.add('active'); enBtn.classList.remove('active');
+            document.getElementById('txt-header').innerText = "☁️ منظومة محاكي التداول الذكي والتحليل السحابي";
+        } else {
+            enBtn.classList.add('active'); arBtn.classList.remove('active');
+            document.getElementById('txt-header').innerText = "☁️ Smart Trading Simulator & Cloud Analytics";
+        }
+    }
+</script>
+</body>
+</html>
