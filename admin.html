@@ -28,6 +28,8 @@
 <body>
 <div class="container">
     <div class="header">👑 Bulut Platformu - Yönetim Kontrol Paneli</div>
+    
+    <!-- 📊 إحصائيات وأرباح جماعية -->
     <div class="section">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <span>Kayıtlı Aktif Üye Sayısı Toplamı 👥</span>
@@ -35,6 +37,8 @@
         </div>
         <button class="btn-blue" onclick="distributeProfitMassive()">📊 Doğrudan Günlük Kar Dağıtımı (%15) ⚡</button>
     </div>
+
+    <!-- 👤 جدول طلبات تفعيل وتأكيد الأسماء الجديدة -->
     <div class="section">
         <div class="section-title">👤 Yeni Kullanıcı Adı Onay Talepleri</div>
         <table>
@@ -42,6 +46,8 @@
             <tbody id="users-table-body"><tr><td colspan="4" class="empty-msg">Bekleyen talep bulunmamaktadır...</td></tr></tbody>
         </table>
     </div>
+
+    <!-- ⚠️ جدول طلبات المستخدمين المالية (إيداع / سحب / دعوات) -->
     <div class="section">
         <div class="section-title">⚠️ Üyelerin Bekleyen Finansal Talepleri (Yükleme / Çekme / Davet)</div>
         <table>
@@ -49,6 +55,8 @@
             <tbody id="requests-table-body"><tr><td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr></tbody>
         </table>
     </div>
+
+    <!-- 📊 جدول المراقبة الحية وتعديل أرصدة الحسابات مباشرة -->
     <div class="section">
         <div class="section-title">📊 Üyelerin Bakiyelerinin ve Kararlarının Canlı Takibi</div>
         <table>
@@ -57,10 +65,14 @@
         </table>
     </div>
 </div>
+
 <script>
     const ADMIN_PASS = "ADMIN_SECRET_PASS_2026";
+    const BACKEND_URL = window.location.origin; 
+
+    // 🔄 دالة جلب وتحديث لوحة التحكم بالكامل حياً من السيرفر وقاعدة البيانات
     function updateAdminDashboard() {
-        fetch('/api/admin/requests', {
+        fetch(`${BACKEND_URL}/api/admin/requests`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ adminPassword: ADMIN_PASS })
@@ -68,52 +80,96 @@
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                // 1. تحديث عداد الأعضاء الكلي
                 document.getElementById('total-users-badge').innerText = data.totalUsers;
+
+                // 2. تحديث جدول طلبات تأكيد الأسماء الجديدة
                 const usersBody = document.getElementById('users-table-body');
-                if (data.allUsers.length === 0) {
+                if (!data.pendingUsers || data.pendingUsers.length === 0) {
                     usersBody.innerHTML = `<tr><td colspan="4" class="empty-msg">Bekleyen talep bulunmamaktadır...</td></tr>`;
                 } else {
-                    usersBody.innerHTML = data.allUsers.map(u => `<tr><td style="color:#38bdf8; font-weight:bold;">${u.username}</td><td><span style="color:#16a34a;">● Aktif</span></td><td>${new Date().toLocaleDateString('tr-TR')}</td><td>Sabitlendi</td></tr>`).join('');
+                    usersBody.innerHTML = data.pendingUsers.map(u => `
+                        <tr>
+                            <td style="color:#38bdf8; font-weight:bold;">${u.username}</td>
+                            <td><span style="color:#fbbf24;">● Bekliyor</span></td>
+                            <td>${new Date(u.createdAt || Date.now()).toLocaleDateString('tr-TR')}</td>
+                            <td>
+                                <span style="color:#16a34a; font-weight:bold;">Sistem Aktif</span>
+                            </td>
+                        </tr>
+                    `).join('');
                 }
+
+                // 3. تحديث جدول الطلبات المالية المعلقة (إيداع / سحب / مكافآت)
                 const requestsBody = document.getElementById('requests-table-body');
-                if (data.requests.length === 0) {
+                if (!data.requests || data.requests.length === 0) {
                     requestsBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Bekleyen finansal bakiye talebi bulunmamaktadır...</td></tr>`;
                 } else {
-                    requestsBody.innerHTML = data.requests.map(r => {
-                        let typeText = "";
-                        if (r.type === 'deposit') typeText = "📥 Para Yatırma";
-                        if (r.type === 'withdraw_daily') typeText = "📊 Kar Çekme";
-                        if (r.type === 'withdraw_capital') typeText = "💸 Sermaye Çekme";
-                        if (r.type === 'invite_bonus') typeText = "🍇 Davet Ödülü (15 USDT)";
-                        return `<tr><td><b>${r.username}</b></td><td>${typeText}</td><td><input type="number" id="amt-${r.id}" class="input-inline" value="${r.amount}"></td><td style="color:#67e8f9;">${r.walletAddress || '---'}</td><td><button class="btn-green" onclick="approveAction(${r.id}, '${r.username}', '${r.type}')">✅ Onayla</button></td></tr>`;
-                    }).join('');
+                    requestsBody.innerHTML = data.requests.map(req => `
+                        <tr>
+                            <td style="font-weight:bold; color:#ffffff;">${req.username}</td>
+                            <td style="color:#a855f7; font-weight:bold;">${translateType(req.type)}</td>
+                            <td style="color:#16a34a; font-weight:bold;">USDT ${req.amount}</td>
+                            <td><span style="font-family:monospace; font-size:11px; color:#9ca3af;">${req.details || req.walletAddress || '-'}</span></td>
+                            <td>
+                                <button class="btn-green" onclick="handleRequestDecision('${req._id}', 'approve')">Kabul Et</button>
+                                <button style="background-color:#dc2626; padding: 10px 16px; border: none; border-radius: 6px; color: white; cursor: pointer; margin-left:4px;" onclick="handleRequestDecision('${req._id}', 'reject')">Reddet</button>
+                            </td>
+                        </tr>
+                    `).join('');
                 }
-                const monitoringBody = document.getElementById('live-monitoring-body');
-                if (data.allUsers.length === 0) {
-                    monitoringBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Henüz üye yok...</td></tr>`;
+
+                // 4. تحديث جدول مراقبة وتعديل حسابات وأرصدة الأعضاء حياً
+                const liveBody = document.getElementById('live-monitoring-body');
+                if (!data.allUsers || data.allUsers.length === 0) {
+                    liveBody.innerHTML = `<tr><td colspan="5" class="empty-msg">Henüz kayıtlı aktif üye yok...</td></tr>`;
                 } else {
-                    monitoringBody.innerHTML = data.allUsers.map(u => `<tr><td><b>${u.username}</b></td><td style="color:#a855f7; font-weight:bold;">USDT ${u.balance.toFixed(2)}</td><td style="color:#eab308; font-weight:bold;">USDT ${u.todayProfit.toFixed(2)}</td><td style="color:#06b6d4; font-weight:bold;">USDT ${u.bonus.toFixed(2)}</td><td>${u.teamCount} Üye</td></tr>`).join('');
+                    liveBody.innerHTML = data.allUsers.map(u => `
+                        <tr>
+                            <td style="color:#38bdf8; font-weight:bold;">${u.username}</td>
+                            <td><input type="text" class="input-inline" id="cap-${u._id}" value="${u.balance || 0}"></td>
+                            <td><input type="text" class="input-inline" id="prof-${u._id}" value="${u.todayProfit || 0}"></td>
+                            <td><input type="text" class="input-inline" id="bon-${u._id}" value="${u.bonus || 0}"></td>
+                            <td>
+                                <input type="text" class="input-inline" style="width:40px;" id="team-${u._id}" value="${u.teamCount || 0}">
+                                <button style="background:#1a56db; padding:6px 10px; font-size:11px; margin-left:5px; border-radius:4px;" onclick="updateUserValues('${u._id}')">Güncelle</button>
+                            </td>
+                        </tr>
+                    `).join('');
                 }
             }
-        }).catch(err => console.error(err));
+        })
+        .catch(err => console.error("Veri çekme hatası:", err));
     }
-    function approveAction(id, username, type) {
-        const inputAmt = document.getElementById(`amt-${id}`).value;
-        fetch('/api/admin/action', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminPassword: ADMIN_PASS, id, action: 'approve', username, type, amount: inputAmt })
-        }).then(res => res.json()).then(data => { if(data.success) updateAdminDashboard(); });
+
+    // دالة مساعدة لترجمة نوع العملية في جدول المشرف
+    function translateType(type) {
+        if(type === 'deposit') return 'Yükleme (İhbar)';
+        if(type === 'withdraw_capital') return 'Sermaye Çekme';
+        if(type === 'withdraw_daily') return 'Kar Çekme';
+        if(type === 'invite_bonus') return 'Davet Ödülü';
+        return type;
     }
-    function distributeProfitMassive() {
-        fetch('/api/admin/distribute-profit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminPassword: ADMIN_PASS })
-        }).then(res => res.json()).then(data => { if(data.success) { alert("📊 %15 Dağıtıldı!"); updateAdminDashboard(); } });
+
+    // 1️⃣ دالة اتخاذ القرار للموافقة أو رفض الطلبات المالية (إيداع / سحب)
+    async function handleRequestDecision(requestId, action) {
+        try {
+            const response = await fetch(`${BACKEND_URL}/api/admin/action-request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminPassword: ADMIN_PASS, requestId: requestId, action: action })
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert("İşlem başarıyla tamamlandı!");
+                updateAdminDashboard(); 
+            } else {
+                alert("Hata: " + result.message);
+            }
+        } catch (error) {
+            console.error("Hata:", error);
+        }
     }
-    setInterval(updateAdminDashboard, 4000);
-    window.onload = updateAdminDashboard;
-</script>
-</body>
-</html>
+
+    // 2️⃣ دالة تعديل قيم وأرصدة المستخدم يدوياً من جدول المراقبة الحية
+    
