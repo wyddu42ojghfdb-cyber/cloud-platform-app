@@ -38,8 +38,11 @@ app.use(express.static(__dirname, {
 const UserSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true, trim: true, maxlength: 64 },
   balance: { type: Number, default: 0, min: 0 },
-  todayProfit: { type: Number, default: 0 },
+  todayProfit: { type: Number, default: 0, min: 0 },
   bonus: { type: Number, default: 0, min: 0 },
+  reservedCapital: { type: Number, default: 0, min: 0 },
+  reservedProfit: { type: Number, default: 0, min: 0 },
+  reservedBonus: { type: Number, default: 0, min: 0 },
   teamCount: { type: Number, default: 0, min: 0 },
   walletAddress: { type: String, default: '' },
   history: { type: [mongoose.Schema.Types.Mixed], default: [] },
@@ -54,12 +57,36 @@ const RequestSchema = new mongoose.Schema({
   walletAddress: { type: String, default: '', maxlength: 128 },
   referredUsername: { type: String, default: '', trim: true, maxlength: 64 },
   details: { type: String, default: '', maxlength: 300 },
+  fundsReserved: { type: Boolean, default: false },
   status: { type: String, default: 'pending', enum: ['pending', 'approved', 'rejected'] },
   createdAt: { type: Date, default: Date.now }
 });
 // A referred username can earn one referral reward only, even when requests race.
 RequestSchema.index({ referredUsername: 1 }, { unique: true, partialFilterExpression: { type: 'referral_reward', referredUsername: { $type: 'string', $gt: '' } } });
 const Request = mongoose.models.Request || mongoose.model('Request', RequestSchema);
+
+const ProfitDistribution = mongoose.models.ProfitDistribution || mongoose.model('ProfitDistribution', new mongoose.Schema({
+  operationId: { type: String, required: true, unique: true, maxlength: 100 },
+  sourceKey: { type: String, required: true, unique: true, maxlength: 64 },
+  fingerprint: { type: String, required: true, maxlength: 64 },
+  netProfit: { type: Number, required: true, min: 0.01 },
+  totalCapital: { type: Number, required: true, min: 0.01 },
+  eligibleUsers: { type: Number, required: true, min: 1 },
+  period: { type: String, required: true, maxlength: 10 },
+  sourceReference: { type: String, required: true, maxlength: 200 },
+  createdAt: { type: Date, default: Date.now }
+}));
+const ProfitAllocation = mongoose.models.ProfitAllocation || mongoose.model('ProfitAllocation', new mongoose.Schema({
+  operationId: { type: String, required: true, maxlength: 100 },
+  userId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  username: { type: String, required: true, maxlength: 64 },
+  capital: { type: Number, required: true, min: 0.01 },
+  sharePercent: { type: Number, required: true, min: 0 },
+  amount: { type: Number, required: true, min: 0 },
+  period: { type: String, required: true, maxlength: 10 },
+  sourceReference: { type: String, required: true, maxlength: 200 },
+  createdAt: { type: Date, default: Date.now }
+}).index({ operationId: 1, userId: 1 }, { unique: true }));
 
 function sendDbUnavailable(res) {
   return res.status(503).json({ success: false, error: 'Database unavailable' });
@@ -74,6 +101,10 @@ function safeUser(user) {
     balance: user.balance,
     todayProfit: user.todayProfit,
     bonus: user.bonus,
+    reservedCapital: Number(user.reservedCapital || 0),
+    reservedProfit: Number(user.reservedProfit || 0),
+    reservedBonus: Number(user.reservedBonus || 0),
+    reservedTotal: Number(user.reservedCapital || 0) + Number(user.reservedProfit || 0) + Number(user.reservedBonus || 0),
     teamCount: user.teamCount,
     walletAddress: user.walletAddress,
     history: user.history,
@@ -102,6 +133,49 @@ function passwordMatches(candidate) {
   const supplied = Buffer.from(candidate);
   return expected.length === supplied.length && crypto.timingSafeEqual(expected, supplied);
 }
+function toCents(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0 || number > 1_000_000_000) return null;
+  const cents = Math.round(number * 100);
+  return Number.isSafeInteger(cents) && cents > 0 ? BigInt(cents) : null;
+}
+function buildProfitPlan(users, netProfitCents) {
+  const eligible = users.map(user => {
+    const cents = Math.round(Number(user.balance) * 100);
+    if (!Number.isSafeInteger(cents)) throw new Error('Capital amount is outside supported precision');
+    return { user, capitalCents: BigInt(cents) };
+  }).filter(entry => entry.capitalCents > 0n);
+  const totalCapitalCents = eligible.reduce((sum, entry) => sum + entry.capitalCents, 0n);
+  if (!eligible.length || totalCapitalCents <= 0n) return null;
+  if (totalCapitalCents > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Aggregate capital is outside supported precision');
+  const rows = eligible.map(entry => {
+    const product = netProfitCents * entry.capitalCents;
+    return { ...entry, amountCents: product / totalCapitalCents, remainder: product % totalCapitalCents };
+  });
+  const assigned = rows.reduce((sum, row) => sum + row.amountCents, 0n);
+  const centsLeft = Number(netProfitCents - assigned);
+  const ranked = [...rows].sort((a, b) => a.remainder === b.remainder ? String(a.user._id).localeCompare(String(b.user._id)) : a.remainder > b.remainder ? -1 : 1);
+  for (let i = 0; i < centsLeft; i++) ranked[i].amountCents += 1n;
+  return {
+    totalCapitalCents,
+    netProfitCents,
+    allocations: rows.map(row => ({
+      userId: row.user._id,
+      username: row.user.username,
+      capitalCents: row.capitalCents,
+      amountCents: row.amountCents,
+      sharePercent: Number((row.capitalCents * 1_000_000n + totalCapitalCents / 2n) / totalCapitalCents) / 10_000
+    }))
+  };
+}
+function profitFingerprint(plan, period, sourceReference) {
+  const snapshot = plan.allocations.map(row => [String(row.userId), row.capitalCents.toString()]).sort((a, b) => a[0].localeCompare(b[0]));
+  return crypto.createHash('sha256').update(JSON.stringify({ netProfitCents: plan.netProfitCents.toString(), period, sourceReference, snapshot })).digest('hex');
+}
+function profitSourceKey(period, sourceReference) {
+  return crypto.createHash('sha256').update(`${period}\n${sourceReference.trim().toLowerCase()}`).digest('hex');
+}
+function moneyFromCents(cents) { return Number(cents) / 100; }
 
 app.get('/api/health', (_req, res) => res.json({
   success: true,
@@ -132,7 +206,7 @@ app.post('/api/user/request', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Invalid request' });
   }
   const isReferral = type === 'referral_reward';
-  const amount = isReferral ? REFERRAL_REWARD : Number(req.body?.amount);
+  const amount = isReferral ? REFERRAL_REWARD : Math.round(Number(req.body?.amount) * 100) / 100;
   if (!Number.isFinite(amount) || amount <= 0 || amount > 1_000_000_000) return res.status(400).json({ success: false, error: 'Invalid amount' });
   if (isReferral && (!validUsername(referredUsername) || referredUsername.trim().toLowerCase() === username.trim().toLowerCase())) {
     return res.status(400).json({ success: false, error: 'Invalid referred username' });
@@ -146,11 +220,46 @@ app.post('/api/user/request', async (req, res) => {
       const existing = await Request.exists({ type: 'referral_reward', referredUsername: invited.username });
       if (existing) return res.status(409).json({ success: false, error: 'This account already has a referral reward request' });
     }
+  const withdrawalFields = {
+      withdraw_capital: { balance: 'balance', reserve: 'reservedCapital' },
+      withdraw_daily: { balance: 'todayProfit', reserve: 'reservedProfit' },
+      invite_bonus: { balance: 'bonus', reserve: 'reservedBonus' }
+    };
+    const normalizedWallet = String(walletAddress || '').trim().slice(0, 128);
+    if (withdrawalFields[type]) {
+      if (!normalizedWallet) return res.status(400).json({ success: false, error: 'A withdrawal wallet address is required' });
+      const session = await mongoose.startSession();
+      try {
+        let outcome;
+        await session.withTransaction(async () => {
+          const current = await User.findById(user._id).session(session);
+          if (!current) { outcome = { error: 'User not found', status: 404 }; return; }
+          const { balance: balanceField, reserve: reserveField } = withdrawalFields[type];
+          const available = Math.round((Number(current[balanceField] || 0) - Number(current[reserveField] || 0)) * 100) / 100;
+          if (amount > available) { outcome = { error: 'Insufficient available balance', status: 400 }; return; }
+          current[reserveField] = Math.round((Number(current[reserveField] || 0) + amount) * 100) / 100;
+          await current.save({ session });
+          const [request] = await Request.create([{
+            username: current.username,
+            amount,
+            type,
+            walletAddress: normalizedWallet,
+            details: String(details).trim().slice(0, 300),
+            fundsReserved: true
+          }], { session });
+          outcome = { requestId: request._id };
+        });
+        if (outcome?.error) return res.status(outcome.status).json({ success: false, error: outcome.error });
+        return res.status(201).json({ success: true, requestId: outcome.requestId, amount, reserved: true });
+      } finally {
+        await session.endSession();
+      }
+    }
     const request = await Request.create({
       username: user.username,
       amount,
       type,
-      walletAddress: String(walletAddress).trim().slice(0, 128),
+      walletAddress: normalizedWallet,
       referredUsername: isReferral ? referredUsername.trim() : '',
       details: String(details).trim().slice(0, 300)
     });
@@ -207,15 +316,140 @@ app.post('/api/admin/logout', adminSession, (req, res) => {
 app.get('/api/admin/requests', adminSession, async (_req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
   try {
-    const [requests, allUsers] = await Promise.all([
+    const [requests, allUsers, totalUsers, distributions] = await Promise.all([
       Request.find({ status: 'pending' }).sort({ createdAt: -1 }).limit(500).lean(),
-      User.find({}).sort({ createdAt: -1 }).limit(2000).lean()
+      User.find({}).sort({ createdAt: -1 }).limit(2000).lean(),
+      User.countDocuments(),
+      ProfitDistribution.find({}).sort({ createdAt: -1 }).limit(20).lean()
     ]);
     const pendingUsers = allUsers.filter(user => user.balance === 0 && (!user.history || user.history.length === 0));
-    return res.json({ success: true, requests, totalUsers: allUsers.length, allUsers, pendingUsers });
+    return res.json({ success: true, requests, totalUsers, allUsers, pendingUsers, distributions });
   } catch (error) {
     console.error('Admin data load failed:', error.message);
     return res.status(500).json({ success: false, error: 'Unable to load admin data' });
+  }
+});
+
+app.post('/api/admin/profit-distribution/preview', adminSession, async (req, res) => {
+  if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
+  const netProfitCents = toCents(req.body?.realizedProfit);
+  const period = typeof req.body?.period === 'string' ? req.body.period.trim() : '';
+  const sourceReference = typeof req.body?.sourceReference === 'string' ? req.body.sourceReference.trim() : '';
+  if (!netProfitCents || !/^\d{4}-\d{2}-\d{2}$/.test(period) || sourceReference.length < 4 || sourceReference.length > 200) {
+    return res.status(400).json({ success: false, error: 'Enter a valid realized net profit, period, and source report reference' });
+  }
+  try {
+    const sourceKey = profitSourceKey(period, sourceReference);
+    if (await ProfitDistribution.exists({ sourceKey })) return res.status(409).json({ success: false, error: 'This report reference has already been distributed for that period' });
+    const users = await User.find({ balance: { $gt: 0 } }).select('_id username balance').lean();
+    const plan = buildProfitPlan(users, netProfitCents);
+    if (!plan) return res.status(400).json({ success: false, error: 'No users with positive capital are eligible for distribution' });
+    return res.json({
+      success: true,
+      preview: {
+        fingerprint: profitFingerprint(plan, period, sourceReference),
+        realizedProfit: moneyFromCents(plan.netProfitCents),
+        totalCapital: moneyFromCents(plan.totalCapitalCents),
+        eligibleUsers: plan.allocations.length,
+        period,
+        sourceReference,
+        allocations: plan.allocations.map(row => ({
+          username: row.username,
+          capital: moneyFromCents(row.capitalCents),
+          sharePercent: row.sharePercent,
+          amount: moneyFromCents(row.amountCents)
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Profit distribution preview failed:', error.message);
+    return res.status(500).json({ success: false, error: 'Unable to prepare profit distribution preview' });
+  }
+});
+
+app.post('/api/admin/profit-distribution/publish', adminSession, async (req, res) => {
+  if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
+  const netProfitCents = toCents(req.body?.realizedProfit);
+  const period = typeof req.body?.period === 'string' ? req.body.period.trim() : '';
+  const sourceReference = typeof req.body?.sourceReference === 'string' ? req.body.sourceReference.trim() : '';
+  const operationId = typeof req.body?.operationId === 'string' ? req.body.operationId.trim() : '';
+  const fingerprint = typeof req.body?.fingerprint === 'string' ? req.body.fingerprint.trim() : '';
+  if (!netProfitCents || !/^\d{4}-\d{2}-\d{2}$/.test(period) || sourceReference.length < 4 || sourceReference.length > 200 || !/^[a-zA-Z0-9-]{16,100}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(fingerprint)) {
+    return res.status(400).json({ success: false, error: 'Invalid distribution data; prepare a new preview' });
+  }
+  const session = await mongoose.startSession();
+  const sourceKey = profitSourceKey(period, sourceReference);
+  try {
+    let result;
+    await session.withTransaction(async () => {
+      const prior = await ProfitDistribution.findOne({ operationId }).session(session).lean();
+      if (prior) {
+        if (prior.fingerprint !== fingerprint) {
+          result = { error: 'This operation ID was already used for a different distribution', status: 409 };
+          return;
+        }
+        result = { success: true, duplicate: true, distribution: prior };
+        return;
+      }
+      const priorSource = await ProfitDistribution.findOne({ sourceKey }).session(session).lean();
+      if (priorSource) {
+        if (priorSource.fingerprint === fingerprint) result = { success: true, duplicate: true, distribution: priorSource };
+        else result = { error: 'This report reference was already used for a different distribution', status: 409 };
+        return;
+      }
+      const users = await User.find({ balance: { $gt: 0 } }).select('_id username balance').session(session).lean();
+      const plan = buildProfitPlan(users, netProfitCents);
+      if (!plan) {
+        result = { error: 'No users with positive capital are eligible for distribution', status: 400 };
+        return;
+      }
+      if (profitFingerprint(plan, period, sourceReference) !== fingerprint) {
+        result = { error: 'Capital changed since preview; prepare a fresh preview before publishing', status: 409 };
+        return;
+      }
+      const createdAt = new Date();
+      const allocations = plan.allocations.map(row => ({
+        operationId,
+        userId: row.userId,
+        username: row.username,
+        capital: moneyFromCents(row.capitalCents),
+        sharePercent: row.sharePercent,
+        amount: moneyFromCents(row.amountCents),
+        period,
+        sourceReference,
+        createdAt
+      }));
+      const updates = plan.allocations.map(row => ({
+        updateOne: {
+          filter: { _id: row.userId },
+          update: {
+            $inc: { todayProfit: moneyFromCents(row.amountCents) },
+            $push: { history: { type: 'profit_distribution', amount: moneyFromCents(row.amountCents), sharePercent: row.sharePercent, period, sourceReference, operationId, date: createdAt } }
+          }
+        }
+      }));
+      await User.bulkWrite(updates, { session, ordered: true });
+      await ProfitAllocation.insertMany(allocations, { session, ordered: true });
+      const [distribution] = await ProfitDistribution.create([{
+        operationId,
+        sourceKey,
+        fingerprint,
+        netProfit: moneyFromCents(plan.netProfitCents),
+        totalCapital: moneyFromCents(plan.totalCapitalCents),
+        eligibleUsers: plan.allocations.length,
+        period,
+        sourceReference,
+        createdAt
+      }], { session });
+      result = { success: true, duplicate: false, distribution };
+    });
+    if (result?.error) return res.status(result.status).json({ success: false, error: result.error });
+    return res.json(result || { success: false, error: 'Distribution produced no result' });
+  } catch (error) {
+    console.error('Profit distribution publish failed:', error.message);
+    return res.status(500).json({ success: false, error: 'Unable to publish profit distribution' });
+  } finally {
+    await session.endSession();
   }
 });
 
@@ -233,6 +467,14 @@ app.post('/api/admin/action-request', adminSession, async (req, res) => {
         return;
       }
       if (action === 'rejected') {
+        const reserveField = { withdraw_capital: 'reservedCapital', withdraw_daily: 'reservedProfit', invite_bonus: 'reservedBonus' }[item.type];
+        if (reserveField && item.fundsReserved) {
+          const user = await User.findOne({ username: item.username }).session(session);
+          if (user) {
+            user[reserveField] = Math.max(0, Math.round((Number(user[reserveField] || 0) - item.amount) * 100) / 100);
+            await user.save({ session });
+          }
+        }
         await Request.updateOne({ _id: item._id, status: 'pending' }, { $set: { status: 'rejected' } }, { session });
         result = { success: true };
         return;
@@ -262,14 +504,17 @@ app.post('/api/admin/action-request', adminSession, async (req, res) => {
       } else if (item.type === 'withdraw_capital') {
         if (user.balance < item.amount) { result = { error: 'Insufficient capital balance', status: 400 }; return; }
         user.balance -= item.amount;
+        if (item.fundsReserved) user.reservedCapital = Math.max(0, Math.round((Number(user.reservedCapital || 0) - item.amount) * 100) / 100);
         user.history.push({ type: item.type, amount: item.amount, status: 'approved', date: new Date() });
       } else if (item.type === 'withdraw_daily') {
         if (user.todayProfit < item.amount) { result = { error: 'Insufficient daily profit balance', status: 400 }; return; }
         user.todayProfit -= item.amount;
+        if (item.fundsReserved) user.reservedProfit = Math.max(0, Math.round((Number(user.reservedProfit || 0) - item.amount) * 100) / 100);
         user.history.push({ type: item.type, amount: item.amount, status: 'approved', date: new Date() });
       } else if (item.type === 'invite_bonus') {
         if (user.bonus < item.amount) { result = { error: 'Insufficient referral bonus balance', status: 400 }; return; }
         user.bonus -= item.amount;
+        if (item.fundsReserved) user.reservedBonus = Math.max(0, Math.round((Number(user.reservedBonus || 0) - item.amount) * 100) / 100);
         user.history.push({ type: item.type, amount: item.amount, status: 'approved', date: new Date() });
       }
       await user.save({ session });
@@ -291,10 +536,10 @@ app.post('/api/admin/update-user', adminSession, async (req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
   const { userId } = req.body || {};
   if (!mongoose.isValidObjectId(userId)) return res.status(400).json({ success: false, error: 'Invalid user id' });
-  const fields = { balance: Number(req.body.capital), todayProfit: Number(req.body.dailyProfit), bonus: Number(req.body.bonus), teamCount: Number(req.body.teamCount) };
-  if (Object.values(fields).some(value => !Number.isFinite(value)) || fields.balance < 0 || fields.bonus < 0 || fields.teamCount < 0) return res.status(400).json({ success: false, error: 'Invalid user values' });
+  const fields = { balance: Math.round(Number(req.body.capital) * 100) / 100, todayProfit: Math.round(Number(req.body.dailyProfit) * 100) / 100, bonus: Math.round(Number(req.body.bonus) * 100) / 100, teamCount: Number(req.body.teamCount) };
+  if (Object.values(fields).some(value => !Number.isFinite(value)) || fields.balance < 0 || fields.todayProfit < 0 || fields.bonus < 0 || !Number.isInteger(fields.teamCount) || fields.teamCount < 0) return res.status(400).json({ success: false, error: 'Invalid user values' });
   try {
-    const user = await User.findByIdAndUpdate(userId, { $set: fields }, { new: true, runValidators: true });
+    const user = await User.findByIdAndUpdate(userId, { $set: fields, $push: { history: { type: 'admin_manual_adjustment', ...fields, date: new Date() } } }, { new: true, runValidators: true });
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
     return res.json({ success: true, user: safeUser(user) });
   } catch (error) {

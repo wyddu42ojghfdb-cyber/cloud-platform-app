@@ -1,10 +1,14 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#111c33"><title>لوحة إدارة المنظومة</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111c33">
+  <title>لوحة إدارة المنظومة</title>
   <style>
-    :root{color-scheme:dark;--bg:#0b1426;--card:#111c33;--line:#263650;--muted:#a5b2c7;--blue:#2563eb;--green:#16a34a;--red:#dc2626}*{box-sizing:border-box}body{margin:0;padding:20px;background:var(--bg);color:#f8fafc;font:15px/1.6 system-ui,sans-serif}.container{max-width:1200px;margin:auto}h1{color:#7dd3fc;text-align:center}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}input,button{font:inherit;border-radius:7px;padding:9px}input{background:#080f1d;color:white;border:1px solid var(--line);max-width:220px}button{border:0;background:var(--blue);color:white;font-weight:700;cursor:pointer;margin:3px}button.green{background:var(--green)}button.red{background:var(--red)}button:disabled{opacity:.5}#login-panel{max-width:460px;margin:30px auto}#message{min-height:1.5em;color:#93c5fd}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:9px;border:1px solid var(--line);text-align:center}th{background:#1e293b;color:#cbd5e1}td input{width:95px}.muted{color:var(--muted);font-size:.9rem}.warning{color:#fde68a}.hidden{display:none}.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    :root{color-scheme:dark;--bg:#0b1426;--card:#111c33;--line:#263650;--muted:#a5b2c7;--blue:#2563eb;--green:#15803d;--red:#dc2626;--gold:#fbbf24}
+    *{box-sizing:border-box}body{margin:0;padding:18px;background:var(--bg);color:#f8fafc;font:15px/1.6 system-ui,sans-serif}.container{max-width:1280px;margin:auto}h1{color:#7dd3fc;text-align:center}h2{margin-top:0}.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}input,button{font:inherit;border-radius:7px;padding:9px}input{background:#080f1d;color:white;border:1px solid var(--line);max-width:260px}button{border:0;background:var(--blue);color:white;font-weight:700;cursor:pointer;margin:3px}button.green{background:var(--green)}button.red{background:var(--red)}button:disabled{opacity:.5;cursor:wait}#login-panel{max-width:460px;margin:30px auto}#message{min-height:1.5em;color:#93c5fd}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:720px}th,td{padding:9px;border:1px solid var(--line);text-align:center;vertical-align:middle}th{background:#1e293b;color:#cbd5e1}td input{width:100px}.muted{color:var(--muted);font-size:.9rem}.warning{color:#fde68a}.hidden{display:none!important}.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;align-items:end}.field label{display:block;color:var(--muted);margin-bottom:5px}.field input{width:100%;max-width:none}.summary{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}.summary span{background:#0b1426;border:1px solid var(--line);padding:8px 12px;border-radius:8px}.primary-action{background:#15803d;padding:12px 18px}.code{direction:ltr;unicode-bidi:plaintext;font-family:monospace}
+    @media(max-width:600px){body{padding:10px}.card{padding:13px}.bar{align-items:flex-start}}
   </style>
 </head>
 <body>
@@ -13,12 +17,44 @@
   <section id="login-panel" class="card">
     <h2>تسجيل دخول المشرف</h2>
     <form id="login-form"><label for="admin-password">كلمة مرور المشرف</label><br><input id="admin-password" type="password" autocomplete="current-password" required><button>دخول</button></form>
-    <p id="message" role="status"></p>
+    <p id="message" role="status" aria-live="polite"></p>
   </section>
   <section id="dashboard" class="hidden">
-    <div class="card bar"><strong>عدد الحسابات: <span id="total-users">0</span></strong><span>تحديث تلقائي كل 4 ثوانٍ</span><button id="logout" class="red">تسجيل الخروج</button></div>
-    <div class="card"><h2>طلبات مالية معلقة</h2><p class="muted">الموافقة تسجل تغييراً في دفتر التطبيق فقط، ولا تنفذ تحويلاً بلوكتشين.</p><p class="warning">راجع إثبات الإيداع والسحب، وتحقق من أن الصديق المدعو مستخدم حقيقي وغير مكرر قبل اعتماد مكافأة الإحالة. الاعتماد يضيف 10 USDT تلقائياً إلى المكافأة ويزيد الفريق مرة واحدة.</p><div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>النوع</th><th>المبلغ</th><th>المحفظة / التفاصيل</th><th>الإجراء</th></tr></thead><tbody id="requests-body"></tbody></table></div></div>
-    <div class="card"><h2>الحسابات</h2><div class="table-wrap"><table><thead><tr><th>اسم المستخدم</th><th>رأس المال</th><th>ربح اليوم</th><th>المكافأة</th><th>الفريق</th><th>حفظ</th></tr></thead><tbody id="users-body"></tbody></table></div></div>
+    <div class="card bar"><strong>إجمالي المشتركين: <span id="total-users">0</span></strong><span>تحديث تلقائي كل 4 ثوانٍ</span><button id="logout" class="red">تسجيل الخروج</button></div>
+
+    <section class="card" aria-labelledby="distribution-title">
+      <h2 id="distribution-title">توزيع صافي الربح المحقق تناسبياً</h2>
+      <p class="warning">أدخل مبلغ صافي الربح المحقق للفترة ومرجع التقرير/الدفتر. تُحسب حصة كل مستخدم بنسبة رأس ماله إلى إجمالي رأس المال، ثم تضاف داخلياً إلى ربح اليوم. لا يتحقق التطبيق آلياً من تقرير Binance ولا ينفّذ أي تحويل إلى Binance أو إلى محفظة بلوكتشين؛ تحقّق من صافي الربح قبل النشر.</p>
+      <div class="form-grid">
+        <div class="field"><label for="realized-profit">مبلغ صافي الربح المحقق (USDT)</label><input id="realized-profit" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="مثال: 250.00"></div>
+        <div class="field"><label for="profit-period">تاريخ/فترة التقرير</label><input id="profit-period" type="date" required></div>
+        <div class="field"><label for="profit-reference">مرجع تقرير Binance أو الدفتر</label><input id="profit-reference" type="text" maxlength="200" placeholder="رقم تقرير أو مرجع داخلي"></div>
+        <div><button id="preview-profit">معاينة التوزيع</button></div>
+      </div>
+      <div id="profit-preview" class="hidden" aria-live="polite">
+        <div class="summary"><span>صافي الربح: <strong id="preview-profit-total"></strong></span><span>إجمالي رأس المال: <strong id="preview-capital-total"></strong></span><span>المشتركون المؤهلون: <strong id="preview-users-count"></strong></span></div>
+        <div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>رأس المال (USDT)</th><th>نسبة رأس المال</th><th>الحصة الموزعة (USDT)</th></tr></thead><tbody id="preview-allocations"></tbody></table></div>
+        <p class="muted">راجع التوزيع والمرجع قبل الاعتماد. تُحسب الحصص بالسنت مع توزيع فروق التقريب كي يساوي مجموع الحصص المبلغ المدخل تماماً.</p>
+        <button id="publish-profit" class="primary-action">نشر التوزيع الداخلي المعتمد</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>طلبات مالية معلقة</h2>
+      <p class="muted">الموافقة تحدّث دفتر التطبيق فقط؛ لا تنفّذ تحويلاً بلوكتشين. طلب السحب يحجز المبلغ المتاح حتى الموافقة أو الرفض.</p>
+      <p class="warning">تحقق من إثبات الإيداع والسحب. مكافأة الإحالة نوع مستقل؛ بعد التحقق من أهلية الصديق واعتماد الطلب يضاف 10 USDT إلى عمولة الداعي ويزاد الفريق مرة واحدة.</p>
+      <div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>نوع الطلب</th><th>كمية USDT</th><th>محفظة TRC-20 / التفاصيل</th><th>الإجراء</th></tr></thead><tbody id="requests-body"></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <h2>الحسابات</h2>
+      <div class="table-wrap"><table><thead><tr><th>اسم المستخدم</th><th>رأس المال</th><th>ربح اليوم</th><th>عمولات الإحالة</th><th>الفريق</th><th>حفظ</th></tr></thead><tbody id="users-body"></tbody></table></div>
+    </section>
+
+    <section class="card">
+      <h2>سجل توزيعات الأرباح الداخلية</h2>
+      <div class="table-wrap"><table><thead><tr><th>الفترة</th><th>صافي الربح (USDT)</th><th>إجمالي رأس المال (USDT)</th><th>المستخدمون</th><th>مرجع التقرير</th><th>وقت النشر</th></tr></thead><tbody id="distributions-body"></tbody></table></div>
+    </section>
   </section>
 </main>
 <script>
@@ -26,37 +62,55 @@
 const loginPanel=document.getElementById('login-panel');
 const dashboard=document.getElementById('dashboard');
 const message=document.getElementById('message');
+const previewBox=document.getElementById('profit-preview');
 let timer;
-const typeNames={deposit:'إيداع',withdraw_daily:'سحب أرباح يومية',withdraw_capital:'سحب رأس المال',invite_bonus:'سحب عمولات دعوة',referral_reward:'مكافأة إحالة'};
+let activePreview=null;
+let activeOperationId=null;
+const userDrafts=new Map();
+const typeNames={deposit:'إيداع رأس مال',withdraw_daily:'سحب أرباح يومية',withdraw_capital:'سحب رأس مال',invite_bonus:'سحب عمولات دعوة',referral_reward:'مكافأة دعوة صديق'};
+const fmt=value=>`USDT ${Number(value||0).toFixed(2)}`;
 async function api(url,options={}){
   const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.success)throw new Error(data.error||`تعذّر الاتصال (${response.status})`);
   return data;
 }
-function cell(row,text){const td=document.createElement('td');td.textContent=text==null?'':String(text);row.appendChild(td);return td;}
-function inputCell(row,id,value,min='0'){const td=document.createElement('td');const input=document.createElement('input');input.id=id;input.type='number';input.step='0.01';input.min=min;input.value=Number(value||0);td.appendChild(input);row.appendChild(td);}
+function cell(row,text,cls=''){const td=document.createElement('td');td.textContent=text==null?'':String(text);if(cls)td.className=cls;row.appendChild(td);return td;}
+function inputCell(row,id,value,min='0'){
+  const td=document.createElement('td');const input=document.createElement('input');input.id=id;input.type='number';input.step='0.01';input.min=min;input.value=Number(value||0);input.className='user-input';input.dataset.draftId=id;
+  if(userDrafts.has(id))input.value=userDrafts.get(id);
+  input.addEventListener('input',()=>userDrafts.set(id,input.value));td.appendChild(input);row.appendChild(td);
+}
 function emptyRow(body,columns,text){const row=document.createElement('tr');const td=document.createElement('td');td.colSpan=columns;td.textContent=text;row.appendChild(td);body.appendChild(row);}
+function setToday(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);document.getElementById('profit-period').value=local.toISOString().slice(0,10);}
+function invalidatePreview(){activePreview=null;activeOperationId=null;previewBox.classList.add('hidden');}
+function renderPreview(preview){
+  activePreview=preview;
+  activeOperationId=crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  document.getElementById('preview-profit-total').textContent=fmt(preview.realizedProfit);
+  document.getElementById('preview-capital-total').textContent=fmt(preview.totalCapital);
+  document.getElementById('preview-users-count').textContent=String(preview.eligibleUsers);
+  const body=document.getElementById('preview-allocations');body.replaceChildren();
+  for(const rowData of preview.allocations){const row=document.createElement('tr');cell(row,rowData.username);cell(row,fmt(rowData.capital));cell(row,`${Number(rowData.sharePercent).toFixed(4)}%`);cell(row,fmt(rowData.amount));body.appendChild(row);}
+  previewBox.classList.remove('hidden');
+}
 async function loadDashboard(){
   try{
     const data=await api('/api/admin/requests');
-    document.getElementById('total-users').textContent=data.totalUsers;
+    document.getElementById('total-users').textContent=String(data.totalUsers);
     const requestsBody=document.getElementById('requests-body');requestsBody.replaceChildren();
     if(!data.requests.length)emptyRow(requestsBody,5,'لا توجد طلبات معلقة.');
     for(const item of data.requests){
-      const row=document.createElement('tr');cell(row,item.username);cell(row,typeNames[item.type]||item.type);cell(row,`USDT ${Number(item.amount).toFixed(2)}`);
-      const detail=item.type==='referral_reward'?`الصديق المدعو: ${item.referredUsername||'—'}`:(item.details||item.walletAddress||'—');cell(row,detail);
+      const row=document.createElement('tr');cell(row,item.username);cell(row,typeNames[item.type]||item.type);cell(row,fmt(item.amount));
+      cell(row,item.type==='referral_reward'?`الصديق المدعو: ${item.referredUsername||'—'}`:(item.walletAddress||item.details||'—'),'code');
       const actions=document.createElement('td');
       for(const [label,action,cls] of [['موافق / Approved','approved','green'],['رفض','rejected','red']]){
         const button=document.createElement('button');button.textContent=label;button.className=cls;
         button.addEventListener('click',async()=>{
-          if(action==='approved'&&item.type==='referral_reward'&&!window.confirm(`تحققت من تسجيل الصديق ${item.referredUsername} ومن عدم تكرار المكافأة؟ عند الموافقة سيضاف 10 USDT ويزاد الفريق بمقدار 1.`))return;
+          if(action==='approved'&&item.type==='referral_reward'&&!window.confirm(`تحققت من أهلية الصديق ${item.referredUsername}؟ ستُضاف مكافأة 10 USDT ويزاد الفريق مرة واحدة.`))return;
           button.disabled=true;
-          try{
-            const result=await api('/api/admin/action-request',{method:'POST',body:JSON.stringify({requestId:item._id,action})});
-            await loadDashboard();
-            message.textContent=result.referralReward?`تم اعتماد الإحالة وإضافة ${result.referralReward} USDT وزيادة الفريق بمقدار 1.`:'تم تحديث حالة الطلب.';
-          }catch(error){message.textContent=error.message;button.disabled=false;}
+          try{const result=await api('/api/admin/action-request',{method:'POST',body:JSON.stringify({requestId:item._id,action})});await loadDashboard();message.textContent=result.referralReward?`تم اعتماد الإحالة وإضافة ${result.referralReward} USDT.`:'تم تحديث الطلب.';}
+          catch(error){message.textContent=error.message;button.disabled=false;}
         });actions.appendChild(button);
       }
       row.appendChild(actions);requestsBody.appendChild(row);
@@ -65,35 +119,55 @@ async function loadDashboard(){
     if(!data.allUsers.length)emptyRow(usersBody,6,'لا توجد حسابات.');
     for(const user of data.allUsers){
       const row=document.createElement('tr');cell(row,user.username);
-      inputCell(row,`capital-${user._id}`,user.balance);inputCell(row,`profit-${user._id}`,user.todayProfit,'-1000000000');inputCell(row,`bonus-${user._id}`,user.bonus);inputCell(row,`team-${user._id}`,user.teamCount);
+      inputCell(row,`capital-${user._id}`,user.balance);inputCell(row,`profit-${user._id}`,user.todayProfit,'0');inputCell(row,`bonus-${user._id}`,user.bonus);inputCell(row,`team-${user._id}`,user.teamCount);
       const td=document.createElement('td');const save=document.createElement('button');save.textContent='حفظ';
       save.addEventListener('click',async()=>{
         save.disabled=true;
         try{
           const value=id=>document.getElementById(`${id}-${user._id}`).value;
           await api('/api/admin/update-user',{method:'POST',body:JSON.stringify({userId:user._id,capital:value('capital'),dailyProfit:value('profit'),bonus:value('bonus'),teamCount:value('team')})});
-          message.textContent='تم تحديث الحساب.';await loadDashboard();
+          for(const key of ['capital','profit','bonus','team'])userDrafts.delete(`${key}-${user._id}`);
+          message.textContent='تم حفظ الحساب.';await loadDashboard();
         }catch(error){message.textContent=error.message;save.disabled=false;}
       });td.appendChild(save);row.appendChild(td);usersBody.appendChild(row);
     }
+    const distributionsBody=document.getElementById('distributions-body');distributionsBody.replaceChildren();
+    if(!data.distributions.length)emptyRow(distributionsBody,6,'لا توجد توزيعات مسجلة بعد.');
+    for(const item of data.distributions){const row=document.createElement('tr');cell(row,item.period);cell(row,fmt(item.netProfit));cell(row,fmt(item.totalCapital));cell(row,item.eligibleUsers);cell(row,item.sourceReference);cell(row,new Date(item.createdAt).toLocaleString('ar'));distributionsBody.appendChild(row);}
   }catch(error){
     if(error.message.includes('authentication')||error.message.includes('401')){dashboard.classList.add('hidden');loginPanel.classList.remove('hidden');if(timer)clearInterval(timer);}
     message.textContent=error.message;
   }
 }
+for(const id of ['realized-profit','profit-period','profit-reference'])document.getElementById(id).addEventListener('input',invalidatePreview);
+document.getElementById('preview-profit').addEventListener('click',async event=>{
+  const button=event.currentTarget;const realizedProfit=Number(document.getElementById('realized-profit').value);const period=document.getElementById('profit-period').value;const sourceReference=document.getElementById('profit-reference').value.trim();
+  if(!Number.isFinite(realizedProfit)||realizedProfit<=0||!period||sourceReference.length<4){message.textContent='أدخل مبلغاً موجباً وفترة ومرجع تقرير صالحاً.';return;}
+  button.disabled=true;message.textContent='جارٍ إعداد المعاينة…';
+  try{const data=await api('/api/admin/profit-distribution/preview',{method:'POST',body:JSON.stringify({realizedProfit,period,sourceReference})});renderPreview(data.preview);message.textContent='راجع الحصص التناسبية قبل النشر.';}
+  catch(error){message.textContent=error.message;invalidatePreview();}
+  finally{button.disabled=false;}
+});
+document.getElementById('publish-profit').addEventListener('click',async event=>{
+  if(!activePreview||!activeOperationId)return;
+  const button=event.currentTarget;
+  if(!window.confirm(`تأكيد توزيع ${fmt(activePreview.realizedProfit)} تناسبياً على ${activePreview.eligibleUsers} مستخدم؟ سيُسجل رصيداً داخلياً ولن ينفذ تحويلاً خارج التطبيق.`))return;
+  button.disabled=true;
+  try{
+    const result=await api('/api/admin/profit-distribution/publish',{method:'POST',body:JSON.stringify({realizedProfit:activePreview.realizedProfit,period:activePreview.period,sourceReference:activePreview.sourceReference,fingerprint:activePreview.fingerprint,operationId:activeOperationId})});
+    invalidatePreview();for(const key of [...userDrafts.keys()])if(key.startsWith('profit-'))userDrafts.delete(key);message.textContent=result.duplicate?'هذه العملية منشورة سابقاً ولم تكرر.':'تم نشر التوزيع الداخلي وتسجيل حصصه.';await loadDashboard();
+  }catch(error){message.textContent=error.message;invalidatePreview();button.disabled=false;}
+});
 document.getElementById('login-form').addEventListener('submit',async event=>{
   event.preventDefault();message.textContent='جارٍ التحقق…';
-  try{
-    await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:document.getElementById('admin-password').value})});
-    document.getElementById('admin-password').value='';loginPanel.classList.add('hidden');dashboard.classList.remove('hidden');await loadDashboard();timer=setInterval(loadDashboard,4000);
-  }catch(error){message.textContent=error.message;}
+  try{await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:document.getElementById('admin-password').value})});document.getElementById('admin-password').value='';loginPanel.classList.add('hidden');dashboard.classList.remove('hidden');setToday();await loadDashboard();timer=setInterval(loadDashboard,4000);}
+  catch(error){message.textContent=error.message;}
 });
 document.getElementById('logout').addEventListener('click',async()=>{
-  if(timer)clearInterval(timer);
-  try{await api('/api/admin/logout',{method:'POST',body:'{}'});}catch(_){}
+  if(timer)clearInterval(timer);try{await api('/api/admin/logout',{method:'POST',body:'{}'});}catch(_){}
   dashboard.classList.add('hidden');loginPanel.classList.remove('hidden');message.textContent='تم تسجيل الخروج.';
 });
-loadDashboard();
+setToday();loadDashboard();
 </script>
 </body>
 </html>
