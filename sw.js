@@ -1,5 +1,5 @@
 'use strict';
-const CACHE_NAME = 'cloud-platform-v4';
+const CACHE_NAME = 'cloud-platform-v5';
 const APP_SHELL = ['/', '/panel', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', event => {

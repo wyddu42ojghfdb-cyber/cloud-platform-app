@@ -10,95 +10,173 @@
   <title>منظومة التداول والتحليل السحابي</title>
   <style>
     :root{color-scheme:dark;--bg:#0b1426;--card:#111c33;--line:#263650;--muted:#a5b2c7;--blue:#2563eb;--green:#16a34a;--red:#dc2626;--cyan:#06b6d4;--purple:#7c3aed}
-    *{box-sizing:border-box}body{margin:0;padding:20px;background:var(--bg);color:#f8fafc;font:16px/1.6 system-ui,"Segoe UI",sans-serif}.container{max-width:760px;margin:auto}.header{text-align:center;margin:10px 0 20px;color:#7dd3fc}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}.row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #ffffff12}.row:last-child{border:0}.value{font-weight:700;color:#c4b5fd}label{display:block;color:var(--muted);margin:8px 0}input,button{font:inherit;border-radius:8px}input{width:100%;padding:11px;background:#080f1d;color:white;border:1px solid var(--line);margin:5px 0 10px}button{border:0;padding:11px 14px;color:white;font-weight:700;cursor:pointer;background:var(--blue)}button:disabled{opacity:.55;cursor:wait}.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}.green{background:var(--green)}.red{background:var(--red)}.cyan{background:#0891b2}.purple{background:var(--purple)}.wallet{direction:ltr;text-align:center;word-break:break-all;color:#86efac;font-family:monospace;background:#07100c;padding:12px;border:1px dashed var(--green);border-radius:8px}.muted{color:var(--muted);font-size:.9rem}.notice{color:#fde68a;font-size:.9rem}.status{min-height:1.5em;color:#93c5fd}@media(max-width:520px){body{padding:10px}.card{padding:14px}}
+    *{box-sizing:border-box}body{margin:0;padding:18px;background:var(--bg);color:#f8fafc;font:16px/1.6 system-ui,"Segoe UI",sans-serif}.container{max-width:780px;margin:auto}.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:5px 0 14px}.language{display:flex;gap:8px}.language button{padding:8px 13px}.language button.active{outline:2px solid #c4b5fd}.header{text-align:center;margin:8px 0 18px;color:#7dd3fc}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:14px 0}.row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #ffffff12}.row:last-child{border:0}.value{font-weight:700;color:#c4b5fd}label{display:block;color:var(--muted);margin:8px 0}input,button{font:inherit;border-radius:8px}input{width:100%;padding:11px;background:#080f1d;color:white;border:1px solid var(--line);margin:5px 0 10px}button{border:0;padding:11px 14px;color:white;font-weight:700;cursor:pointer;background:var(--blue)}button:disabled{opacity:.55;cursor:wait}.actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px}.green{background:var(--green)}.red{background:var(--red)}.cyan{background:#0891b2}.purple{background:var(--purple)}.install{background:#0e7490}.wallet{direction:ltr;text-align:center;word-break:break-all;color:#86efac;font-family:monospace;background:#07100c;padding:12px;border:1px dashed var(--green);border-radius:8px}.muted{color:var(--muted);font-size:.9rem}.notice{color:#fde68a;font-size:.9rem}.status{min-height:1.5em;color:#93c5fd}.notifications{margin:0;padding:0;list-style:none}.notifications li{padding:9px 10px;margin:7px 0;background:#0b1426;border:1px solid var(--line);border-radius:8px}.empty{color:var(--muted)}a{text-decoration:none}@media(max-width:520px){body{padding:10px}.card{padding:14px}.topbar{align-items:flex-start}}
   </style>
 </head>
 <body>
 <main class="container">
-  <h1 class="header">☁️ منظومة التداول والتحليل السحابي</h1>
+  <div class="topbar">
+    <div class="language" role="group" aria-label="Language">
+      <button type="button" data-lang="ar" class="active">العربية</button>
+      <button type="button" data-lang="en">English</button>
+    </div>
+    <button type="button" id="install-app" class="install">📲 تثبيت التطبيق على الهاتف</button>
+  </div>
+  <h1 class="header" data-i18n="title">☁️ منظومة التداول والتحليل السحابي</h1>
   <section class="card" aria-labelledby="account-title">
-    <h2 id="account-title">الحساب</h2>
-    <label for="username">اسم المستخدم</label>
-    <input id="username" maxlength="64" autocomplete="username" placeholder="أدخل اسم المستخدم">
-    <button id="login">فتح الحساب</button>
-    <p id="status" class="status" role="status"></p>
+    <h2 id="account-title" data-i18n="account">الحساب</h2>
+    <label for="username" data-i18n="username">اسم المستخدم</label>
+    <input id="username" maxlength="64" autocomplete="username" placeholder="أدخل اسم المستخدم" data-i18n-placeholder="usernamePlaceholder">
+    <button id="login" data-i18n="loadAccount">فتح الحساب</button>
+    <p id="status" class="status" role="status" aria-live="polite"></p>
   </section>
   <section class="card" aria-label="الأرصدة">
-    <div class="row"><span>رأس المال</span><span id="balance" class="value">USDT 0.00</span></div>
-    <div class="row"><span>الأرباح اليومية</span><span id="profit" class="value">USDT 0.00</span></div>
-    <div class="row"><span>عمولات الإحالة</span><span id="bonus" class="value">USDT 0.00</span></div>
-    <div class="row"><span>أعضاء الفريق</span><span id="team" class="value">0</span></div>
+    <div class="row"><span data-i18n="capital">رأس المال</span><span id="balance" class="value">USDT 0.00</span></div>
+    <div class="row"><span data-i18n="dailyProfit">الأرباح اليومية</span><span id="profit" class="value">USDT 0.00</span></div>
+    <div class="row"><span data-i18n="referralCommissions">عمولات الإحالة</span><span id="bonus" class="value">USDT 0.00</span></div>
+    <div class="row"><span data-i18n="teamMembers">أعضاء الفريق</span><span id="team" class="value">0</span></div>
   </section>
   <section class="card">
-    <h2>العمليات والطلبات</h2>
-    <label for="amount">المبلغ (USDT)</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal">
-    <label for="wallet">عنوان محفظة السحب (TRC‑20)</label><input id="wallet" maxlength="128" autocomplete="off">
+    <h2 data-i18n="operations">العمليات والطلبات</h2>
+    <label for="amount" data-i18n="amount">المبلغ (USDT)</label><input id="amount" type="number" min="0.01" step="0.01" inputmode="decimal">
+    <label for="wallet" data-i18n="walletAddress">عنوان محفظة TRC-20</label><input id="wallet" maxlength="128" autocomplete="off" dir="ltr">
     <div class="actions">
-      <button class="green" data-request="deposit">إرسال طلب إيداع</button>
-      <button class="red" data-request="withdraw_daily">طلب سحب الأرباح اليومية</button>
-      <button class="cyan" data-request="invite_bonus">طلب سحب مكافأة الإحالة</button>
-      <button class="red" data-request="withdraw_capital">طلب سحب رأس المال</button>
+      <button class="green" data-request="deposit" data-i18n="deposit">إرسال طلب إيداع</button>
+      <button class="red" data-request="withdraw_daily" data-i18n="withdrawProfit">طلب سحب الأرباح اليومية</button>
+      <button class="cyan" data-request="invite_bonus" data-i18n="withdrawBonus">طلب سحب عمولات الدعوة</button>
+      <button class="red" data-request="withdraw_capital" data-i18n="withdrawCapital">طلب سحب رأس المال</button>
     </div>
-    <p class="notice">إرسال الطلب يسجّله للمراجعة فقط؛ لا تنفّذ هذه الصفحة تحويلاً على الشبكة.</p>
+    <p class="notice" data-i18n="manualReview">إرسال الطلب يسجّله للمراجعة فقط؛ لا تنفّذ هذه الصفحة تحويلاً على الشبكة.</p>
   </section>
   <section class="card">
-    <h2>عنوان الإيداع المعروض</h2>
-    <p class="wallet">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</p>
-    <p class="muted">تحقق من العنوان والشبكة والجهة المستفيدة عبر قناة موثوقة قبل إرسال أي أصول رقمية.</p>
+    <h2 data-i18n="referrals">دعوة صديق</h2>
+    <label for="friend-username" data-i18n="friendName">اسم المستخدم للصديق المدعو</label>
+    <input id="friend-username" maxlength="64" autocomplete="off" data-i18n-placeholder="friendPlaceholder">
+    <button id="request-referral" class="purple" data-i18n="getReward">الحصول على المكافأة</button>
+    <p class="muted" data-i18n="referralReview">تُرسل المكافأة للمراجعة؛ يجب أن يكون حساب الصديق مسجلاً، ويعتمد المشرف الأهلية قبل إضافة 10 USDT.</p>
   </section>
-  <section class="card"><h2>الدعم</h2><a href="https://t.me/invest_support_bot" target="_blank" rel="noopener noreferrer"><button class="purple">التواصل مع الدعم عبر Telegram</button></a></section>
+  <section class="card">
+    <h2 data-i18n="depositWallet">محفظة إيداع المنصة الرسمية</h2>
+    <p id="deposit-wallet" class="wallet">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</p>
+    <p class="muted" data-i18n="walletWarning">تحقق من العنوان والشبكة والجهة المستفيدة عبر قناة موثوقة قبل إرسال أي أصول رقمية.</p>
+  </section>
+  <section class="card">
+    <h2 data-i18n="notificationsTitle">الإشعارات والتنبيهات</h2>
+    <p class="muted" data-i18n="notificationsRefresh">تُحدّث تلقائياً كل 4 ثوانٍ بعد تحميل الحساب.</p>
+    <ul id="notifications" class="notifications"><li class="empty" data-i18n="noNotifications">لا توجد إشعارات بعد.</li></ul>
+  </section>
+  <section class="card"><h2 data-i18n="support">الدعم</h2><a href="https://t.me/invest_support_bot" target="_blank" rel="noopener noreferrer"><button class="purple" data-i18n="telegramSupport">التواصل مع الدعم عبر Telegram</button></a></section>
 </main>
 <script>
 'use strict';
 const API_BASE_URL = window.location.origin;
-const usernameField = document.getElementById('username');
-const statusNode = document.getElementById('status');
-let currentUsername = localStorage.getItem('trader_username') || '';
-let refreshTimer;
-usernameField.value = currentUsername;
-const format = value => `USDT ${Number(value || 0).toFixed(2)}`;
-function showStatus(message, isError = false) { statusNode.textContent = message; statusNode.style.color = isError ? '#fca5a5' : '#93c5fd'; }
-async function api(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || !data.success) throw new Error(data.error || `تعذّر الاتصال (${response.status})`);
+const TEXT = {
+  ar:{title:'☁️ منظومة التداول والتحليل السحابي',account:'الحساب',username:'اسم المستخدم',usernamePlaceholder:'أدخل اسم المستخدم',loadAccount:'فتح الحساب',capital:'رأس المال',dailyProfit:'الأرباح اليومية',referralCommissions:'عمولات الإحالة',teamMembers:'أعضاء الفريق',operations:'العمليات والطلبات',amount:'المبلغ (USDT)',walletAddress:'عنوان محفظة TRC-20',deposit:'إرسال طلب إيداع',withdrawProfit:'طلب سحب الأرباح اليومية',withdrawBonus:'طلب سحب عمولات الدعوة',withdrawCapital:'طلب سحب رأس المال',manualReview:'إرسال الطلب يسجّله للمراجعة فقط؛ لا تنفّذ هذه الصفحة تحويلاً على الشبكة.',referrals:'دعوة صديق',friendName:'اسم المستخدم للصديق المدعو',friendPlaceholder:'اكتب اسم المستخدم للصديق',getReward:'الحصول على المكافأة',referralReview:'تُرسل المكافأة للمراجعة؛ يجب أن يكون حساب الصديق مسجلاً، ويعتمد المشرف الأهلية قبل إضافة 10 USDT.',depositWallet:'محفظة إيداع المنصة الرسمية',walletWarning:'تحقق من العنوان والشبكة والجهة المستفيدة عبر قناة موثوقة قبل إرسال أي أصول رقمية.',notificationsTitle:'الإشعارات والتنبيهات',notificationsRefresh:'تُحدّث تلقائياً كل 4 ثوانٍ بعد تحميل الحساب.',noNotifications:'لا توجد إشعارات بعد.',support:'الدعم',telegramSupport:'التواصل مع الدعم عبر Telegram',install:'📲 تثبيت التطبيق على الهاتف',loaded:'تم تحميل الحساب.',enterUsername:'أدخل اسم المستخدم أولاً.',loadFirst:'حمّل الحساب أولاً.',validAmount:'أدخل مبلغاً صالحاً أكبر من صفر.',requestSent:'تم تسجيل الطلب للمراجعة.',referralSent:'تم إرسال طلب مكافأة الإحالة للمراجعة.',enterFriend:'أدخل اسم المستخدم للصديق المدعو.',installUnavailable:'للتثبيت: افتح قائمة المتصفح واختر «إضافة إلى الشاشة الرئيسية».',installDone:'تم تثبيت التطبيق.',dbUnavailable:'قاعدة البيانات غير متصلة حالياً؛ أعد المحاولة لاحقاً.',errorPrefix:'تعذّر إكمال الطلب: ',notificationPending:'قيد المراجعة',notificationApproved:'تمت الموافقة',notificationRejected:'مرفوض',type_deposit:'إيداع',type_withdraw_daily:'سحب أرباح يومية',type_withdraw_capital:'سحب رأس المال',type_invite_bonus:'سحب عمولات دعوة',type_referral_reward:'مكافأة دعوة صديق'},
+  en:{title:'☁️ Cloud Trading & Analytics',account:'Account',username:'Username',usernamePlaceholder:'Enter username',loadAccount:'Load account',capital:'Capital',dailyProfit:'Daily profit',referralCommissions:'Referral commissions',teamMembers:'Team members',operations:'Transactions & requests',amount:'Amount (USDT)',walletAddress:'TRC-20 wallet address',deposit:'Submit deposit request',withdrawProfit:'Request daily-profit withdrawal',withdrawBonus:'Request referral-commission withdrawal',withdrawCapital:'Request capital withdrawal',manualReview:'Requests are recorded for review only; this page does not transfer funds on-chain.',referrals:'Invite a friend',friendName:'Invited friend username',friendPlaceholder:'Enter your friend’s username',getReward:'Request referral reward',referralReview:'The reward is subject to review. The friend must have a registered account; an administrator verifies eligibility before adding 10 USDT.',depositWallet:'Official platform deposit wallet',walletWarning:'Verify the address, network, and recipient through a trusted channel before sending digital assets.',notificationsTitle:'Notifications & alerts',notificationsRefresh:'Automatically refreshes every 4 seconds after loading your account.',noNotifications:'No notifications yet.',support:'Support',telegramSupport:'Contact support on Telegram',install:'📲 Install app on phone',loaded:'Account loaded.',enterUsername:'Enter a username first.',loadFirst:'Load your account first.',validAmount:'Enter a valid amount greater than zero.',requestSent:'Request submitted for review.',referralSent:'Referral reward request submitted for review.',enterFriend:'Enter the invited friend’s username.',installUnavailable:'To install, open your browser menu and choose “Add to Home Screen”.',installDone:'App installed.',dbUnavailable:'The database is currently unavailable. Please try again later.',errorPrefix:'Could not complete request: ',notificationPending:'Pending review',notificationApproved:'Approved',notificationRejected:'Rejected',type_deposit:'Deposit',type_withdraw_daily:'Daily-profit withdrawal',type_withdraw_capital:'Capital withdrawal',type_invite_bonus:'Referral-commission withdrawal',type_referral_reward:'Referral reward'}
+};
+const usernameField=document.getElementById('username');
+const statusNode=document.getElementById('status');
+const notificationList=document.getElementById('notifications');
+let currentUsername=localStorage.getItem('trader_username')||'';
+let refreshTimer=null;
+let deferredInstallPrompt=null;
+let language=localStorage.getItem('cloudapp_lang')||'ar';
+usernameField.value=currentUsername;
+const format=value=>`USDT ${Number(value||0).toFixed(2)}`;
+function t(key){return TEXT[language][key]||key;}
+function setLanguage(next){
+  if(!TEXT[next])return;
+  language=next;localStorage.setItem('cloudapp_lang',next);
+  document.title=t('title').replace(/^☁️\s*/, '');
+  document.documentElement.lang=next;document.documentElement.dir=next==='ar'?'rtl':'ltr';
+  document.querySelectorAll('[data-i18n]').forEach(node=>{const key=node.dataset.i18n;node.textContent=t(key);});
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(node=>{node.placeholder=t(node.dataset.i18nPlaceholder);});
+  document.querySelectorAll('[data-lang]').forEach(button=>button.classList.toggle('active',button.dataset.lang===next));
+  if(notificationList.children.length===0)showEmptyNotifications();
+}
+function showStatus(message,isError=false){statusNode.textContent=message;statusNode.style.color=isError?'#fca5a5':'#93c5fd';}
+async function api(url,options={}){
+  let response;
+  try{response=await fetch(`${API_BASE_URL}${url}`,{cache:'no-store',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
+  catch(_){throw new Error(t('dbUnavailable'));}
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.success){
+    if(response.status===503)throw new Error(t('dbUnavailable'));
+    const errors={'Invalid username':language==='ar'?'اسم المستخدم غير صالح.':'Invalid username.','User not found':language==='ar'?'الحساب غير موجود.':'Account not found.','Invalid amount':language==='ar'?'المبلغ غير صالح.':'Invalid amount.','Invalid referred username':language==='ar'?'اسم الصديق المدعو غير صالح.':'Invalid invited username.','Referred account must already exist':language==='ar'?'يجب أن يكون حساب الصديق مسجلاً أولاً.':'The friend must have a registered account first.','This account already has a referral reward request':language==='ar'?'سبق تسجيل طلب مكافأة لهذا الحساب.':'A referral reward request already exists for this account.'};
+    throw new Error(t('errorPrefix')+(errors[data.error]||data.error||`HTTP ${response.status}`));
+  }
   return data;
 }
-function renderUser(user) {
-  document.getElementById('balance').textContent = format(user.balance);
-  document.getElementById('profit').textContent = format(user.todayProfit);
-  document.getElementById('bonus').textContent = format(user.bonus);
-  document.getElementById('team').textContent = String(user.teamCount || 0);
+function renderUser(user){
+  document.getElementById('balance').textContent=format(user.balance);
+  document.getElementById('profit').textContent=format(user.todayProfit);
+  document.getElementById('bonus').textContent=format(user.bonus);
+  document.getElementById('team').textContent=String(user.teamCount||0);
 }
-async function loadUser() {
-  if (!currentUsername) return;
-  try { const data = await api('/api/user/login', { method: 'POST', body: JSON.stringify({ username: currentUsername }) }); renderUser(data.user); }
-  catch (error) { showStatus(error.message, true); }
+function showEmptyNotifications(){notificationList.replaceChildren();const li=document.createElement('li');li.className='empty';li.textContent=t('noNotifications');notificationList.appendChild(li);}
+async function loadNotifications(){
+  if(!currentUsername)return showEmptyNotifications();
+  try{
+    const data=await api(`/api/user/notifications?username=${encodeURIComponent(currentUsername)}`);
+    notificationList.replaceChildren();
+    if(!data.notifications.length)return showEmptyNotifications();
+    for(const item of data.notifications){
+      const li=document.createElement('li');
+      const kind=t(`type_${item.type}`);const state=t(`notification${item.status[0].toUpperCase()}${item.status.slice(1)}`);
+      const when=new Date(item.createdAt).toLocaleString(language==='ar'?'ar':'en');
+      li.textContent=`${kind} — ${format(item.amount)} — ${state} — ${when}`;
+      notificationList.appendChild(li);
+    }
+  }catch(error){showStatus(error.message,true);}
 }
-document.getElementById('login').addEventListener('click', async () => {
-  const username = usernameField.value.trim();
-  if (!username) return showStatus('أدخل اسم المستخدم أولاً.', true);
-  try {
-    const data = await api('/api/user/login', { method: 'POST', body: JSON.stringify({ username }) });
-    currentUsername = data.user.username; localStorage.setItem('trader_username', currentUsername); renderUser(data.user); showStatus('تم تحميل الحساب.');
-    if (!refreshTimer) refreshTimer = setInterval(loadUser, 4000);
-  } catch (error) { showStatus(error.message, true); }
-});
-document.querySelectorAll('[data-request]').forEach(button => button.addEventListener('click', async () => {
-  if (!currentUsername) return showStatus('حمّل الحساب أولاً.', true);
-  const amount = Number(document.getElementById('amount').value);
-  if (!Number.isFinite(amount) || amount <= 0) return showStatus('أدخل مبلغاً صالحاً أكبر من صفر.', true);
-  button.disabled = true;
-  try {
-    await api('/api/user/request', { method: 'POST', body: JSON.stringify({ username: currentUsername, amount, type: button.dataset.request, walletAddress: document.getElementById('wallet').value.trim() }) });
-    document.getElementById('amount').value = ''; showStatus('تم تسجيل الطلب للمراجعة.');
-  } catch (error) { showStatus(error.message, true); }
-  finally { button.disabled = false; }
+async function refreshAccount(){
+  if(!currentUsername)return;
+  try{const data=await api('/api/user/login',{method:'POST',body:JSON.stringify({username:currentUsername})});renderUser(data.user);}
+  catch(error){showStatus(error.message,true);}
+  await loadNotifications();
+}
+async function loadAccount(){
+  const username=usernameField.value.trim();
+  if(!username)return showStatus(t('enterUsername'),true);
+  try{
+    const data=await api('/api/user/login',{method:'POST',body:JSON.stringify({username})});
+    currentUsername=data.user.username;localStorage.setItem('trader_username',currentUsername);renderUser(data.user);showStatus(t('loaded'));
+    await loadNotifications();if(refreshTimer)clearInterval(refreshTimer);refreshTimer=setInterval(refreshAccount,4000);
+  }catch(error){showStatus(error.message,true);}
+}
+document.getElementById('login').addEventListener('click',loadAccount);
+document.querySelectorAll('[data-lang]').forEach(button=>button.addEventListener('click',()=>setLanguage(button.dataset.lang)));
+document.querySelectorAll('[data-request]').forEach(button=>button.addEventListener('click',async()=>{
+  if(!currentUsername)return showStatus(t('loadFirst'),true);
+  const amount=Number(document.getElementById('amount').value);
+  if(!Number.isFinite(amount)||amount<=0)return showStatus(t('validAmount'),true);
+  button.disabled=true;
+  try{
+    await api('/api/user/request',{method:'POST',body:JSON.stringify({username:currentUsername,amount,type:button.dataset.request,walletAddress:document.getElementById('wallet').value.trim()})});
+    document.getElementById('amount').value='';showStatus(t('requestSent'));await loadNotifications();
+  }catch(error){showStatus(error.message,true);}finally{button.disabled=false;}
 }));
-if (currentUsername) { loadUser(); refreshTimer = setInterval(loadUser, 4000); }
-if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(error => console.error('Service worker registration failed:', error)));
-}
+document.getElementById('request-referral').addEventListener('click',async event=>{
+  if(!currentUsername)return showStatus(t('loadFirst'),true);
+  const referredUsername=document.getElementById('friend-username').value.trim();
+  if(!referredUsername)return showStatus(t('enterFriend'),true);
+  const button=event.currentTarget;button.disabled=true;
+  try{
+    await api('/api/user/request',{method:'POST',body:JSON.stringify({username:currentUsername,type:'referral_reward',referredUsername})});
+    document.getElementById('friend-username').value='';showStatus(t('referralSent'));await loadNotifications();
+  }catch(error){showStatus(error.message,true);}finally{button.disabled=false;}
+});
+document.getElementById('install-app').addEventListener('click',async()=>{
+  if(!deferredInstallPrompt){showStatus(t('installUnavailable'));return;}
+  deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;
+});
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();deferredInstallPrompt=event;});
+window.addEventListener('appinstalled',()=>showStatus(t('installDone')));
+async function loadPublicConfig(){try{const data=await api('/api/public/config');if(data.depositWallet)document.getElementById('deposit-wallet').textContent=data.depositWallet;}catch(_) {}}
+setLanguage(language);
+loadPublicConfig();
+if(currentUsername){refreshAccount();refreshTimer=setInterval(refreshAccount,4000);}
+if('serviceWorker'in navigator&&window.location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).catch(error=>console.error('Service worker registration failed:',error)));
 </script>
 </body>
 </html>
