@@ -66,6 +66,24 @@ const RequestSchema = new mongoose.Schema({
 // A referred username can earn one referral reward only, even when requests race.
 RequestSchema.index({ referredUsername: 1 }, { unique: true, partialFilterExpression: { type: 'referral_reward', referredUsername: { $type: 'string', $gt: '' } } });
 const Request = mongoose.models.Request || mongoose.model('Request', RequestSchema);
+const SupportMessageSchema = new mongoose.Schema({
+  sender: { type: String, required: true, enum: ['user', 'admin'] },
+  text: { type: String, required: true, maxlength: 2000 },
+  deliveryStatus: { type: String, enum: ['sent', 'queued', 'failed'], default: 'sent' },
+  createdAt: { type: Date, default: Date.now }
+}, { _id: false });
+const SupportTicketSchema = new mongoose.Schema({
+  telegramUpdateId: { type: String, required: true, unique: true, maxlength: 32 },
+  telegramChatId: { type: String, required: true, maxlength: 32 },
+  telegramUsername: { type: String, default: '', maxlength: 64 },
+  displayName: { type: String, default: '', maxlength: 128 },
+  status: { type: String, enum: ['pending', 'answered'], default: 'pending' },
+  messages: { type: [SupportMessageSchema], default: [] },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+SupportTicketSchema.index({ updatedAt: -1 });
+const SupportTicket = mongoose.models.SupportTicket || mongoose.model('SupportTicket', SupportTicketSchema);
 
 const ProfitDistribution = mongoose.models.ProfitDistribution || mongoose.model('ProfitDistribution', new mongoose.Schema({
   operationId: { type: String, required: true, unique: true, maxlength: 100 },
@@ -100,15 +118,41 @@ function safeSecretMatch(actual, expected) {
   const right = Buffer.from(String(expected || ''));
   return left.length > 0 && left.length === right.length && crypto.timingSafeEqual(left, right);
 }
+function telegramTokenConfigured() { return /^\d+:[A-Za-z0-9_-]{20,}$/.test(TELEGRAM_BOT_TOKEN); }
+function telegramWebhookConfigured() {
+  return telegramTokenConfigured() && /^[A-Za-z0-9_-]{32,256}$/.test(TELEGRAM_WEBHOOK_SECRET);
+}
+async function sendTelegramText(chatId, text) {
+  const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, text })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.ok) throw new Error('Telegram sendMessage failed');
+}
+function safeSupportTicket(ticket) {
+  const value = ticket.toObject ? ticket.toObject() : ticket;
+  return {
+    _id: value._id,
+    telegramUsername: value.telegramUsername,
+    displayName: value.displayName,
+    status: value.status,
+    messages: (value.messages || []).map(item => ({ sender: item.sender, text: item.text, deliveryStatus: item.deliveryStatus, createdAt: item.createdAt })),
+    createdAt: value.createdAt,
+    updatedAt: value.updatedAt
+  };
+}
 function telegramFaqReply(text) {
   const normalized = String(text || '').trim().toLowerCase();
   const arabic = /[\u0600-\u06ff]/.test(normalized);
   const link = PUBLIC_APP_URL;
   if (/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(normalized) || /^(مرحبا|مساعدة|help)$/.test(normalized)) {
     return arabic
-      ? `مرحباً بك في دعم المنصة. رابط واجهة المستخدم: ${link}\nأستطيع شرح الإيداع والسحب والإحالات وتثبيت التطبيق. لا أستطيع عرض أرصدة الحسابات عبر Telegram.`
-      : `Welcome to platform support. User interface: ${link}\nI can explain deposits, withdrawals, referrals, and app installation. I cannot access account balances through Telegram.`;
+      ? `مرحباً بك في دعم المنصة. رابط واجهة المستخدم: ${link}\nأستطيع شرح الإيداع والسحب والإحالات والتثبيت. لطلب ردّ موظف الدعم اكتب «الدعم الفني». لا أستطيع عرض أرصدة الحسابات عبر Telegram.`
+      : `Welcome to platform support. User interface: ${link}\nI can explain deposits, withdrawals, referrals, and installation. To reach a human agent, write “technical support”. I cannot access account balances through Telegram.`;
   }
+  if (/technical support|human|agent|operator|الدعم الفني|موظف|مشرف|مساعدة فنية|تواصل مع الدعم/.test(normalized)) return null;
   if (/balance|account|رصيد|حساب|ارصدة|أرصدة/.test(normalized)) {
     return arabic
       ? `لعرض الأرصدة، افتح حسابك من واجهة المنصة: ${link}. لا يستطيع البوت الوصول إلى بيانات الحساب أو تغييرها، ولا ترسل كلمات مرور أو مفاتيح محفظة عبر Telegram.`
@@ -134,9 +178,7 @@ function telegramFaqReply(text) {
       ? `رابط واجهة المستخدم: ${link}\nللتثبيت على الهاتف، افتح الرابط في المتصفح واختر «إضافة إلى الشاشة الرئيسية» أو زر التثبيت داخل الصفحة.`
       : `User interface: ${link}\nTo install on a phone, open it in your browser and choose “Add to Home Screen” or use the in-page install button.`;
   }
-  return arabic
-    ? `أستطيع المساعدة في الإيداع والسحب والإحالات وتثبيت التطبيق. اكتب موضوع سؤالك أو تواصل مع الدعم: https://t.me/invest_support_bot. رابط المنصة: ${link}.`
-    : `I can help with deposits, withdrawals, referrals, and app installation. Tell me which topic you need, or contact support at https://t.me/invest_support_bot. Platform: ${link}.`;
+  return null;
 }
 function validUsername(value) {
   return typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 64;
@@ -207,9 +249,9 @@ app.get('/api/public/config', (_req, res) => res.json({ success: true, depositWa
 app.get('/panel', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/secure-admin-panel-2026', (_req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
-// Optional private-chat FAQ bot. No channel/group broadcasts are performed here.
+// Optional private-chat FAQ bot and human-support inbox. No channel/group broadcasts are performed here.
 app.post('/api/telegram/webhook', async (req, res) => {
-  if (!TELEGRAM_BOT_TOKEN || !/^[A-Za-z0-9_-]{32,256}$/.test(TELEGRAM_WEBHOOK_SECRET)) {
+  if (!telegramWebhookConfigured()) {
     return res.status(503).json({ success: false, error: 'Telegram bot is not configured' });
   }
   if (!safeSecretMatch(req.get('X-Telegram-Bot-Api-Secret-Token'), TELEGRAM_WEBHOOK_SECRET)) {
@@ -217,31 +259,50 @@ app.post('/api/telegram/webhook', async (req, res) => {
   }
   const update = req.body || {};
   const message = update.message;
-  if (!Number.isSafeInteger(update.update_id) || !message || message.chat?.type !== 'private' || message.from?.is_bot || typeof message.text !== 'string') {
+  if (!Number.isSafeInteger(update.update_id) || !message || message.chat?.type !== 'private' || message.from?.is_bot || typeof message.text !== 'string' || !message.text.trim()) {
     return res.sendStatus(200);
   }
   const updateId = String(update.update_id);
   if (telegramProcessedUpdates.has(updateId) || telegramPendingUpdates.has(updateId)) return res.sendStatus(200);
   telegramPendingUpdates.add(updateId);
   try {
-    const reply = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: message.chat.id, text: telegramFaqReply(message.text) })
-    });
-    const result = await reply.json().catch(() => ({}));
-    if (!reply.ok || !result.ok) {
-      telegramPendingUpdates.delete(updateId);
-      console.error('Telegram reply failed; HTTP status:', reply.status);
-      return res.status(502).json({ success: false, error: 'Telegram reply failed' });
+    let responseText = telegramFaqReply(message.text);
+    if (!responseText) {
+      if (mongoose.connection.readyState !== 1) {
+        telegramPendingUpdates.delete(updateId);
+        return sendDbUnavailable(res);
+      }
+      const from = message.from || {};
+      const displayName = [from.first_name, from.last_name].filter(value => typeof value === 'string').join(' ').slice(0, 128);
+      try {
+        await SupportTicket.findOneAndUpdate({ telegramUpdateId: updateId }, {
+          $setOnInsert: {
+            telegramUpdateId: updateId,
+            telegramChatId: String(message.chat.id),
+            telegramUsername: typeof from.username === 'string' ? from.username.slice(0, 64) : '',
+            displayName,
+            status: 'pending',
+            messages: [{ sender: 'user', text: message.text.trim().slice(0, 2000), deliveryStatus: 'sent', createdAt: new Date() }],
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+        }, { upsert: true, new: true, runValidators: true });
+      } catch (error) {
+        if (error.code !== 11000) throw error;
+      }
+      const arabic = /[\u0600-\u06ff]/.test(message.text);
+      responseText = arabic
+        ? 'تم تسجيل رسالتك للدعم الفني. سيظهر الطلب للمشرف، ويمكنه الرد عليك هنا. لا ترسل كلمات مرور أو مفاتيح محفظة.'
+        : 'Your support message was recorded for the admin. They can reply to you here. Do not send passwords or wallet keys.';
     }
+    await sendTelegramText(message.chat.id, responseText);
     telegramPendingUpdates.delete(updateId);
     telegramProcessedUpdates.add(updateId);
     if (telegramProcessedUpdates.size > 5000) telegramProcessedUpdates.delete(telegramProcessedUpdates.values().next().value);
     return res.sendStatus(200);
   } catch (_) {
     telegramPendingUpdates.delete(updateId);
-    console.error('Telegram reply request failed');
+    console.error('Telegram update handling failed');
     return res.status(502).json({ success: false, error: 'Telegram reply failed' });
   }
 });
@@ -374,6 +435,53 @@ app.get('/api/admin/requests', async (_req, res) => {
   } catch (error) {
     console.error('Admin data load failed:', error.message);
     return res.status(500).json({ success: false, error: 'Unable to load admin data' });
+  }
+});
+
+app.get('/api/admin/support-tickets', async (_req, res) => {
+  if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
+  try {
+    const tickets = await SupportTicket.find({}).sort({ updatedAt: -1 }).limit(200).lean();
+    return res.json({ success: true, botConfigured: telegramTokenConfigured(), webhookConfigured: telegramWebhookConfigured(), tickets: tickets.map(safeSupportTicket) });
+  } catch (error) {
+    console.error('Admin support inbox load failed:', error.message);
+    return res.status(500).json({ success: false, error: 'Unable to load support inbox' });
+  }
+});
+
+app.post('/api/admin/support-tickets/reply', async (req, res) => {
+  if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
+  if (!telegramTokenConfigured()) return res.status(503).json({ success: false, error: 'Telegram bot token is not configured' });
+  const ticketId = typeof req.body?.ticketId === 'string' ? req.body.ticketId.trim() : '';
+  const replyText = typeof req.body?.reply === 'string' ? req.body.reply.trim() : '';
+  if (!mongoose.isValidObjectId(ticketId) || !replyText || replyText.length > 2000) {
+    return res.status(400).json({ success: false, error: 'Invalid support reply' });
+  }
+  try {
+    const ticket = await SupportTicket.findById(ticketId);
+    if (!ticket) return res.status(404).json({ success: false, error: 'Support ticket not found' });
+    ticket.messages.push({ sender: 'admin', text: replyText, deliveryStatus: 'queued', createdAt: new Date() });
+    ticket.updatedAt = new Date();
+    await ticket.save();
+    const outgoing = ticket.messages[ticket.messages.length - 1];
+    try {
+      await sendTelegramText(ticket.telegramChatId, replyText);
+      outgoing.deliveryStatus = 'sent';
+      ticket.status = 'answered';
+      ticket.updatedAt = new Date();
+      await ticket.save();
+      return res.json({ success: true, ticket: safeSupportTicket(ticket) });
+    } catch (_) {
+      outgoing.deliveryStatus = 'failed';
+      ticket.status = 'pending';
+      ticket.updatedAt = new Date();
+      await ticket.save().catch(() => {});
+      console.error('Manual Telegram support reply failed to deliver');
+      return res.status(502).json({ success: false, error: 'Telegram reply delivery failed' });
+    }
+  } catch (error) {
+    console.error('Admin support reply failed:', error.message);
+    return res.status(500).json({ success: false, error: 'Unable to send support reply' });
   }
 });
 

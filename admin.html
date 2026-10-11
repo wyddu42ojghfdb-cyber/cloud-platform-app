@@ -45,6 +45,13 @@
     </section>
 
     <section class="card">
+      <h2>صندوق دعم Telegram والرد اليدوي</h2>
+      <p id="telegram-bot-status" class="warning">حالة البوت: جارٍ التحقق…</p>
+      <p class="warning">الرد اليدوي يُرسل من حساب البوت إلى محادثة صاحب الرسالة. لوحة الإدارة مفتوحة بلا تحقق؛ لا تطلب أو تكتب كلمات مرور أو مفاتيح محفظة أو عبارات استرداد.</p>
+      <div class="table-wrap"><table><thead><tr><th>حساب Telegram</th><th>المحادثة</th><th>الحالة</th><th>آخر تحديث</th><th>رد المشرف</th></tr></thead><tbody id="support-tickets-body"></tbody></table></div>
+    </section>
+
+    <section class="card">
       <h2>الحسابات</h2>
       <div class="table-wrap"><table><thead><tr><th>اسم المستخدم</th><th>رأس المال</th><th>ربح اليوم</th><th>عمولات الإحالة</th><th>الفريق</th><th>حفظ</th></tr></thead><tbody id="users-body"></tbody></table></div>
     </section>
@@ -63,6 +70,7 @@ let timer;
 let activePreview=null;
 let activeOperationId=null;
 const userDrafts=new Map();
+const supportDrafts=new Map();
 const typeNames={deposit:'إيداع رأس مال',withdraw_daily:'سحب أرباح يومية',withdraw_capital:'سحب رأس مال',invite_bonus:'سحب عمولات دعوة',referral_reward:'مكافأة دعوة صديق'};
 const fmt=value=>`USDT ${Number(value||0).toFixed(2)}`;
 async function api(url,options={}){
@@ -78,6 +86,32 @@ function inputCell(row,id,value,min='0'){
   input.addEventListener('input',()=>userDrafts.set(id,input.value));td.appendChild(input);row.appendChild(td);
 }
 function emptyRow(body,columns,text){const row=document.createElement('tr');const td=document.createElement('td');td.colSpan=columns;td.textContent=text;row.appendChild(td);body.appendChild(row);}
+function renderSupportTickets(tickets,botConfigured){
+  const body=document.getElementById('support-tickets-body');body.replaceChildren();
+  if(!tickets.length){emptyRow(body,5,'لا توجد رسائل دعم محفوظة.');return;}
+  for(const ticket of tickets){
+    const row=document.createElement('tr');
+    cell(row,ticket.telegramUsername?`@${ticket.telegramUsername}`:(ticket.displayName||'مستخدم Telegram'));
+    const conversation=(ticket.messages||[]).map(item=>`${item.sender==='admin'?'المشرف':'المستخدم'}${item.deliveryStatus==='failed'?' (تعذر الإرسال)':''}: ${item.text}`).join('\n');
+    const conversationCell=cell(row,conversation);conversationCell.style.whiteSpace='pre-wrap';conversationCell.style.minWidth='260px';conversationCell.style.textAlign='start';conversationCell.dir='auto';
+    cell(row,ticket.status==='answered'?'تم الرد':'بانتظار الرد');
+    cell(row,new Date(ticket.updatedAt).toLocaleString('ar'));
+    const replyCell=document.createElement('td');
+    const input=document.createElement('textarea');input.maxLength=2000;input.placeholder='اكتب الرد اليدوي…';input.value=supportDrafts.get(String(ticket._id))||'';input.disabled=!botConfigured;
+    input.style.cssText='width:100%;min-width:210px;min-height:70px;background:#080f1d;color:white;border:1px solid #263650;border-radius:7px;padding:8px;font:inherit';
+    input.addEventListener('input',()=>supportDrafts.set(String(ticket._id),input.value));
+    const button=document.createElement('button');button.textContent='إرسال الرد عبر Telegram';button.className='green';button.disabled=!botConfigured;
+    button.addEventListener('click',async()=>{
+      const reply=input.value.trim();if(!reply){message.textContent='اكتب الرد أولاً.';return;}
+      button.disabled=true;
+      try{
+        await api('/api/admin/support-tickets/reply',{method:'POST',body:JSON.stringify({ticketId:ticket._id,reply})});
+        supportDrafts.delete(String(ticket._id));message.textContent='تم إرسال الرد اليدوي عبر Telegram.';await loadDashboard();
+      }catch(error){message.textContent=error.message;button.disabled=false;}
+    });
+    replyCell.append(input,button);row.appendChild(replyCell);body.appendChild(row);
+  }
+}
 function setToday(){const d=new Date();const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);document.getElementById('profit-period').value=local.toISOString().slice(0,10);}
 function invalidatePreview(){activePreview=null;activeOperationId=null;previewBox.classList.add('hidden');}
 function renderPreview(preview){
@@ -93,7 +127,9 @@ function renderPreview(preview){
 }
 async function loadDashboard(){
   try{
-    const data=await api('/api/admin/requests');
+    const [data,supportData]=await Promise.all([api('/api/admin/requests'),api('/api/admin/support-tickets')]);
+    document.getElementById('telegram-bot-status').textContent=supportData.webhookConfigured?'إعدادات الرمز والـ webhook تبدو مكتملة شكلياً؛ لم يُختبر الاتصال الخارجي.':'حالة webhook: غير مكتمل؛ يلزم TELEGRAM_BOT_TOKEN صالح وTELEGRAM_WEBHOOK_SECRET لاستقبال الرسائل. الرد اليدوي يتطلب الرمز الصالح فقط.';
+    renderSupportTickets(supportData.tickets,supportData.botConfigured);
     document.getElementById('total-users').textContent=String(data.totalUsers);
     const requestsBody=document.getElementById('requests-body');requestsBody.replaceChildren();
     if(!data.requests.length)emptyRow(requestsBody,5,'لا توجد طلبات معلقة.');
