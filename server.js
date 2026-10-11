@@ -67,6 +67,7 @@ const ProfitDistribution = mongoose.models.ProfitDistribution || mongoose.model(
   sourceKey: { type: String, required: true, unique: true, maxlength: 64 },
   fingerprint: { type: String, required: true, maxlength: 64 },
   netProfit: { type: Number, required: true, min: 0.01 },
+  distributionPercent: { type: Number, min: 0, max: 100, default: null },
   totalCapital: { type: Number, required: true, min: 0.01 },
   eligibleUsers: { type: Number, required: true, min: 1 },
   period: { type: String, required: true, maxlength: 10 },
@@ -79,6 +80,7 @@ const ProfitAllocation = mongoose.models.ProfitAllocation || mongoose.model('Pro
   username: { type: String, required: true, maxlength: 64 },
   capital: { type: Number, required: true, min: 0.01 },
   sharePercent: { type: Number, required: true, min: 0 },
+  distributionPercent: { type: Number, min: 0, max: 100, default: null },
   amount: { type: Number, required: true, min: 0 },
   period: { type: String, required: true, maxlength: 10 },
   sourceReference: { type: String, required: true, maxlength: 200 },
@@ -108,13 +110,13 @@ function safeUser(user) {
     createdAt: user.createdAt
   } : null;
 }
-function toCents(value) {
+function toPercentBasisPoints(value) {
   const number = Number(value);
-  if (!Number.isFinite(number) || number <= 0 || number > 1_000_000_000) return null;
-  const cents = Math.round(number * 100);
-  return Number.isSafeInteger(cents) && cents > 0 ? BigInt(cents) : null;
+  if (!Number.isFinite(number) || number <= 0 || number > 100) return null;
+  const basisPoints = Math.round(number * 100);
+  return Number.isInteger(basisPoints) && basisPoints > 0 && basisPoints <= 10000 ? basisPoints : null;
 }
-function buildProfitPlan(users, netProfitCents) {
+function buildPercentagePlan(users, percentageBps) {
   const eligible = users.map(user => {
     const cents = Math.round(Number(user.balance) * 100);
     if (!Number.isSafeInteger(cents)) throw new Error('Capital amount is outside supported precision');
@@ -123,29 +125,26 @@ function buildProfitPlan(users, netProfitCents) {
   const totalCapitalCents = eligible.reduce((sum, entry) => sum + entry.capitalCents, 0n);
   if (!eligible.length || totalCapitalCents <= 0n) return null;
   if (totalCapitalCents > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error('Aggregate capital is outside supported precision');
-  const rows = eligible.map(entry => {
-    const product = netProfitCents * entry.capitalCents;
-    return { ...entry, amountCents: product / totalCapitalCents, remainder: product % totalCapitalCents };
-  });
-  const assigned = rows.reduce((sum, row) => sum + row.amountCents, 0n);
-  const centsLeft = Number(netProfitCents - assigned);
-  const ranked = [...rows].sort((a, b) => a.remainder === b.remainder ? String(a.user._id).localeCompare(String(b.user._id)) : a.remainder > b.remainder ? -1 : 1);
-  for (let i = 0; i < centsLeft; i++) ranked[i].amountCents += 1n;
+  const allocations = eligible.map(entry => ({
+    userId: entry.user._id,
+    username: entry.user.username,
+    capitalCents: entry.capitalCents,
+    amountCents: (entry.capitalCents * BigInt(percentageBps) + 5000n) / 10000n,
+    sharePercent: Number((entry.capitalCents * 1_000_000n + totalCapitalCents / 2n) / totalCapitalCents) / 10_000,
+    distributionPercent: percentageBps / 100
+  }));
+  const totalProfitCents = allocations.reduce((sum, row) => sum + row.amountCents, 0n);
+  if (totalProfitCents <= 0n) return null;
   return {
     totalCapitalCents,
-    netProfitCents,
-    allocations: rows.map(row => ({
-      userId: row.user._id,
-      username: row.user.username,
-      capitalCents: row.capitalCents,
-      amountCents: row.amountCents,
-      sharePercent: Number((row.capitalCents * 1_000_000n + totalCapitalCents / 2n) / totalCapitalCents) / 10_000
-    }))
+    totalProfitCents,
+    percentageBps,
+    allocations
   };
 }
 function profitFingerprint(plan, period, sourceReference) {
   const snapshot = plan.allocations.map(row => [String(row.userId), row.capitalCents.toString()]).sort((a, b) => a[0].localeCompare(b[0]));
-  return crypto.createHash('sha256').update(JSON.stringify({ netProfitCents: plan.netProfitCents.toString(), period, sourceReference, snapshot })).digest('hex');
+  return crypto.createHash('sha256').update(JSON.stringify({ totalProfitCents: plan.totalProfitCents.toString(), percentageBps: plan.percentageBps, period, sourceReference, snapshot })).digest('hex');
 }
 function profitSourceKey(period, sourceReference) {
   return crypto.createHash('sha256').update(`${period}\n${sourceReference.trim().toLowerCase()}`).digest('hex');
@@ -294,31 +293,31 @@ app.get('/api/admin/requests', async (_req, res) => {
 
 app.post('/api/admin/profit-distribution/preview', async (req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
-  const netProfitCents = toCents(req.body?.realizedProfit);
+  const percentageBps = toPercentBasisPoints(req.body?.percentage);
   const period = typeof req.body?.period === 'string' ? req.body.period.trim() : '';
-  const sourceReference = typeof req.body?.sourceReference === 'string' ? req.body.sourceReference.trim() : '';
-  if (!netProfitCents || !/^\d{4}-\d{2}-\d{2}$/.test(period) || sourceReference.length < 4 || sourceReference.length > 200) {
-    return res.status(400).json({ success: false, error: 'Enter a valid realized net profit, period, and source report reference' });
+  const sourceReference = `admin-percent-broadcast:${period}`;
+  if (!percentageBps || !/^\d{4}-\d{2}-\d{2}$/.test(period)) {
+    return res.status(400).json({ success: false, error: 'Enter a percentage from 0.01 to 100 and a valid period' });
   }
   try {
     const sourceKey = profitSourceKey(period, sourceReference);
-    if (await ProfitDistribution.exists({ sourceKey })) return res.status(409).json({ success: false, error: 'This report reference has already been distributed for that period' });
+    if (await ProfitDistribution.exists({ sourceKey })) return res.status(409).json({ success: false, error: 'A percentage distribution has already been published for this period' });
     const users = await User.find({ balance: { $gt: 0 } }).select('_id username balance').lean();
-    const plan = buildProfitPlan(users, netProfitCents);
-    if (!plan) return res.status(400).json({ success: false, error: 'No users with positive capital are eligible for distribution' });
+    const plan = buildPercentagePlan(users, percentageBps);
+    if (!plan) return res.status(400).json({ success: false, error: 'No non-zero distribution remains after cent rounding; increase the percentage or balances' });
     return res.json({
       success: true,
       preview: {
         fingerprint: profitFingerprint(plan, period, sourceReference),
-        realizedProfit: moneyFromCents(plan.netProfitCents),
+        percentage: percentageBps / 100,
+        totalProfit: moneyFromCents(plan.totalProfitCents),
         totalCapital: moneyFromCents(plan.totalCapitalCents),
         eligibleUsers: plan.allocations.length,
         period,
-        sourceReference,
         allocations: plan.allocations.map(row => ({
           username: row.username,
           capital: moneyFromCents(row.capitalCents),
-          sharePercent: row.sharePercent,
+          percentage: row.distributionPercent,
           amount: moneyFromCents(row.amountCents)
         }))
       }
@@ -331,12 +330,12 @@ app.post('/api/admin/profit-distribution/preview', async (req, res) => {
 
 app.post('/api/admin/profit-distribution/publish', async (req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
-  const netProfitCents = toCents(req.body?.realizedProfit);
+  const percentageBps = toPercentBasisPoints(req.body?.percentage);
   const period = typeof req.body?.period === 'string' ? req.body.period.trim() : '';
-  const sourceReference = typeof req.body?.sourceReference === 'string' ? req.body.sourceReference.trim() : '';
+  const sourceReference = `admin-percent-broadcast:${period}`;
   const operationId = typeof req.body?.operationId === 'string' ? req.body.operationId.trim() : '';
   const fingerprint = typeof req.body?.fingerprint === 'string' ? req.body.fingerprint.trim() : '';
-  if (!netProfitCents || !/^\d{4}-\d{2}-\d{2}$/.test(period) || sourceReference.length < 4 || sourceReference.length > 200 || !/^[a-zA-Z0-9-]{16,100}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(fingerprint)) {
+  if (!percentageBps || !/^\d{4}-\d{2}-\d{2}$/.test(period) || !/^[a-zA-Z0-9-]{16,100}$/.test(operationId) || !/^[a-f0-9]{64}$/.test(fingerprint)) {
     return res.status(400).json({ success: false, error: 'Invalid distribution data; prepare a new preview' });
   }
   const session = await mongoose.startSession();
@@ -356,13 +355,13 @@ app.post('/api/admin/profit-distribution/publish', async (req, res) => {
       const priorSource = await ProfitDistribution.findOne({ sourceKey }).session(session).lean();
       if (priorSource) {
         if (priorSource.fingerprint === fingerprint) result = { success: true, duplicate: true, distribution: priorSource };
-        else result = { error: 'This report reference was already used for a different distribution', status: 409 };
+        else result = { error: 'A percentage distribution already exists for this period', status: 409 };
         return;
       }
       const users = await User.find({ balance: { $gt: 0 } }).select('_id username balance').session(session).lean();
-      const plan = buildProfitPlan(users, netProfitCents);
+      const plan = buildPercentagePlan(users, percentageBps);
       if (!plan) {
-        result = { error: 'No users with positive capital are eligible for distribution', status: 400 };
+        result = { error: 'No non-zero distribution remains after cent rounding; increase the percentage or balances', status: 400 };
         return;
       }
       if (profitFingerprint(plan, period, sourceReference) !== fingerprint) {
@@ -376,6 +375,7 @@ app.post('/api/admin/profit-distribution/publish', async (req, res) => {
         username: row.username,
         capital: moneyFromCents(row.capitalCents),
         sharePercent: row.sharePercent,
+        distributionPercent: row.distributionPercent,
         amount: moneyFromCents(row.amountCents),
         period,
         sourceReference,
@@ -386,7 +386,7 @@ app.post('/api/admin/profit-distribution/publish', async (req, res) => {
           filter: { _id: row.userId },
           update: {
             $inc: { todayProfit: moneyFromCents(row.amountCents) },
-            $push: { history: { type: 'profit_distribution', amount: moneyFromCents(row.amountCents), sharePercent: row.sharePercent, period, sourceReference, operationId, date: createdAt } }
+            $push: { history: { type: 'profit_distribution', amount: moneyFromCents(row.amountCents), distributionPercent: row.distributionPercent, period, sourceReference, operationId, date: createdAt } }
           }
         }
       }));
@@ -396,7 +396,8 @@ app.post('/api/admin/profit-distribution/publish', async (req, res) => {
         operationId,
         sourceKey,
         fingerprint,
-        netProfit: moneyFromCents(plan.netProfitCents),
+        netProfit: moneyFromCents(plan.totalProfitCents),
+        distributionPercent: percentageBps / 100,
         totalCapital: moneyFromCents(plan.totalCapitalCents),
         eligibleUsers: plan.allocations.length,
         period,

@@ -22,19 +22,18 @@
     <div class="card bar"><strong>إجمالي المشتركين: <span id="total-users">0</span></strong><span>تحديث تلقائي كل 4 ثوانٍ</span></div>
 
     <section class="card" aria-labelledby="distribution-title">
-      <h2 id="distribution-title">توزيع صافي الربح المحقق تناسبياً</h2>
-      <p class="warning">أدخل مبلغ صافي الربح المحقق للفترة ومرجع التقرير/الدفتر. تُحسب حصة كل مستخدم بنسبة رأس ماله إلى إجمالي رأس المال، ثم تضاف داخلياً إلى ربح اليوم. لا يتحقق التطبيق آلياً من تقرير Binance ولا ينفّذ أي تحويل إلى Binance أو إلى محفظة بلوكتشين؛ تحقّق من صافي الربح قبل النشر.</p>
+      <h2 id="distribution-title">بث نسبة ربح من رصيد كل مشترك</h2>
+      <p class="warning">أدخل النسبة المئوية المراد تطبيقها على رصيد كل مشترك؛ مثال: 15 تعني رصيد المشترك × 15 ÷ 100. تُضاف النتيجة داخلياً إلى خانة ربح اليوم. لا يثبت إدخال النسبة تحقق ربح تداول فعلي، ولا ينفّذ التطبيق تحويلاً إلى محفظة خارجية.</p>
       <div class="form-grid">
-        <div class="field"><label for="realized-profit">مبلغ صافي الربح المحقق (USDT)</label><input id="realized-profit" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="مثال: 250.00"></div>
-        <div class="field"><label for="profit-period">تاريخ/فترة التقرير</label><input id="profit-period" type="date" required></div>
-        <div class="field"><label for="profit-reference">مرجع تقرير Binance أو الدفتر</label><input id="profit-reference" type="text" maxlength="200" placeholder="رقم تقرير أو مرجع داخلي"></div>
-        <div><button id="preview-profit">معاينة التوزيع</button></div>
+        <div class="field"><label for="profit-percentage">نسبة الربح (%)</label><input id="profit-percentage" type="number" min="0.01" max="100" step="0.01" inputmode="decimal" placeholder="مثال: 15"></div>
+        <div class="field"><label for="profit-period">تاريخ التوزيع</label><input id="profit-period" type="date" required></div>
+        <div><button id="preview-profit">معاينة البث</button></div>
       </div>
       <div id="profit-preview" class="hidden" aria-live="polite">
-        <div class="summary"><span>صافي الربح: <strong id="preview-profit-total"></strong></span><span>إجمالي رأس المال: <strong id="preview-capital-total"></strong></span><span>المشتركون المؤهلون: <strong id="preview-users-count"></strong></span></div>
-        <div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>رأس المال (USDT)</th><th>نسبة رأس المال</th><th>الحصة الموزعة (USDT)</th></tr></thead><tbody id="preview-allocations"></tbody></table></div>
-        <p class="muted">راجع التوزيع والمرجع قبل الاعتماد. تُحسب الحصص بالسنت مع توزيع فروق التقريب كي يساوي مجموع الحصص المبلغ المدخل تماماً.</p>
-        <button id="publish-profit" class="primary-action">نشر التوزيع الداخلي المعتمد</button>
+        <div class="summary"><span>النسبة المطبقة: <strong id="preview-percentage"></strong></span><span>إجمالي المبلغ المضاف: <strong id="preview-profit-total"></strong></span><span>إجمالي الأرصدة المستهدفة: <strong id="preview-capital-total"></strong></span><span>المشتركون: <strong id="preview-users-count"></strong></span></div>
+        <div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>الرصيد الحالي (USDT)</th><th>النسبة المطبقة</th><th>المبلغ المضاف لربح اليوم (USDT)</th></tr></thead><tbody id="preview-allocations"></tbody></table></div>
+        <p class="muted">تُقرّب حصة كل مشترك إلى أقرب سنت. يسمح النظام بتوزيع واحد فقط لكل تاريخ لمنع التكرار؛ مرجع التقرير غير مطلوب.</p>
+        <button id="publish-profit" class="primary-action">نشر النسبة على المشتركين</button>
       </div>
     </section>
 
@@ -52,14 +51,12 @@
 
     <section class="card">
       <h2>سجل توزيعات الأرباح الداخلية</h2>
-      <div class="table-wrap"><table><thead><tr><th>الفترة</th><th>صافي الربح (USDT)</th><th>إجمالي رأس المال (USDT)</th><th>المستخدمون</th><th>مرجع التقرير</th><th>وقت النشر</th></tr></thead><tbody id="distributions-body"></tbody></table></div>
+      <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النسبة</th><th>إجمالي المبلغ المضاف (USDT)</th><th>إجمالي الأرصدة (USDT)</th><th>المشتركون</th><th>وقت النشر</th></tr></thead><tbody id="distributions-body"></tbody></table></div>
     </section>
   </section>
 </main>
 <script>
 'use strict';
-const loginPanel=document.getElementById('login-panel');
-const dashboard=document.getElementById('dashboard');
 const message=document.getElementById('message');
 const previewBox=document.getElementById('profit-preview');
 let timer;
@@ -86,11 +83,12 @@ function invalidatePreview(){activePreview=null;activeOperationId=null;previewBo
 function renderPreview(preview){
   activePreview=preview;
   activeOperationId=crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  document.getElementById('preview-profit-total').textContent=fmt(preview.realizedProfit);
+  document.getElementById('preview-percentage').textContent=`${Number(preview.percentage).toFixed(2)}%`;
+  document.getElementById('preview-profit-total').textContent=fmt(preview.totalProfit);
   document.getElementById('preview-capital-total').textContent=fmt(preview.totalCapital);
   document.getElementById('preview-users-count').textContent=String(preview.eligibleUsers);
   const body=document.getElementById('preview-allocations');body.replaceChildren();
-  for(const rowData of preview.allocations){const row=document.createElement('tr');cell(row,rowData.username);cell(row,fmt(rowData.capital));cell(row,`${Number(rowData.sharePercent).toFixed(4)}%`);cell(row,fmt(rowData.amount));body.appendChild(row);}
+  for(const rowData of preview.allocations){const row=document.createElement('tr');cell(row,rowData.username);cell(row,fmt(rowData.capital));cell(row,`${Number(rowData.percentage).toFixed(2)}%`);cell(row,fmt(rowData.amount));body.appendChild(row);}
   previewBox.classList.remove('hidden');
 }
 async function loadDashboard(){
@@ -132,28 +130,28 @@ async function loadDashboard(){
     }
     const distributionsBody=document.getElementById('distributions-body');distributionsBody.replaceChildren();
     if(!data.distributions.length)emptyRow(distributionsBody,6,'لا توجد توزيعات مسجلة بعد.');
-    for(const item of data.distributions){const row=document.createElement('tr');cell(row,item.period);cell(row,fmt(item.netProfit));cell(row,fmt(item.totalCapital));cell(row,item.eligibleUsers);cell(row,item.sourceReference);cell(row,new Date(item.createdAt).toLocaleString('ar'));distributionsBody.appendChild(row);}
+    for(const item of data.distributions){const row=document.createElement('tr');cell(row,item.period);cell(row,item.distributionPercent==null?'توزيع سابق':`${Number(item.distributionPercent).toFixed(2)}%`);cell(row,fmt(item.netProfit));cell(row,fmt(item.totalCapital));cell(row,item.eligibleUsers);cell(row,new Date(item.createdAt).toLocaleString('ar'));distributionsBody.appendChild(row);}
   }catch(error){
     message.textContent=error.message;
   }
 }
-for(const id of ['realized-profit','profit-period','profit-reference'])document.getElementById(id).addEventListener('input',invalidatePreview);
+for(const id of ['profit-percentage','profit-period'])document.getElementById(id).addEventListener('input',invalidatePreview);
 document.getElementById('preview-profit').addEventListener('click',async event=>{
-  const button=event.currentTarget;const realizedProfit=Number(document.getElementById('realized-profit').value);const period=document.getElementById('profit-period').value;const sourceReference=document.getElementById('profit-reference').value.trim();
-  if(!Number.isFinite(realizedProfit)||realizedProfit<=0||!period||sourceReference.length<4){message.textContent='أدخل مبلغاً موجباً وفترة ومرجع تقرير صالحاً.';return;}
+  const button=event.currentTarget;const percentage=Number(document.getElementById('profit-percentage').value);const period=document.getElementById('profit-period').value;
+  if(!Number.isFinite(percentage)||percentage<0.01||percentage>100||!period){message.textContent='أدخل نسبة بين 0.01% و100% وتاريخاً صالحاً.';return;}
   button.disabled=true;message.textContent='جارٍ إعداد المعاينة…';
-  try{const data=await api('/api/admin/profit-distribution/preview',{method:'POST',body:JSON.stringify({realizedProfit,period,sourceReference})});renderPreview(data.preview);message.textContent='راجع الحصص التناسبية قبل النشر.';}
+  try{const data=await api('/api/admin/profit-distribution/preview',{method:'POST',body:JSON.stringify({percentage,period})});renderPreview(data.preview);message.textContent='راجع مبلغ كل مشترك والإجمالي قبل النشر.';}
   catch(error){message.textContent=error.message;invalidatePreview();}
   finally{button.disabled=false;}
 });
 document.getElementById('publish-profit').addEventListener('click',async event=>{
   if(!activePreview||!activeOperationId)return;
   const button=event.currentTarget;
-  if(!window.confirm(`تأكيد توزيع ${fmt(activePreview.realizedProfit)} تناسبياً على ${activePreview.eligibleUsers} مستخدم؟ سيُسجل رصيداً داخلياً ولن ينفذ تحويلاً خارج التطبيق.`))return;
+  if(!window.confirm(`تأكيد تطبيق ${Number(activePreview.percentage).toFixed(2)}% على أرصدة ${activePreview.eligibleUsers} مشترك؟ سيضاف إجمالي ${fmt(activePreview.totalProfit)} إلى ربح اليوم كسجل داخلي فقط، ولن ينفذ تحويلاً خارج التطبيق.`))return;
   button.disabled=true;
   try{
-    const result=await api('/api/admin/profit-distribution/publish',{method:'POST',body:JSON.stringify({realizedProfit:activePreview.realizedProfit,period:activePreview.period,sourceReference:activePreview.sourceReference,fingerprint:activePreview.fingerprint,operationId:activeOperationId})});
-    invalidatePreview();for(const key of [...userDrafts.keys()])if(key.startsWith('profit-'))userDrafts.delete(key);message.textContent=result.duplicate?'هذه العملية منشورة سابقاً ولم تكرر.':'تم نشر التوزيع الداخلي وتسجيل حصصه.';await loadDashboard();
+    const result=await api('/api/admin/profit-distribution/publish',{method:'POST',body:JSON.stringify({percentage:activePreview.percentage,period:activePreview.period,fingerprint:activePreview.fingerprint,operationId:activeOperationId})});
+    invalidatePreview();for(const key of [...userDrafts.keys()])if(key.startsWith('profit-'))userDrafts.delete(key);message.textContent=result.duplicate?'هذه العملية منشورة سابقاً ولم تكرر.':'تم تطبيق النسبة وتسجيل الحصص في الدفتر الداخلي.';await loadDashboard();
   }catch(error){message.textContent=error.message;invalidatePreview();button.disabled=false;}
 });
 setToday();
