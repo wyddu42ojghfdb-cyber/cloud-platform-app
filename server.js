@@ -122,14 +122,41 @@ function telegramTokenConfigured() { return /^\d+:[A-Za-z0-9_-]{20,}$/.test(TELE
 function telegramWebhookConfigured() {
   return telegramTokenConfigured() && /^[A-Za-z0-9_-]{32,256}$/.test(TELEGRAM_WEBHOOK_SECRET);
 }
-async function sendTelegramText(chatId, text) {
-  const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+async function telegramApi(method, payload = {}) {
+  const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text })
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10000)
   });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok || !result.ok) throw new Error('Telegram sendMessage failed');
+  if (!response.ok || !result.ok) throw new Error(`Telegram ${method} API request failed`);
+  return result.result;
+}
+async function sendTelegramText(chatId, text) {
+  await telegramApi('sendMessage', { chat_id: chatId, text });
+}
+async function configureTelegramWebhook() {
+  if (!telegramWebhookConfigured()) {
+    console.log('Telegram webhook setup skipped: bot credentials are not configured');
+    return;
+  }
+  const webhookUrl = `${PUBLIC_APP_URL.replace(/\/+$/, '')}/api/telegram/webhook`;
+  try {
+    const current = await telegramApi('getWebhookInfo');
+    if (current.url && current.url !== webhookUrl) {
+      console.error('Telegram webhook setup skipped: a different webhook URL is already configured');
+      return;
+    }
+    await telegramApi('setWebhook', {
+      url: webhookUrl,
+      secret_token: TELEGRAM_WEBHOOK_SECRET,
+      allowed_updates: ['message']
+    });
+    console.log('Telegram webhook configured');
+  } catch (error) {
+    console.error('Telegram webhook setup failed:', error.message);
+  }
 }
 function safeSupportTicket(ticket) {
   const value = ticket.toObject ? ticket.toObject() : ticket;
@@ -724,7 +751,10 @@ if (MONGO_URI) {
 } else {
   console.error('MONGODB_URI is not configured; database API routes will return 503');
 }
-const server = app.listen(PORT, '0.0.0.0', () => console.log(`Server listening on port ${PORT}`));
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server listening on port ${PORT}`);
+  void configureTelegramWebhook();
+});
 function shutdown() { server.close(() => mongoose.disconnect().finally(() => process.exit(0))); }
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
