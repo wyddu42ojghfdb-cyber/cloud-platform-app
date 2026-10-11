@@ -147,6 +147,12 @@ function telegramFaqReply(text) {
   const normalized = String(text || '').trim().toLowerCase();
   const arabic = /[\u0600-\u06ff]/.test(normalized);
   const link = PUBLIC_APP_URL;
+  const supportStart = normalized.match(/^\/start(?:@\w+)?\s+support_(ar|en)(?:\s|$)/i);
+  if (supportStart) {
+    return supportStart[1].toLowerCase() === 'ar'
+      ? `مرحباً بك في الدعم الفني. أرسل سؤالك هنا وسأجيب تلقائياً عن الأسئلة الشائعة. إذا أردت الرد اليدوي من المشرف فاكتب «الدعم الفني». رابط المنصة: ${link}. لا ترسل كلمات مرور أو مفاتيح محفظة.`
+      : `Welcome to technical support. Send your question here for an automatic FAQ answer. To request a human reply, write “technical support”. Platform: ${link}. Never send passwords or wallet keys.`;
+  }
   if (/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(normalized) || /^(مرحبا|مساعدة|help)$/.test(normalized)) {
     return arabic
       ? `مرحباً بك في دعم المنصة. رابط واجهة المستخدم: ${link}\nأستطيع شرح الإيداع والسحب والإحالات والتثبيت. لطلب ردّ موظف الدعم اكتب «الدعم الفني». لا أستطيع عرض أرصدة الحسابات عبر Telegram.`

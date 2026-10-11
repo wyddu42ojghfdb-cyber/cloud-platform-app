@@ -36,6 +36,7 @@ def api_post(path, payload):
 
 st.title("☁️ منظومة التداول والتحليل السحابي")
 st.caption("واجهة Streamlit اختيارية؛ التطبيق الرئيسي القابل للتثبيت يقدمه server.js.")
+st.link_button("التواصل مع الدعم الفني عبر Telegram", "https://t.me/invest_support_bot?start=support_ar", use_container_width=True)
 with st.form("login"):
     username = st.text_input("اسم المستخدم", value=st.session_state.get("username", ""), max_chars=64)
     submitted = st.form_submit_button("تحميل الحساب")
