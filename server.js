@@ -9,6 +9,11 @@ const app = express();
 const PORT = Number(process.env.PORT) || 10000;
 const MONGO_URI = process.env.MONGODB_URI;
 const OFFICIAL_DEPOSIT_WALLET = process.env.OFFICIAL_DEPOSIT_WALLET || 'TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN';
+const PUBLIC_APP_URL = (process.env.PUBLIC_APP_URL || 'https://cloud-platform-app.onrender.com').replace(/\/+$/, '');
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || '';
+const telegramPendingUpdates = new Set();
+const telegramProcessedUpdates = new Set();
 const REFERRAL_REWARD = 10;
 
 app.disable('x-powered-by');
@@ -90,6 +95,49 @@ const ProfitAllocation = mongoose.models.ProfitAllocation || mongoose.model('Pro
 function sendDbUnavailable(res) {
   return res.status(503).json({ success: false, error: 'Database unavailable' });
 }
+function safeSecretMatch(actual, expected) {
+  const left = Buffer.from(String(actual || ''));
+  const right = Buffer.from(String(expected || ''));
+  return left.length > 0 && left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+function telegramFaqReply(text) {
+  const normalized = String(text || '').trim().toLowerCase();
+  const arabic = /[\u0600-\u06ff]/.test(normalized);
+  const link = PUBLIC_APP_URL;
+  if (/^\/(start|help)(?:@\w+)?(?:\s|$)/i.test(normalized) || /^(مرحبا|مساعدة|help)$/.test(normalized)) {
+    return arabic
+      ? `مرحباً بك في دعم المنصة. رابط واجهة المستخدم: ${link}\nأستطيع شرح الإيداع والسحب والإحالات وتثبيت التطبيق. لا أستطيع عرض أرصدة الحسابات عبر Telegram.`
+      : `Welcome to platform support. User interface: ${link}\nI can explain deposits, withdrawals, referrals, and app installation. I cannot access account balances through Telegram.`;
+  }
+  if (/balance|account|رصيد|حساب|ارصدة|أرصدة/.test(normalized)) {
+    return arabic
+      ? `لعرض الأرصدة، افتح حسابك من واجهة المنصة: ${link}. لا يستطيع البوت الوصول إلى بيانات الحساب أو تغييرها، ولا ترسل كلمات مرور أو مفاتيح محفظة عبر Telegram.`
+      : `To view balances, open your account through the platform: ${link}. The bot cannot access or change account data. Never send passwords or wallet keys over Telegram.`;
+  }
+  if (/deposit|إيداع|شحن|wallet|محفظة|عنوان/.test(normalized)) {
+    return arabic
+      ? `لإرسال طلب إيداع، افتح ${link} وقدّم الطلب للمراجعة. عنوان الإيداع المعروض: ${OFFICIAL_DEPOSIT_WALLET}. تحقق من الشبكة والعنوان قبل أي تحويل؛ البوت لا ينفذ تحويلات.`
+      : `To submit a deposit request, open ${link} and submit it for review. Displayed deposit address: ${OFFICIAL_DEPOSIT_WALLET}. Verify the network and address before any transfer; this bot does not transfer funds.`;
+  }
+  if (/withdraw|سحب|withdrawal/.test(normalized)) {
+    return arabic
+      ? `طلبات السحب تُقدّم من ${link} وتبقى للمراجعة الإدارية. موافقة التطبيق لا تعني أن تحويلاً على الشبكة قد تم؛ لا تشارك بيانات الدخول أو مفاتيح المحفظة هنا.`
+      : `Submit withdrawal requests through ${link}; they remain subject to administrative review. App approval does not mean an on-chain transfer occurred. Do not share passwords or wallet keys here.`;
+  }
+  if (/referral|invite|دعوة|إحالة|الصديق|مكافأة/.test(normalized)) {
+    return arabic
+      ? `لطلب مكافأة الدعوة، افتح ${link} وأدخل اسم الصديق. يمكن إرسال الطلب قبل تسجيل الصديق، لكنه لا يُعتمد إلا بعد وجود حساب والتحقق من الأهلية.`
+      : `To request a referral reward, open ${link} and enter the friend's username. You may submit before the friend registers; approval requires an account and eligibility review.`;
+  }
+  if (/install|تثبيت|الرابط|link|app|تطبيق|منصة/.test(normalized)) {
+    return arabic
+      ? `رابط واجهة المستخدم: ${link}\nللتثبيت على الهاتف، افتح الرابط في المتصفح واختر «إضافة إلى الشاشة الرئيسية» أو زر التثبيت داخل الصفحة.`
+      : `User interface: ${link}\nTo install on a phone, open it in your browser and choose “Add to Home Screen” or use the in-page install button.`;
+  }
+  return arabic
+    ? `أستطيع المساعدة في الإيداع والسحب والإحالات وتثبيت التطبيق. اكتب موضوع سؤالك أو تواصل مع الدعم: https://t.me/invest_support_bot. رابط المنصة: ${link}.`
+    : `I can help with deposits, withdrawals, referrals, and app installation. Tell me which topic you need, or contact support at https://t.me/invest_support_bot. Platform: ${link}.`;
+}
 function validUsername(value) {
   return typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 64;
 }
@@ -159,6 +207,45 @@ app.get('/api/public/config', (_req, res) => res.json({ success: true, depositWa
 app.get('/panel', (_req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/secure-admin-panel-2026', (_req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
+// Optional private-chat FAQ bot. No channel/group broadcasts are performed here.
+app.post('/api/telegram/webhook', async (req, res) => {
+  if (!TELEGRAM_BOT_TOKEN || !/^[A-Za-z0-9_-]{32,256}$/.test(TELEGRAM_WEBHOOK_SECRET)) {
+    return res.status(503).json({ success: false, error: 'Telegram bot is not configured' });
+  }
+  if (!safeSecretMatch(req.get('X-Telegram-Bot-Api-Secret-Token'), TELEGRAM_WEBHOOK_SECRET)) {
+    return res.status(401).json({ success: false, error: 'Invalid webhook secret' });
+  }
+  const update = req.body || {};
+  const message = update.message;
+  if (!Number.isSafeInteger(update.update_id) || !message || message.chat?.type !== 'private' || message.from?.is_bot || typeof message.text !== 'string') {
+    return res.sendStatus(200);
+  }
+  const updateId = String(update.update_id);
+  if (telegramProcessedUpdates.has(updateId) || telegramPendingUpdates.has(updateId)) return res.sendStatus(200);
+  telegramPendingUpdates.add(updateId);
+  try {
+    const reply = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: message.chat.id, text: telegramFaqReply(message.text) })
+    });
+    const result = await reply.json().catch(() => ({}));
+    if (!reply.ok || !result.ok) {
+      telegramPendingUpdates.delete(updateId);
+      console.error('Telegram reply failed; HTTP status:', reply.status);
+      return res.status(502).json({ success: false, error: 'Telegram reply failed' });
+    }
+    telegramPendingUpdates.delete(updateId);
+    telegramProcessedUpdates.add(updateId);
+    if (telegramProcessedUpdates.size > 5000) telegramProcessedUpdates.delete(telegramProcessedUpdates.values().next().value);
+    return res.sendStatus(200);
+  } catch (_) {
+    telegramPendingUpdates.delete(updateId);
+    console.error('Telegram reply request failed');
+    return res.status(502).json({ success: false, error: 'Telegram reply failed' });
+  }
+});
+
 app.post('/api/user/login', async (req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
   const username = typeof req.body?.username === 'string' ? req.body.username.trim() : '';
@@ -185,13 +272,12 @@ app.post('/api/user/request', async (req, res) => {
   if (isReferral && (!validUsername(referredUsername) || referredUsername.trim().toLowerCase() === username.trim().toLowerCase())) {
     return res.status(400).json({ success: false, error: 'Invalid referred username' });
   }
+  const normalizedReferredUsername = isReferral ? referredUsername.trim() : '';
   try {
     const user = await User.findOne({ username: username.trim() });
     if (!user) return res.status(404).json({ success: false, error: 'User not found' });
     if (isReferral) {
-      const invited = await User.findOne({ username: referredUsername.trim() }).select('_id username');
-      if (!invited) return res.status(400).json({ success: false, error: 'Referred account must already exist' });
-      const existing = await Request.exists({ type: 'referral_reward', referredUsername: invited.username });
+      const existing = await Request.exists({ type: 'referral_reward', referredUsername: normalizedReferredUsername });
       if (existing) return res.status(409).json({ success: false, error: 'This account already has a referral reward request' });
     }
   const withdrawalFields = {
@@ -234,7 +320,7 @@ app.post('/api/user/request', async (req, res) => {
       amount,
       type,
       walletAddress: normalizedWallet,
-      referredUsername: isReferral ? referredUsername.trim() : '',
+      referredUsername: normalizedReferredUsername,
       details: String(details).trim().slice(0, 300)
     });
     return res.status(201).json({ success: true, requestId: request._id, amount });

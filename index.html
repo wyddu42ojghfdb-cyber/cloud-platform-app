@@ -28,6 +28,7 @@
     <label for="username" data-i18n="username">اسم المستخدم</label>
     <input id="username" maxlength="64" autocomplete="username" placeholder="أدخل اسم المستخدم" data-i18n-placeholder="usernamePlaceholder">
     <button id="login" data-i18n="loadAccount">فتح الحساب</button>
+    <p class="muted" data-i18n="usernameLockedHelp">بعد تحميل الحساب، يُقفل الاسم في هذه الشاشة ولا يمكن تعديله.</p>
     <p id="status" class="status" role="status" aria-live="polite"></p>
   </section>
   <section class="card" aria-label="الأرصدة">
@@ -51,14 +52,15 @@
   </section>
   <section class="card">
     <h2 data-i18n="referrals">دعوة صديق</h2>
-    <label for="friend-username" data-i18n="friendName">اسم المستخدم للصديق المدعو</label>
+    <label for="friend-username" data-i18n="friendName">اسم المستخدم للصديق المدعو (حتى لو لم يسجل بعد)</label>
     <input id="friend-username" maxlength="64" autocomplete="off" data-i18n-placeholder="friendPlaceholder">
     <button id="request-referral" class="purple" data-i18n="getReward">الحصول على المكافأة</button>
-    <p class="muted" data-i18n="referralReview">تُرسل المكافأة للمراجعة؛ يجب أن يكون حساب الصديق مسجلاً، ويعتمد المشرف الأهلية قبل إضافة 10 USDT.</p>
+    <p class="muted" data-i18n="referralReview">يمكن إرسال الطلب قبل تسجيل الصديق؛ يظهر للمشرف، ولا يُعتمد إلا بعد وجود حساب للصديق والتحقق من الأهلية.</p>
   </section>
   <section class="card">
     <h2 data-i18n="depositWallet">محفظة إيداع المنصة الرسمية</h2>
     <p id="deposit-wallet" class="wallet">TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN</p>
+    <button type="button" id="copy-wallet" class="green" data-i18n="copyWallet">نسخ عنوان المحفظة</button>
     <p class="muted" data-i18n="walletWarning">تحقق من العنوان والشبكة والجهة المستفيدة عبر قناة موثوقة قبل إرسال أي أصول رقمية.</p>
   </section>
   <section class="card">
@@ -75,6 +77,8 @@ const TEXT = {
   ar:{title:'☁️ منظومة التداول والتحليل السحابي',account:'الحساب',username:'اسم المستخدم',usernamePlaceholder:'أدخل اسم المستخدم',loadAccount:'فتح الحساب',capital:'رأس المال',dailyProfit:'الأرباح اليومية',reservedWithdrawals:'مبالغ محجوزة لطلبات السحب',referralCommissions:'عمولات الإحالة',teamMembers:'أعضاء الفريق',operations:'العمليات والطلبات',amount:'المبلغ (USDT)',walletAddress:'عنوان محفظة TRC-20',deposit:'إرسال طلب إيداع',withdrawProfit:'طلب سحب الأرباح اليومية',withdrawBonus:'طلب سحب عمولات الدعوة',withdrawCapital:'طلب سحب رأس المال',manualReview:'إرسال الطلب يسجّله للمراجعة فقط؛ لا تنفّذ هذه الصفحة تحويلاً على الشبكة.',referrals:'دعوة صديق',friendName:'اسم المستخدم للصديق المدعو',friendPlaceholder:'اكتب اسم المستخدم للصديق',getReward:'الحصول على المكافأة',referralReview:'تُرسل المكافأة للمراجعة؛ يجب أن يكون حساب الصديق مسجلاً، ويعتمد المشرف الأهلية قبل إضافة 10 USDT.',depositWallet:'محفظة إيداع المنصة الرسمية',walletWarning:'تحقق من العنوان والشبكة والجهة المستفيدة عبر قناة موثوقة قبل إرسال أي أصول رقمية.',notificationsTitle:'الإشعارات والتنبيهات',notificationsRefresh:'تُحدّث تلقائياً كل 4 ثوانٍ بعد تحميل الحساب.',noNotifications:'لا توجد إشعارات بعد.',support:'الدعم',telegramSupport:'التواصل مع الدعم عبر Telegram',install:'📲 تثبيت التطبيق على الهاتف',loaded:'تم تحميل الحساب.',enterUsername:'أدخل اسم المستخدم أولاً.',loadFirst:'حمّل الحساب أولاً.',validAmount:'أدخل مبلغاً صالحاً أكبر من صفر.',requestSent:'تم تسجيل الطلب للمراجعة.',referralSent:'تم إرسال طلب مكافأة الإحالة للمراجعة.',enterFriend:'أدخل اسم المستخدم للصديق المدعو.',installUnavailable:'للتثبيت: افتح قائمة المتصفح واختر «إضافة إلى الشاشة الرئيسية».',installDone:'تم تثبيت التطبيق.',dbUnavailable:'قاعدة البيانات غير متصلة حالياً؛ أعد المحاولة لاحقاً.',errorPrefix:'تعذّر إكمال الطلب: ',notificationPending:'قيد المراجعة',notificationApproved:'تمت الموافقة',notificationRejected:'مرفوض',type_deposit:'إيداع',type_withdraw_daily:'سحب أرباح يومية',type_withdraw_capital:'سحب رأس المال',type_invite_bonus:'سحب عمولات دعوة',type_referral_reward:'مكافأة دعوة صديق'},
   en:{title:'☁️ Cloud Trading & Analytics',account:'Account',username:'Username',usernamePlaceholder:'Enter username',loadAccount:'Load account',capital:'Capital',dailyProfit:'Daily profit',reservedWithdrawals:'Funds reserved for pending withdrawals',referralCommissions:'Referral commissions',teamMembers:'Team members',operations:'Transactions & requests',amount:'Amount (USDT)',walletAddress:'TRC-20 wallet address',deposit:'Submit deposit request',withdrawProfit:'Request daily-profit withdrawal',withdrawBonus:'Request referral-commission withdrawal',withdrawCapital:'Request capital withdrawal',manualReview:'Requests are recorded for review only; this page does not transfer funds on-chain.',referrals:'Invite a friend',friendName:'Invited friend username',friendPlaceholder:'Enter your friend’s username',getReward:'Request referral reward',referralReview:'The reward is subject to review. The friend must have a registered account; an administrator verifies eligibility before adding 10 USDT.',depositWallet:'Official platform deposit wallet',walletWarning:'Verify the address, network, and recipient through a trusted channel before sending digital assets.',notificationsTitle:'Notifications & alerts',notificationsRefresh:'Automatically refreshes every 4 seconds after loading your account.',noNotifications:'No notifications yet.',support:'Support',telegramSupport:'Contact support on Telegram',install:'📲 Install app on phone',loaded:'Account loaded.',enterUsername:'Enter a username first.',loadFirst:'Load your account first.',validAmount:'Enter a valid amount greater than zero.',requestSent:'Request submitted for review.',referralSent:'Referral reward request submitted for review.',enterFriend:'Enter the invited friend’s username.',installUnavailable:'To install, open your browser menu and choose “Add to Home Screen”.',installDone:'App installed.',dbUnavailable:'The database is currently unavailable. Please try again later.',errorPrefix:'Could not complete request: ',notificationPending:'Pending review',notificationApproved:'Approved',notificationRejected:'Rejected',type_deposit:'Deposit',type_withdraw_daily:'Daily-profit withdrawal',type_withdraw_capital:'Capital withdrawal',type_invite_bonus:'Referral-commission withdrawal',type_referral_reward:'Referral reward'}
 };
+Object.assign(TEXT.ar,{usernameLockedHelp:'بعد تحميل الحساب، يُقفل الاسم في هذه الشاشة ولا يمكن تعديله. هذا قفل للواجهة فقط وليس إثبات هوية.',friendName:'اسم المستخدم للصديق المدعو (حتى لو لم يسجل بعد)',friendPlaceholder:'اكتب اسم المستخدم للصديق',referralReview:'يمكن إرسال الطلب قبل تسجيل الصديق؛ يظهر للمشرف، ولا يُعتمد إلا بعد وجود حساب للصديق والتحقق من الأهلية.',copyWallet:'نسخ عنوان المحفظة',walletCopied:'تم نسخ عنوان محفظة الإيداع.',walletCopyFailed:'تعذر النسخ تلقائياً؛ حدّد العنوان وانسخه يدوياً.'});
+Object.assign(TEXT.en,{usernameLockedHelp:'After loading, the name is locked in this screen. This is a UI lock only, not identity verification.',friendName:'Invited friend username (registration not required to submit)',friendPlaceholder:'Enter the invited friend’s username',referralReview:'You can submit before the friend registers. The request appears for review; approval requires an account and eligibility verification.',copyWallet:'Copy wallet address',walletCopied:'Deposit wallet address copied.',walletCopyFailed:'Automatic copy failed; select and copy the address manually.'});
 const usernameField=document.getElementById('username');
 const statusNode=document.getElementById('status');
 const notificationList=document.getElementById('notifications');
@@ -96,6 +100,7 @@ function setLanguage(next){
   if(notificationList.children.length===0)showEmptyNotifications();
 }
 function showStatus(message,isError=false){statusNode.textContent=message;statusNode.style.color=isError?'#fca5a5':'#93c5fd';}
+function lockUsername(){usernameField.readOnly=true;usernameField.setAttribute('aria-readonly','true');document.getElementById('login').hidden=true;}
 async function api(url,options={}){
   let response;
   try{response=await fetch(`${API_BASE_URL}${url}`,{cache:'no-store',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});}
@@ -133,7 +138,7 @@ async function loadNotifications(){
 }
 async function refreshAccount(){
   if(!currentUsername)return;
-  try{const data=await api('/api/user/login',{method:'POST',body:JSON.stringify({username:currentUsername})});renderUser(data.user);}
+  try{const data=await api('/api/user/login',{method:'POST',body:JSON.stringify({username:currentUsername})});renderUser(data.user);lockUsername();}
   catch(error){showStatus(error.message,true);}
   await loadNotifications();
 }
@@ -142,7 +147,7 @@ async function loadAccount(){
   if(!username)return showStatus(t('enterUsername'),true);
   try{
     const data=await api('/api/user/login',{method:'POST',body:JSON.stringify({username})});
-    currentUsername=data.user.username;localStorage.setItem('trader_username',currentUsername);renderUser(data.user);showStatus(t('loaded'));
+    currentUsername=data.user.username;localStorage.setItem('trader_username',currentUsername);renderUser(data.user);lockUsername();showStatus(t('loaded'));
     await loadNotifications();if(refreshTimer)clearInterval(refreshTimer);refreshTimer=setInterval(refreshAccount,4000);
   }catch(error){showStatus(error.message,true);}
 }
@@ -168,6 +173,14 @@ document.getElementById('request-referral').addEventListener('click',async event
     document.getElementById('friend-username').value='';showStatus(t('referralSent'));await loadNotifications();
   }catch(error){showStatus(error.message,true);}finally{button.disabled=false;}
 });
+document.getElementById('copy-wallet').addEventListener('click',async()=>{
+  const address=document.getElementById('deposit-wallet').textContent.trim();
+  try{
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(address);
+    else{const field=document.createElement('textarea');field.value=address;field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();const copied=document.execCommand('copy');field.remove();if(!copied)throw new Error('copy failed');}
+    showStatus(t('walletCopied'));
+  }catch(_){showStatus(t('walletCopyFailed'),true);}
+});
 document.getElementById('install-app').addEventListener('click',async()=>{
   if(!deferredInstallPrompt){showStatus(t('installUnavailable'));return;}
   deferredInstallPrompt.prompt();await deferredInstallPrompt.userChoice;deferredInstallPrompt=null;
@@ -177,7 +190,7 @@ window.addEventListener('appinstalled',()=>showStatus(t('installDone')));
 async function loadPublicConfig(){try{const data=await api('/api/public/config');if(data.depositWallet)document.getElementById('deposit-wallet').textContent=data.depositWallet;}catch(_) {}}
 setLanguage(language);
 loadPublicConfig();
-if(currentUsername){refreshAccount();refreshTimer=setInterval(refreshAccount,4000);}
+if(currentUsername){lockUsername();refreshAccount();refreshTimer=setInterval(refreshAccount,4000);}
 if('serviceWorker'in navigator&&window.location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).catch(error=>console.error('Service worker registration failed:',error)));
 </script>
 </body>
