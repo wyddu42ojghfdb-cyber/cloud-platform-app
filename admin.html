@@ -14,13 +14,12 @@
 <body>
 <main class="container">
   <h1>لوحة إدارة المنظومة</h1>
-  <section id="login-panel" class="card">
-    <h2>تسجيل دخول المشرف</h2>
-    <form id="login-form"><label for="admin-password">كلمة مرور المشرف</label><br><input id="admin-password" type="password" autocomplete="current-password" required><button>دخول</button></form>
+  <section class="card">
+    <p class="warning"><strong>تنبيه أمني:</strong> هذه اللوحة وواجهات الإدارة مفتوحة بلا تحقق. أي شخص يصل إلى الرابط أو مسارات API يستطيع الاطلاع على بيانات الأعضاء وتعديل الأرصدة والطلبات.</p>
     <p id="message" role="status" aria-live="polite"></p>
   </section>
-  <section id="dashboard" class="hidden">
-    <div class="card bar"><strong>إجمالي المشتركين: <span id="total-users">0</span></strong><span>تحديث تلقائي كل 4 ثوانٍ</span><button id="logout" class="red">تسجيل الخروج</button></div>
+  <section id="dashboard">
+    <div class="card bar"><strong>إجمالي المشتركين: <span id="total-users">0</span></strong><span>تحديث تلقائي كل 4 ثوانٍ</span></div>
 
     <section class="card" aria-labelledby="distribution-title">
       <h2 id="distribution-title">توزيع صافي الربح المحقق تناسبياً</h2>
@@ -135,7 +134,6 @@ async function loadDashboard(){
     if(!data.distributions.length)emptyRow(distributionsBody,6,'لا توجد توزيعات مسجلة بعد.');
     for(const item of data.distributions){const row=document.createElement('tr');cell(row,item.period);cell(row,fmt(item.netProfit));cell(row,fmt(item.totalCapital));cell(row,item.eligibleUsers);cell(row,item.sourceReference);cell(row,new Date(item.createdAt).toLocaleString('ar'));distributionsBody.appendChild(row);}
   }catch(error){
-    if(error.message.includes('authentication')||error.message.includes('401')){dashboard.classList.add('hidden');loginPanel.classList.remove('hidden');if(timer)clearInterval(timer);}
     message.textContent=error.message;
   }
 }
@@ -158,16 +156,9 @@ document.getElementById('publish-profit').addEventListener('click',async event=>
     invalidatePreview();for(const key of [...userDrafts.keys()])if(key.startsWith('profit-'))userDrafts.delete(key);message.textContent=result.duplicate?'هذه العملية منشورة سابقاً ولم تكرر.':'تم نشر التوزيع الداخلي وتسجيل حصصه.';await loadDashboard();
   }catch(error){message.textContent=error.message;invalidatePreview();button.disabled=false;}
 });
-document.getElementById('login-form').addEventListener('submit',async event=>{
-  event.preventDefault();message.textContent='جارٍ التحقق…';
-  try{await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:document.getElementById('admin-password').value})});document.getElementById('admin-password').value='';loginPanel.classList.add('hidden');dashboard.classList.remove('hidden');setToday();await loadDashboard();timer=setInterval(loadDashboard,4000);}
-  catch(error){message.textContent=error.message;}
-});
-document.getElementById('logout').addEventListener('click',async()=>{
-  if(timer)clearInterval(timer);try{await api('/api/admin/logout',{method:'POST',body:'{}'});}catch(_){}
-  dashboard.classList.add('hidden');loginPanel.classList.remove('hidden');message.textContent='تم تسجيل الخروج.';
-});
-setToday();loadDashboard();
+setToday();
+loadDashboard();
+timer=setInterval(loadDashboard,4000);
 </script>
 </body>
 </html>

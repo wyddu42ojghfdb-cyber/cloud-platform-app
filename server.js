@@ -8,11 +8,8 @@ const path = require('path');
 const app = express();
 const PORT = Number(process.env.PORT) || 10000;
 const MONGO_URI = process.env.MONGODB_URI;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 const OFFICIAL_DEPOSIT_WALLET = process.env.OFFICIAL_DEPOSIT_WALLET || 'TA1vsgrJEFy3YM6rkQWBppnZemFE6c9pBN';
 const REFERRAL_REWARD = 10;
-const ADMIN_SESSION_TTL_MS = 8 * 60 * 60 * 1000;
-const adminSessions = new Map();
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -110,28 +107,6 @@ function safeUser(user) {
     history: user.history,
     createdAt: user.createdAt
   } : null;
-}
-function parseCookies(header = '') {
-  return Object.fromEntries(header.split(';').map(part => {
-    const index = part.indexOf('=');
-    return index < 0 ? ['', ''] : [part.slice(0, index).trim(), decodeURIComponent(part.slice(index + 1).trim())];
-  }).filter(([key]) => key));
-}
-function adminSession(req, res, next) {
-  const token = parseCookies(req.headers.cookie).admin_session;
-  const expiresAt = token && adminSessions.get(token);
-  if (!expiresAt || expiresAt < Date.now()) {
-    if (token) adminSessions.delete(token);
-    return res.status(401).json({ success: false, error: 'Admin authentication required' });
-  }
-  adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL_MS);
-  next();
-}
-function passwordMatches(candidate) {
-  if (!ADMIN_PASSWORD || typeof candidate !== 'string') return false;
-  const expected = Buffer.from(ADMIN_PASSWORD);
-  const supplied = Buffer.from(candidate);
-  return expected.length === supplied.length && crypto.timingSafeEqual(expected, supplied);
 }
 function toCents(value) {
   const number = Number(value);
@@ -298,22 +273,9 @@ app.get('/api/user/history', async (req, res) => {
   }
 });
 
-app.post('/api/admin/login', (req, res) => {
-  if (!ADMIN_PASSWORD) return res.status(503).json({ success: false, error: 'Admin access is not configured' });
-  if (!passwordMatches(req.body?.password)) return res.status(401).json({ success: false, error: 'Invalid credentials' });
-  const token = crypto.randomBytes(32).toString('hex');
-  adminSessions.set(token, Date.now() + ADMIN_SESSION_TTL_MS);
-  const secure = req.secure ? '; Secure' : '';
-  res.setHeader('Set-Cookie', `admin_session=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${ADMIN_SESSION_TTL_MS / 1000}${secure}`);
-  return res.json({ success: true });
-});
-app.post('/api/admin/logout', adminSession, (req, res) => {
-  const token = parseCookies(req.headers.cookie).admin_session;
-  if (token) adminSessions.delete(token);
-  res.setHeader('Set-Cookie', 'admin_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');
-  return res.json({ success: true });
-});
-app.get('/api/admin/requests', adminSession, async (_req, res) => {
+// All /api/admin/* routes are intentionally unauthenticated per owner's explicit request.
+// Anyone who discovers these routes can read and modify admin data.
+app.get('/api/admin/requests', async (_req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
   try {
     const [requests, allUsers, totalUsers, distributions] = await Promise.all([
@@ -330,7 +292,7 @@ app.get('/api/admin/requests', adminSession, async (_req, res) => {
   }
 });
 
-app.post('/api/admin/profit-distribution/preview', adminSession, async (req, res) => {
+app.post('/api/admin/profit-distribution/preview', async (req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
   const netProfitCents = toCents(req.body?.realizedProfit);
   const period = typeof req.body?.period === 'string' ? req.body.period.trim() : '';
@@ -367,7 +329,7 @@ app.post('/api/admin/profit-distribution/preview', adminSession, async (req, res
   }
 });
 
-app.post('/api/admin/profit-distribution/publish', adminSession, async (req, res) => {
+app.post('/api/admin/profit-distribution/publish', async (req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
   const netProfitCents = toCents(req.body?.realizedProfit);
   const period = typeof req.body?.period === 'string' ? req.body.period.trim() : '';
@@ -453,7 +415,7 @@ app.post('/api/admin/profit-distribution/publish', adminSession, async (req, res
   }
 });
 
-app.post('/api/admin/action-request', adminSession, async (req, res) => {
+app.post('/api/admin/action-request', async (req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
   const { requestId, action } = req.body || {};
   if (!mongoose.isValidObjectId(requestId) || !['approved', 'rejected'].includes(action)) return res.status(400).json({ success: false, error: 'Invalid request action' });
@@ -532,7 +494,7 @@ app.post('/api/admin/action-request', adminSession, async (req, res) => {
   }
 });
 
-app.post('/api/admin/update-user', adminSession, async (req, res) => {
+app.post('/api/admin/update-user', async (req, res) => {
   if (mongoose.connection.readyState !== 1) return sendDbUnavailable(res);
   const { userId } = req.body || {};
   if (!mongoose.isValidObjectId(userId)) return res.status(400).json({ success: false, error: 'Invalid user id' });
